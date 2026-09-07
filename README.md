@@ -2,17 +2,17 @@
 
 A lightweight Chromium extension for turning a YouTube video into useful input for ChatGPT or a saved ChatGPT Project.
 
-**Current beta: v0.1.1**
+**Current beta: v0.1.2**
 
 The extension does **not** run its own AI. It extracts YouTube captions locally, packages them with a focused instruction, copies the complete prompt to your clipboard as a safety fallback, opens the selected ChatGPT destination, and tries to populate the composer. You review the prompt and press **Send** yourself.
 
 ## Core modes
 
 ### Apply to Project
-Use the current ChatGPT Project/conversation context to decide what from the video is actually useful. The prompt asks ChatGPT to distinguish **ADOPT / ADAPT / TEST / INVESTIGATE / IGNORE-PARK** and to avoid blindly copying the creator's recommendations.
+Starts with a brief 3–5 bullet **Video TL;DR** for orientation, then uses the current ChatGPT Project/conversation context to decide what from the video is actually useful. The prompt asks ChatGPT to distinguish **ADOPT / ADAPT / TEST / INVESTIGATE / IGNORE-PARK** and to avoid blindly copying the creator's recommendations.
 
 ### Analyze
-Critically evaluate the creator's reasoning, evidence, assumptions, novelty, limitations, hype, feasibility, and implications.
+Starts with the same brief orientation **Video TL;DR**, then critically evaluates the creator's reasoning, evidence, assumptions, novelty, limitations, hype, feasibility, and implications.
 
 ### Summarize
 Faithfully compress the video into a TL;DR, key ideas, examples, conclusions, and useful timestamps.
