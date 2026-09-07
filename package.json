@@ -1,6 +1,6 @@
 {
   "name": "youtube-chatgpt-project-intake",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "private": true,
   "description": "Lightweight Chromium extension for routing YouTube transcripts into ChatGPT Projects.",
   "scripts": {
