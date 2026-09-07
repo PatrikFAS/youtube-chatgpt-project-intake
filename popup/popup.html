@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>YouTube → ChatGPT</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <main class="shell">
+    <header class="header">
+      <div>
+        <div class="eyebrow">PROJECT INTAKE</div>
+        <h1>YouTube → ChatGPT</h1>
+      </div>
+      <button id="openOptionsTop" class="icon-button" title="Manage destinations" aria-label="Manage destinations">⚙</button>
+    </header>
+
+    <section id="loadingView" class="card centered">
+      <div class="spinner" aria-hidden="true"></div>
+      <p>Reading this page…</p>
+    </section>
+
+    <section id="youtubeView" class="hidden">
+      <div class="video-card">
+        <div id="videoTitle" class="video-title">YouTube video</div>
+        <div id="videoMeta" class="video-meta"></div>
+        <div id="transcriptStatus" class="status-line"></div>
+      </div>
+
+      <div class="field">
+        <label for="trackSelect">Transcript</label>
+        <select id="trackSelect"></select>
+      </div>
+
+      <div class="field">
+        <label for="destinationSelect">Send to</label>
+        <div class="inline-row">
+          <select id="destinationSelect" class="grow"></select>
+          <button id="manageDestinations" class="secondary small">Manage</button>
+        </div>
+      </div>
+
+      <fieldset class="mode-group">
+        <legend>What do you want?</legend>
+
+        <label class="mode-card">
+          <input type="radio" name="mode" value="apply">
+          <span>
+            <strong>Apply to Project</strong>
+            <small>Find what matters for our current work</small>
+          </span>
+        </label>
+
+        <label class="mode-card">
+          <input type="radio" name="mode" value="analyze">
+          <span>
+            <strong>Analyze</strong>
+            <small>Critically evaluate the content</small>
+          </span>
+        </label>
+
+        <label class="mode-card">
+          <input type="radio" name="mode" value="summarize">
+          <span>
+            <strong>Summarize</strong>
+            <small>Tell me what is in the video</small>
+          </span>
+        </label>
+      </fieldset>
+
+      <div class="field">
+        <label for="optionalQuestion">Optional question</label>
+        <textarea id="optionalQuestion" rows="3" placeholder="e.g. Could this improve our YMC enquiry workflow?"></textarea>
+      </div>
+
+      <div id="warning" class="warning hidden"></div>
+      <div id="error" class="error hidden"></div>
+
+      <button id="sendButton" class="primary wide">Send to ChatGPT</button>
+
+      <div class="utility-row">
+        <button id="viewTranscript" class="link-button">View transcript</button>
+        <span>·</span>
+        <button id="copyTranscript" class="link-button">Copy transcript</button>
+        <span>·</span>
+        <button id="retryButton" class="link-button">Retry</button>
+      </div>
+
+      <div id="transcriptPanel" class="transcript-panel hidden">
+        <div class="transcript-panel-header">
+          <strong>Transcript preview</strong>
+          <span id="transcriptCount"></span>
+        </div>
+        <pre id="transcriptPreview"></pre>
+      </div>
+    </section>
+
+    <section id="chatgptView" class="hidden">
+      <div class="card">
+        <div class="eyebrow">SAVE DESTINATION</div>
+        <h2>Save this ChatGPT destination</h2>
+        <p class="muted">Navigate to the Project or ChatGPT page you want the extension to reopen, then save it here.</p>
+
+        <div class="field">
+          <label for="destinationName">Name</label>
+          <input id="destinationName" type="text" placeholder="e.g. Yacht Master Class">
+        </div>
+
+        <div id="currentUrl" class="url-preview"></div>
+        <div id="chatgptSaveStatus" class="status-message hidden"></div>
+
+        <button id="saveDestination" class="primary wide">Save current destination</button>
+        <button id="manageDestinationsChatgpt" class="secondary wide">Manage saved destinations</button>
+      </div>
+    </section>
+
+    <section id="otherView" class="hidden">
+      <div class="card centered">
+        <h2>Open YouTube or ChatGPT</h2>
+        <p class="muted">On YouTube, this extension extracts the transcript. On ChatGPT, it can save the current page as a reusable destination.</p>
+        <button id="openOptionsOther" class="secondary">Manage destinations</button>
+      </div>
+    </section>
+
+    <footer class="footer">Local only · no backend · no API key</footer>
+  </main>
+
+  <script src="popup.js"></script>
+</body>
+</html>
