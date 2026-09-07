@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "YouTube → ChatGPT Project Intake",
   "short_name": "YT → GPT",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Send clean YouTube transcripts to ChatGPT or saved ChatGPT Projects for summary, analysis, or project application.",
   "permissions": [
     "activeTab",
