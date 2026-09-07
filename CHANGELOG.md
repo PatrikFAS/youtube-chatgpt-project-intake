@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.2
+
+- Adds a short 3–5 bullet **Video TL;DR** before **Apply to Project** analysis so you know what the video is about before recommendations.
+- Adds the same brief orientation TL;DR before **Analyze**, while keeping the main body focused on critical evaluation.
+- Leaves **Summarize** unchanged because summary is already its primary job.
+- No UI or permission changes.
+
 ## 0.1.1
 
 - Fixes YouTube caption tracks that appear in player metadata but return an empty timedtext response.
