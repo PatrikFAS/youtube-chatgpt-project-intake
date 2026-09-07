@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>YouTube → ChatGPT Destinations</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <main class="page">
+    <header>
+      <div class="eyebrow">YOUTUBE → CHATGPT PROJECT INTAKE</div>
+      <h1>Saved destinations</h1>
+      <p>Each destination is simply a ChatGPT URL the extension can reopen. For a Project, navigate to the Project page you want, then use the extension there to save it.</p>
+    </header>
+
+    <section class="panel">
+      <div id="destinationList" class="destination-list"></div>
+      <div id="emptyState" class="muted hidden">No custom destinations yet.</div>
+    </section>
+
+    <section class="panel">
+      <h2>Add manually</h2>
+      <div class="grid">
+        <label>
+          Name
+          <input id="newName" type="text" placeholder="e.g. Hermes">
+        </label>
+        <label>
+          ChatGPT URL
+          <input id="newUrl" type="url" placeholder="https://chatgpt.com/...">
+        </label>
+      </div>
+      <div id="message" class="message hidden"></div>
+      <button id="addButton" class="primary">Add destination</button>
+    </section>
+
+    <section class="note">
+      <strong>Privacy:</strong> destination names/URLs stay in your browser's extension storage. Transcripts are not stored permanently.
+    </section>
+  </main>
+
+  <script src="options.js"></script>
+</body>
+</html>
