@@ -1,6 +1,6 @@
 # YouTube → ChatGPT Project Intake
 
-A lightweight Chromium extension for turning a YouTube video into useful input for ChatGPT or a saved ChatGPT Project.
+A lightweight Chrome/Edge browser extension that extracts YouTube transcripts and sends them to ChatGPT Projects for summarization, critical analysis, or project-specific application.
 
 **Current beta: v0.1.2**
 
