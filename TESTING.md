@@ -2,7 +2,7 @@
 
 ## Current status
 
-**READY TO TEST v0.1.4 / LIVE UPDATE TEST STILL NEEDED.** Private Edge feedback identified the v0.1.3 destination warning: a saved Project landing page (`/g/g-p-fixture-example/project`, synthetic identifier) opened a conversation inside the same Project (`/g/g-p-fixture-example/c/fixture-conversation`). The strict path comparison refused it. v0.1.4 allows this specific transition in the shared helper used by both the injector and background claim. The user confirmed adjacent-tab placement for their ordinary source-tab case. Automatic insertion on the current authenticated interface and pinned/grouped cases remain unverified. Keep issue #1 open after merge until the user confirms destination routing with the update.
+**READY TO TEST v0.1.5 / LIVE UPDATE TEST STILL NEEDED.** Private Edge feedback identified the earlier destination warning and a later composer-recognition failure. The saved Project landing-to-conversation transition is covered by v0.1.4; v0.1.5 recognizes the actual current Project composer using privately supplied form markup. The user confirmed adjacent-tab placement for their ordinary source-tab case. Automatic insertion in the affected Edge installation and pinned/grouped cases remain unverified. Keep issue #1 open after merge until the user confirms destination routing with the update.
 
 ## Automated checks
 
@@ -28,6 +28,15 @@ npm test
 - The new same-Project regression failed with v0.1.3's strict matcher and passed after the shared helper change. `npm run verify`, all four `npm test` suites and `git diff --check` passed for v0.1.4; the verifier required subprocess access after sandbox `spawnSync EPERM`.
 - Regression checks execute the actual helper, background listener and injector for the Project landing-to-conversation transition. Different Projects, saved-conversation changes, queries/fragments and Codex remain rejected; existing draft and no-automatic-Send protections remain in place.
 - Fixture checks do not establish insertion into the current authenticated composer. Update the existing installation in place, refresh open tabs, and repeat the saved-Project handoff before confirming the fix in Edge.
+
+## Current Project composer coverage (v0.1.5, 2026-10-13)
+
+- A private screenshot showed the composer-recognition timeout in Chat mode. Private inspected HTML identified `form[data-chatgpt-composer]`, `[data-composer-body]`, `[data-composer-input]`, and an editable `[data-composer-markdown]` textbox with no legacy editor ID or test ID. The form contains `button[aria-label="Select ChatGPT model"]` with a Pro label and a Start Voice button instead of a visible Send button while empty.
+- The model button's internal `data-codex-intelligence-trigger` attribute is present in this verified ChatGPT layout. It is not evidence that Codex is the active product; active controls and destination checks remain enforced.
+- Regression fixtures use synthetic names and IDs. The real-browser fixture at `tests/fixtures/chatgpt-project-composer.html` recreates the verified semantic structure without private HTML values or generated CSS classes. It supplies a mock extension handoff; the actual destination helper and injector must be injected separately. This is browser verification of insertion into a reconstructed DOM, not an authenticated end-to-end run in the user's Edge session.
+- The old injector reproduced the exact composer timeout in the real browser fixture. The new injector inserted the complete fixture prompt once, with one handoff claim, no button clicks and the unrelated editor untouched. Playwright intercepted synthetic ChatGPT URLs locally and loaded the actual helper/injector source; virtual browser time advanced timeout checks.
+- All eight additional browser scenarios passed: the same-Project conversation transition, an existing draft, a nonempty hidden attachment container, visible Codex mode, mode and route changes during claim, a missing composer-body marker, and duplicate script loading. Safety cases left content untouched with a visible clipboard fallback.
+- Final `npm run verify`, all four `npm test` suites and `git diff --check` passed. The affected signed-in Edge session remains inaccessible to the separate tool browser; this update still needs installation confirmation there.
 
 ## Focused browser acceptance checks
 

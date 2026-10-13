@@ -219,10 +219,25 @@ class FakeElement {
   getAttribute(name) { return this.attrs[name] ?? null; }
   matches(selector) { return selector === 'textarea' && this.tagName === 'TEXTAREA'; }
   getBoundingClientRect() { return this.visible ? { width: 400, height: 64 } : { width: 0, height: 0 }; }
-  closest(selector) { return selector === 'form' ? this.form : null; }
+  closest(selector) {
+    if (selector === 'form') return this.form;
+    for (let current = this; current; current = current.parent) {
+      if (selector === '[data-composer-input]' && current.getAttribute('data-composer-input') !== null) return current;
+      if (selector === 'form[data-chatgpt-composer]' && current.tagName === 'FORM' && current.getAttribute('data-chatgpt-composer') !== null) return current;
+    }
+    return null;
+  }
   querySelector(selector) { return this.selectors?.[selector] || (this.mediaOrAttachment && selector.includes('data-testid') ? this.mediaOrAttachment : null); }
-  querySelectorAll(selector) { return this.selectorLists?.[selector] || []; }
-  contains(node) { return this === node || (node?.parent === this); }
+  querySelectorAll(selector) {
+    if (this.selectorLists?.[selector]) return this.selectorLists[selector];
+    if (selector.includes('Select ChatGPT model')) return this.selectorLists?.['button']?.filter((button) => button.getAttribute('aria-label') === 'Select ChatGPT model') || [];
+    if (selector === 'button') return this.selectorLists?.['button'] || [];
+    return [];
+  }
+  contains(node) {
+    for (let current = node; current; current = current.parent) if (current === this) return true;
+    return false;
+  }
   focus() { this.focused = true; this.onFocus?.(); }
   replaceChildren(node) { this.children = [node]; this.innerText = node.textContent; this.textContent = node.textContent; this.replaceCount = (this.replaceCount || 0) + 1; }
   dispatchEvent(event) { this.events.push(event.type); return true; }
@@ -231,28 +246,108 @@ class FakeElement {
 }
 
 function makePage({
-  url = 'https://chatgpt.com/g/workspace-123/project', expectedDestination = url, mode = 'ChatGPT', composerText = '', payload = 'sample prompt',
+  url = 'https://chatgpt.com/g/workspace-123/project', expectedDestination = url, mode, composerText = '', payload = 'sample prompt',
   composerCount = 1, genericEditor = false, dialog = false, login = false, partialInsert = false,
   onClaim = null, claimResult = null, noComposer = false, attachment = false, focusText = '', readOnly = false, ariaReadOnly = false,
+  markdownEditor = false, modernEditor = false, modernMarkers = {}, modernEditorCount = 1, ambiguousModel = false,
   backgroundBridge = null
 } = {}) {
   FakeDate.tick = 0;
-  const composer = new FakeElement({ attrs: { 'data-testid': 'composer-input', contenteditable: 'true', ...(ariaReadOnly ? { 'aria-readonly': 'true' } : {}) }, editable: true, text: composerText });
+  const composer = new FakeElement({
+    tagName: 'DIV',
+    attrs: markdownEditor
+      ? {
+          contenteditable: 'true',
+          'aria-multiline': 'true',
+          dir: 'auto',
+          role: 'textbox',
+          spellcheck: 'true',
+          tabindex: '0',
+          translate: 'no',
+          class: 'ProseMirror',
+          'data-composer-markdown': '',
+          'aria-label': 'New chat in Fixture Project',
+          'data-virtualkeyboard': 'true',
+          ...(ariaReadOnly ? { 'aria-readonly': 'true' } : {})
+        }
+      : { 'data-testid': 'composer-input', contenteditable: 'true', ...(ariaReadOnly ? { 'aria-readonly': 'true' } : {}) },
+    editable: true,
+    text: composerText
+  });
+  if (markdownEditor) {
+    const placeholder = new FakeElement({ tagName: 'P', attrs: { 'data-empty-paragraph': 'true' } });
+    const lineBreak = new FakeElement({ tagName: 'BR' });
+    placeholder.children = [lineBreak];
+    lineBreak.parent = placeholder;
+    placeholder.parent = composer;
+    composer.children = [placeholder];
+  }
   composer.readOnly = readOnly;
-  if (attachment) composer.mediaOrAttachment = {};
+  if (attachment && !modernEditor) composer.mediaOrAttachment = {};
   if (focusText) composer.onFocus = () => { composer.innerText = focusText; composer.textContent = focusText; };
-  const model = new FakeElement({ text: mode, attrs: { 'data-testid': 'model-switcher-dropdown-button' } });
+  const modelLabel = mode ?? (modernEditor ? 'Pro' : 'ChatGPT');
+  const model = new FakeElement({
+    tagName: 'BUTTON',
+    text: modelLabel,
+    attrs: modernEditor
+      ? (modernMarkers.model === false ? { type: 'button' } : {
+          type: 'button',
+          'aria-label': 'Select ChatGPT model',
+          'data-codex-intelligence-trigger': 'true'
+        })
+      : { 'data-testid': 'model-switcher-dropdown-button' }
+  });
   const send = new FakeElement({ attrs: { 'data-testid': 'send-button' } });
   send.click = () => { send.clicks += 1; };
   const background = new FakeElement();
-  const form = new FakeElement({ tagName: 'FORM' });
+  const form = new FakeElement({
+    tagName: 'FORM',
+    attrs: modernEditor && modernMarkers.form !== false
+      ? { 'data-chatgpt-composer': '', 'data-composer-placement': 'home', 'data-thread-find-composer': 'true' }
+      : {}
+  });
+  const composerBody = new FakeElement({ attrs: modernEditor && modernMarkers.body !== false ? { 'data-composer-body': '' } : {} });
+  const composerInput = new FakeElement({ attrs: modernEditor && modernMarkers.input !== false ? { 'data-composer-input': '' } : {} });
+  const modernEditors = modernEditor
+    ? Array.from({ length: modernEditorCount }, (_, index) => index === 0 ? composer : new FakeElement({
+        tagName: 'DIV',
+        attrs: {
+          contenteditable: 'true', 'aria-multiline': 'true', dir: 'auto', role: 'textbox', spellcheck: 'true',
+          tabindex: '0', translate: 'no', class: 'ProseMirror', 'data-composer-markdown': '',
+          'aria-label': 'New chat in Fixture Project', 'data-virtualkeyboard': 'true'
+        }, editable: true
+      }))
+    : [];
+  if (modernEditor) {
+    for (const editor of modernEditors) {
+      editor.parent = composerInput;
+      editor.form = form;
+    }
+    composerInput.parent = composerBody;
+    composerBody.parent = form;
+  }
   composer.form = form;
-  composer.parent = background;
-  form.selectors = { '#composer-background': background };
-  background.contains = (node) => node === composer;
-  form.selectorLists = { '[data-testid="send-button"], [data-testid="composer-send-button"]': [send] };
-  let candidates = noComposer ? [] : Array.from({ length: composerCount }, (_, i) => i === 0 ? composer : new FakeElement({ attrs: { 'data-testid': 'composer-input', contenteditable: 'true' }, editable: true }));
-  let controls = [model];
+  if (!modernEditor) composer.parent = background;
+  form.selectors = {
+    '#composer-background': background,
+    '[data-composer-body]': modernMarkers.body === false ? null : composerBody,
+    '[data-composer-input]': modernMarkers.input === false ? null : composerInput,
+    '[data-composer-attachments]': Object.assign(new FakeElement(), { childElementCount: attachment ? 1 : 0 })
+  };
+  const attachments = form.selectors['[data-composer-attachments]'];
+  const formButtons = modernEditor
+    ? [model, new FakeElement({ tagName: 'BUTTON', attrs: { 'aria-label': 'Dictate' } }), new FakeElement({ tagName: 'BUTTON', attrs: { 'aria-label': 'Start Voice' } }), ...(ambiguousModel ? [new FakeElement({ tagName: 'BUTTON', text: modelLabel, attrs: { type: 'button', 'aria-label': 'Select ChatGPT model' } })] : [])]
+    : [send];
+  form.selectorLists = {
+    '[data-testid="send-button"], [data-testid="composer-send-button"]': modernEditor ? [] : [send],
+    '[data-composer-attachments]': attachment ? [attachments] : [],
+    'button': formButtons
+  };
+  const modernModelControls = modernEditor && modernMarkers.model !== false
+    ? [model, ...(ambiguousModel ? [new FakeElement({ tagName: 'BUTTON', text: modelLabel, attrs: { type: 'button', 'aria-label': 'Select ChatGPT model' } })] : [])]
+    : [];
+  let candidates = noComposer ? [] : modernEditor ? modernEditors : Array.from({ length: composerCount }, (_, i) => i === 0 ? composer : new FakeElement({ attrs: { 'data-testid': 'composer-input', contenteditable: 'true' }, editable: true }));
+  let controls = modernEditor ? [] : [model];
   let dialogs = dialog ? [new FakeElement({ attrs: { role: 'dialog' } })] : [];
   if (login) dialogs.push(new FakeElement({ tagName: 'INPUT', attrs: { type: 'password' } }));
   const generic = new FakeElement({ attrs: { contenteditable: 'true' }, editable: true });
@@ -265,7 +360,8 @@ function makePage({
   function applyClaimChange() {
     if (onClaim) onClaim(composer, {
       setMode(value) { model.textContent = value; model.innerText = value; },
-      setUrl(value) { page.location.href = value; }
+      setUrl(value) { page.location.href = value; },
+      setCandidates(value) { page.setCandidates(value); }
     });
   }
   const runtime = {
@@ -301,8 +397,17 @@ function makePage({
   const document = {
     querySelectorAll(selector) {
       if (selector === '[data-testid="model-switcher-dropdown-button"]') return controls;
-      if (selector.includes('[data-testid="model-switcher-dropdown-button"]') && selector.includes('form button')) return controls;
-      if (selector === '#prompt-textarea, [data-testid="composer-input"]') return candidates;
+      if (selector.includes('[data-testid="model-switcher-dropdown-button"]') && selector.includes('form button')) return modernEditor ? formButtons : controls;
+      if (selector.includes('Select ChatGPT model')) return modernModelControls;
+      if (selector.includes('form button')) return modernEditor ? formButtons : controls;
+      if (selector.startsWith('#prompt-textarea, [data-testid="composer-input"]')) {
+        const legacy = candidates.filter((candidate) =>
+          candidate.getAttribute('id') === 'prompt-textarea' || candidate.getAttribute('data-testid') === 'composer-input');
+        const modern = selector.includes('form[data-chatgpt-composer]') && modernEditor && modernMarkers.form !== false && modernMarkers.input !== false
+          ? candidates.filter((editor) => editor.getAttribute('data-composer-markdown') !== null && editor.getAttribute('role') === 'textbox' && editor.getAttribute('aria-multiline') === 'true' && editor.getAttribute('contenteditable') === 'true')
+          : [];
+        return [...new Set([...legacy, ...modern])];
+      }
       if (selector === 'form div[contenteditable="true"]' && genericEditor) return [generic];
       if (selector === '[role="dialog"], input[type="password"], form[action*="login"]') return dialogs;
       if (selector.includes('[aria-pressed="true"]') || selector.includes('header button')) return [];
@@ -346,6 +451,85 @@ async function testInjector() {
   assert.equal(valid.page.send.clicks, 0, 'injector must never submit the prompt');
   assert.match(valid.page.toasts.join(' '), /press Send/);
   assert.equal(valid.generic.innerText, '', 'unrelated editable must remain untouched');
+
+  const modernValid = makePage({ markdownEditor: true, modernEditor: true });
+  await settle();
+  assert.equal(modernValid.composer.innerText, 'sample prompt', 'verified modern ChatGPT form should accept its empty ProseMirror editor');
+  assert.equal(modernValid.composer.replaceCount, 1);
+  assert.equal(modernValid.form.querySelectorAll('[data-testid="send-button"], [data-testid="composer-send-button"]').length, 0, 'empty modern composer fixture exposes voice controls without a send control');
+  assert.equal(modernValid.page.send.clicks, 0, 'modern insertion must never submit, including the voice-only empty state');
+
+  const modernRoute = 'https://chatgpt.com/g/g-p-fixture-project/project';
+  const modernConversation = 'https://chatgpt.com/g/g-p-fixture-project/c/c-fixture-conversation';
+  const modernHandoff = createBackground({ initialPending: {
+    pending_90: { payload: 'sample prompt', createdAt: Date.now(), destinationUrl: modernRoute }
+  } });
+  const modernConnected = makePage({
+    markdownEditor: true,
+    modernEditor: true,
+    url: modernConversation,
+    expectedDestination: modernRoute,
+    backgroundBridge: (message, sender) => modernHandoff.message(message, sender)
+  });
+  await settle();
+  assert.equal(modernConnected.composer.innerText, 'sample prompt', 'modern connected handoff must accept same-Project conversation routing');
+  assert.equal(modernHandoff.pending.has('pending_90'), false, 'modern connected claim must consume the pending payload');
+  assert.equal(modernConnected.page.send.clicks, 0, 'modern connected handoff must leave Send to the user');
+
+  const modernCodexAttribute = makePage({ markdownEditor: true, modernEditor: true });
+  await settle();
+  assert.equal(modernCodexAttribute.composer.replaceCount, 1, 'internal codex trigger attribute with visible Pro label is not evidence Codex is active');
+
+  const modernCodexSelected = makePage({ markdownEditor: true, modernEditor: true, mode: 'Codex' });
+  await settle();
+  assert.equal(modernCodexSelected.composer.replaceCount || 0, 0, 'visible Codex model must block modern insertion');
+  assert.match(modernCodexSelected.page.toasts.join(' '), /Codex/i);
+
+  const ambiguousModernModel = makePage({ markdownEditor: true, modernEditor: true, ambiguousModel: true });
+  await settle();
+  assert.equal(ambiguousModernModel.composer.replaceCount || 0, 0, 'ambiguous modern model controls must block insertion');
+
+  const ambiguousModernEditors = makePage({ markdownEditor: true, modernEditor: true, modernEditorCount: 2 });
+  await settle();
+  assert.equal(ambiguousModernEditors.composer.replaceCount || 0, 0, 'ambiguous modern editors must block insertion');
+
+  for (const marker of ['form', 'model', 'body', 'input']) {
+    const missingMarker = makePage({ markdownEditor: true, modernEditor: true, modernMarkers: { [marker]: false } });
+    await settle();
+    assert.equal(missingMarker.composer.replaceCount || 0, 0, `missing modern ${marker} identity marker must block insertion`);
+    assert.ok(missingMarker.page.toasts.length > 0, `missing modern ${marker} marker must show fallback`);
+  }
+
+  const modernReadOnly = makePage({ markdownEditor: true, modernEditor: true, readOnly: true });
+  await settle();
+  assert.equal(modernReadOnly.composer.replaceCount || 0, 0, 'read-only modern editor must not be used');
+
+  const modernDraft = makePage({ markdownEditor: true, modernEditor: true, composerText: 'existing draft' });
+  await settle();
+  assert.equal(modernDraft.composer.innerText, 'existing draft', 'modern existing draft must remain untouched');
+  assert.equal(modernDraft.page.claimCount, 0, 'modern draft must prevent claiming');
+
+  const modernAttachment = makePage({ markdownEditor: true, modernEditor: true, attachment: true });
+  await settle();
+  assert.equal(modernAttachment.composer.replaceCount || 0, 0, 'nonempty hidden modern attachment container must block insertion');
+
+  const replacedModernEditor = makePage({
+    markdownEditor: true,
+    modernEditor: true,
+    onClaim(_composer, controls) { controls.setCandidates([]); }
+  });
+  await settle();
+  assert.equal(replacedModernEditor.composer.replaceCount || 0, 0, 'modern editor replacement during async claim must block insertion');
+  assert.match(replacedModernEditor.page.toasts.join(' '), /page or draft changed/i);
+
+  const changedModernRoute = makePage({
+    markdownEditor: true,
+    modernEditor: true,
+    onClaim(_composer, controls) { controls.setUrl('https://chatgpt.com/'); }
+  });
+  await settle();
+  assert.equal(changedModernRoute.composer.replaceCount || 0, 0, 'modern Project route change during async claim must block insertion');
+  assert.match(changedModernRoute.page.toasts.join(' '), /page or draft changed/i);
 
   const route = 'https://chatgpt.com/g/g-p-fixture-project/project';
   const conversation = 'https://chatgpt.com/g/g-p-fixture-project/c/c-fixture-conversation';
@@ -459,6 +643,12 @@ async function testInjector() {
   const ariaReadonly = makePage({ ariaReadOnly: true });
   await settle();
   assert.equal(ariaReadonly.composer.replaceCount || 0, 0, 'aria-readonly composer must not be used');
+
+  const unsupportedMarkdown = makePage({ markdownEditor: true, genericEditor: true });
+  await settle();
+  assert.equal(unsupportedMarkdown.composer.replaceCount || 0, 0, 'unverified standalone ProseMirror editor must not be used');
+  assert.equal(unsupportedMarkdown.generic.innerText, '', 'unverified ProseMirror editor must not make a generic editor safe');
+  assert.match(unsupportedMarkdown.page.toasts.join(' '), /verified ChatGPT composer|clipboard/i);
 
   const focusRestore = makePage({ focusText: 'draft restored on focus' });
   await settle();

@@ -6,6 +6,7 @@
 
   const MAX_WAIT_MS = 30000;
   const POLL_MS = 500;
+  const COMPOSER_SELECTOR = '#prompt-textarea, [data-testid="composer-input"], form[data-chatgpt-composer] [data-composer-input] [data-composer-markdown][role="textbox"][aria-multiline="true"][contenteditable="true"]';
 
   attemptPendingInsert();
 
@@ -57,7 +58,7 @@
       await sleep(POLL_MS);
     }
 
-    await failVisible('A verified ChatGPT composer was not found.');
+    await failVisible('This ChatGPT message box could not be recognized. Your saved destination was kept.', false);
   }
 
   function destinationProblem(expected) {
@@ -93,14 +94,25 @@
   function findComposer() {
     // Positive ChatGPT evidence is required alongside the expected URL. Never
     // use generic textareas, ProseMirror/Lexical editors or placeholders alone.
-    const modelControls = [...document.querySelectorAll('[data-testid="model-switcher-dropdown-button"]')].filter(isVisible);
-    if (modelControls.length !== 1 || !/^ChatGPT\b/i.test((modelControls[0].textContent || '').trim())) return null;
-
-    const candidates = [...document.querySelectorAll('#prompt-textarea, [data-testid="composer-input"]')]
-      .filter(isVisibleAndEditable);
+    const candidates = [...document.querySelectorAll(COMPOSER_SELECTOR)].filter(isVisibleAndEditable);
     if (candidates.length !== 1) return null;
     const composer = candidates[0];
     const form = composer.closest('form');
+    if (!form) return null;
+
+    // Verified Project-page markup identifies the ChatGPT form and its editor
+    // explicitly. Its model label can be "Pro", and an empty editor shows
+    // "Start Voice" instead of Send. Neither label is used as editor identity.
+    if (form.getAttribute('data-chatgpt-composer') !== null) {
+      const body = form.querySelector('[data-composer-body]');
+      const input = form.querySelector('[data-composer-input]');
+      const modelControls = [...form.querySelectorAll('button[aria-label="Select ChatGPT model"]')].filter(isVisible);
+      if (!body?.contains(composer) || !input?.contains(composer) || modelControls.length !== 1) return null;
+      return composer;
+    }
+
+    const modelControls = [...document.querySelectorAll('[data-testid="model-switcher-dropdown-button"]')].filter(isVisible);
+    if (modelControls.length !== 1 || !/^ChatGPT\b/i.test((modelControls[0].textContent || '').trim())) return null;
     const background = form?.querySelector('#composer-background');
     if (!background?.contains(composer)) return null;
     const sendControls = [...form.querySelectorAll('[data-testid="send-button"], [data-testid="composer-send-button"]')].filter(isVisible);
@@ -121,9 +133,11 @@
   }
 
   function hasDraft(el) {
+    const form = el.closest('form');
     return Boolean(readComposer(el).trim() ||
       el.querySelector('img, video, audio, iframe, [data-type="mention"], [data-testid*="attachment"]') ||
-      el.closest('form')?.querySelector('[data-testid="attachment"], [data-testid="attachment-preview"], [data-testid="file-preview"], img'));
+      form?.querySelector('[data-testid="attachment"], [data-testid="attachment-preview"], [data-testid="file-preview"], img') ||
+      [...(form?.querySelectorAll('[data-composer-attachments]') || [])].some((container) => container.childElementCount > 0));
   }
 
   async function failVisible(reason, needsRepair = true) {

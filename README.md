@@ -2,7 +2,7 @@
 
 A lightweight Chrome/Edge browser extension that extracts YouTube transcripts and sends them to ChatGPT Projects for summarization, critical analysis, or project-specific application.
 
-**Current beta: v0.1.4 — READY TO TEST**
+**Current beta: v0.1.5 — READY TO TEST**
 
 The extension does **not** run its own AI. It extracts YouTube captions locally, packages them with a focused instruction, copies the complete prompt to your clipboard as a safety fallback, opens the selected ChatGPT destination, and tries to populate the composer. You review the prompt and press **Send** yourself.
 
@@ -19,7 +19,7 @@ Faithfully compress the video into a TL;DR, key ideas, examples, conclusions, an
 
 The raw transcript is a separate utility rather than a fourth reasoning mode.
 
-## Update an existing installation to v0.1.4
+## Update an existing installation to v0.1.5
 
 1. Extract the versioned ZIP and overwrite its files in the **same unpacked extension folder** you originally loaded. Keep that folder's location. You can back it up first.
 2. Open `edge://extensions/` or `chrome://extensions/` and click **Reload** on the existing extension entry. Do not uninstall it; updating in place retains saved destinations and preferences.
@@ -30,7 +30,9 @@ The update keeps supported destination URLs intact and rejects Codex or unfamili
 
 For saved Projects, v0.1.4 also accepts a Project landing page opening a conversation inside that same Project. Saved conversations still require their exact path, and query/fragment differences remain rejected.
 
-**LIVE UPDATE TEST STILL NEEDED:** private Edge feedback established that a saved Project landing URL opened a conversation inside the same Project, triggering v0.1.3's strict path warning. v0.1.4 covers that transition with regression fixtures. Automatic insertion with the current authenticated interface still needs confirmation. The user confirmed adjacent-tab placement in their ordinary source-tab case; pinned/grouped cases remain untested. Keep [issue #1](https://github.com/PatrikFAS/youtube-chatgpt-project-intake/issues/1) open through merge and installation until destination routing is also confirmed. See [TESTING.md](TESTING.md) for the remaining checks.
+v0.1.5 recognizes the current Project-page message box using its specific ChatGPT form, editor-container and model-control markers. Its Pro model label and empty-editor voice button are supported; a visible Send button is not required before inserting into this verified composer.
+
+**LIVE UPDATE TEST STILL NEEDED:** private Edge feedback identified the earlier same-Project path warning and a later composer-recognition failure. v0.1.4 covers the path transition; v0.1.5 adds support for the current composer using privately supplied markup. Automatic insertion in the affected Edge installation still needs confirmation. The user confirmed adjacent-tab placement in their ordinary source-tab case; pinned/grouped cases remain untested. Keep [issue #1](https://github.com/PatrikFAS/youtube-chatgpt-project-intake/issues/1) open through merge and installation until destination routing is also confirmed. See [TESTING.md](TESTING.md) for the remaining checks.
 
 Tab creation uses the captured source tab's current `windowId`, `index + 1` and `openerTabId`, following the [Chrome tabs API](https://developer.chrome.com/docs/extensions/reference/api/tabs). A new result is unpinned; browsers can place it after the pinned area rather than directly after a pinned source. Tab-group behavior needs a browser check; no group-management permission is added. A closed source or creation failure leaves the copied prompt available rather than using an unrelated tab.
 
@@ -168,7 +170,7 @@ Run `npm run verify` and `npm test`. Tests execute the extension's source using 
 After committing with a clean tracked tree, build the ZIP using Python's standard library:
 
 ```sh
-python3 scripts/package.py /path/outside/repository/youtube-chatgpt-project-intake-0.1.4.zip
+python3 scripts/package.py /path/outside/repository/youtube-chatgpt-project-intake-0.1.5.zip
 ```
 
 The archive contains the committed runtime files and product documentation, with version and exact commit in `BUILD.txt`. No dependencies or developer tests are needed to load it unpacked.

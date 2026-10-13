@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.5
+
+- Recognizes the verified current ChatGPT Project composer: a marked ChatGPT form, its markdown textbox inside the composer input/body, and its accessible ChatGPT model control. A Pro model label and the empty editor's voice controls no longer prevent insertion.
+- Retains destination checks, Codex/dialog blocking, unique-editor checks, draft protection, one-time handoff claims and manual Send. Protects attachments in the current composer's attachment container as well.
+- Adds regression coverage and a synthetic browser fixture based on privately supplied composer markup. Composer-recognition failures keep the clipboard fallback without incorrectly asking users to resave their destination.
+
 ## 0.1.4
 
 - Fixes the destination warning when a saved Project landing page opens a conversation inside the same Project. Both the injector and background handoff accept this specific transition while opening the saved URL unchanged.
