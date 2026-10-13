@@ -109,10 +109,9 @@ def make_archive(output: Path) -> None:
             for name in sorted(files):
                 info = ZipInfo(str(PurePosixPath(name)), date_time=ZIP_TIME)
                 info.compress_type = ZIP_DEFLATED
-                info.compresslevel = 9
                 info.create_system = 3
                 info.external_attr = 0o100644 << 16
-                archive.writestr(info, files[name])
+                archive.writestr(info, files[name], compress_type=ZIP_DEFLATED, compresslevel=9)
         os.replace(temp_name, output)
     finally:
         if os.path.exists(temp_name):
