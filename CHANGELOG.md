@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.3
+
+- Validates saved ChatGPT destinations with a bounded route check and keeps their intended path, query and fragment intact.
+- Checks the opened destination before attempting composer insertion; ambiguous or unsupported destinations use a visible clipboard fallback.
+- Captures the originating YouTube tab and opens the result beside it in the same window when the source is still available.
+- Preserves existing drafts and never sends the prompt automatically.
+- Adds reproducible, versioned ZIP packaging from committed tracked runtime files.
+- The reported live ChatGPT/Codex misrouting has not been reproduced. Fixture checks are not live browser verification; status is **READY TO TEST / BLOCKED ON LIVE REPRODUCTION**.
+
 ## 0.1.2
 
 - Adds a short 3–5 bullet **Video TL;DR** before **Apply to Project** analysis so you know what the video is about before recommendations.

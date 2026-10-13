@@ -4,6 +4,7 @@ const LONG_TRANSCRIPT_WARNING = 100000;
 
 const els = {};
 let activeTab = null;
+let sourceTabId = null;
 let videoContext = null;
 let transcriptCache = new Map();
 let currentTranscript = null;
@@ -17,6 +18,7 @@ async function init() {
   try {
     const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
     activeTab = tabs[0] || null;
+    sourceTabId = activeTab?.id ?? null;
     if (!activeTab?.url) return showView('otherView');
 
     const url = new URL(activeTab.url);
@@ -183,7 +185,7 @@ async function getSelectedTranscript() {
   setBusy(true, 'Loading transcript…');
 
   try {
-    const response = await chrome.tabs.sendMessage(activeTab.id, {
+    const response = await chrome.tabs.sendMessage(sourceTabId, {
       type: 'YT2GPT_GET_TRANSCRIPT',
       track
     });
@@ -227,10 +229,14 @@ async function sendToChatGPT() {
     await copyText(prompt);
     promptCopied = true;
 
+    const normalizedDestination = YT2GPTDestination.normalize(destinationUrl);
+    if (!normalizedDestination) throw new Error(YT2GPTDestination.REPAIR);
+
     const response = await chrome.runtime.sendMessage({
       type: 'OPEN_CHATGPT_WITH_PAYLOAD',
-      destinationUrl,
-      payload: prompt
+      destinationUrl: normalizedDestination,
+      payload: prompt,
+      sourceTabId
     });
 
     if (!response?.ok) throw new Error(response?.error || 'Could not open ChatGPT.');
@@ -338,19 +344,14 @@ async function saveCurrentDestination() {
   const name = els.destinationName.value.trim();
   if (!name) return showChatGPTSaveStatus('Give this destination a short name first.', true);
 
-  let url;
-  try {
-    url = new URL(activeTab.url);
-  } catch {
-    return showChatGPTSaveStatus('This page does not have a valid URL.', true);
-  }
-  if (url.origin !== 'https://chatgpt.com') return showChatGPTSaveStatus('Only chatgpt.com destinations can be saved.', true);
+  const url = YT2GPTDestination.normalize(activeTab.url);
+  if (!url) return showChatGPTSaveStatus(YT2GPTDestination.REPAIR, true);
 
   let { destinations = [] } = await chrome.storage.local.get('destinations');
   if (!Array.isArray(destinations)) destinations = [];
 
   const id = `dest-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
-  destinations.push({ id, name, url: url.toString(), builtIn: false });
+  destinations.push({ id, name, url, builtIn: false });
   await chrome.storage.local.set({ destinations, lastDestinationId: id });
   showChatGPTSaveStatus(`Saved “${name}”. You can now choose it from YouTube.`, false);
   els.destinationName.value = '';

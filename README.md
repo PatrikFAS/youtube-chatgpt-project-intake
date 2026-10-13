@@ -2,7 +2,7 @@
 
 A lightweight Chrome/Edge browser extension that extracts YouTube transcripts and sends them to ChatGPT Projects for summarization, critical analysis, or project-specific application.
 
-**Current beta: v0.1.2**
+**Current beta: v0.1.3 — READY TO TEST**
 
 The extension does **not** run its own AI. It extracts YouTube captions locally, packages them with a focused instruction, copies the complete prompt to your clipboard as a safety fallback, opens the selected ChatGPT destination, and tries to populate the composer. You review the prompt and press **Send** yourself.
 
@@ -18,6 +18,19 @@ Starts with the same brief orientation **Video TL;DR**, then critically evaluate
 Faithfully compress the video into a TL;DR, key ideas, examples, conclusions, and useful timestamps.
 
 The raw transcript is a separate utility rather than a fourth reasoning mode.
+
+## Update an existing installation to v0.1.3
+
+1. Extract the versioned ZIP and overwrite its files in the **same unpacked extension folder** you originally loaded. Keep that folder's location. You can back it up first.
+2. Open `edge://extensions/` or `chrome://extensions/` and click **Reload** on the existing extension entry. Do not uninstall it; updating in place retains saved destinations and preferences.
+3. Refresh your open YouTube and ChatGPT tabs.
+4. Send a video to your saved Project/conversation. Check that it opens the intended ChatGPT destination immediately beside the originating YouTube tab, in the same window. Review the prompt and press Send yourself.
+
+The update keeps supported destination URLs intact and rejects Codex or unfamiliar routes with repair guidance. It checks the actual URL, selected product controls and specific ChatGPT composer markers before insertion, preserves existing drafts, and consumes a handoff before editing to avoid duplicates. Unrecognized interfaces get a visible clipboard fallback; choose the intended ChatGPT surface before pasting. No product-mode override is invented.
+
+**BLOCKED ON LIVE REPRODUCTION:** the original browser's ChatGPT/Codex misrouting has not been reproduced in an authenticated session. Baseline fixtures demonstrate acceptance of a `/codex` URL and insertion into a generic editor, but do not establish the cause of the user's report. Keep [issue #1](https://github.com/PatrikFAS/youtube-chatgpt-project-intake/issues/1) open through review, merge and installation until both behaviors are confirmed in the affected browser. See [TESTING.md](TESTING.md) for the remaining checks.
+
+Tab creation uses the captured source tab's current `windowId`, `index + 1` and `openerTabId`, following the [Chrome tabs API](https://developer.chrome.com/docs/extensions/reference/api/tabs). A new result is unpinned; browsers can place it after the pinned area rather than directly after a pinned source. Tab-group behavior needs a browser check; no group-management permission is added. A closed source or creation failure leaves the copied prompt available rather than using an unrelated tab.
 
 ## Install in Microsoft Edge
 
@@ -145,3 +158,15 @@ The extension's product principle is:
 > **Move useful source material into ChatGPT. Let ChatGPT do the thinking.**
 
 v0.1 intentionally does not include APIs, a backend, built-in AI summaries, Hermes integration, video history, highlights, notes, multi-video research, automatic Send, Whisper, or model selection.
+
+## Development and release packaging
+
+Run `npm run verify` and `npm test`. Tests execute the extension's source using simulated browser objects; they are not authenticated end-to-end proof.
+
+After committing with a clean tracked tree, build the ZIP using Python's standard library:
+
+```sh
+python3 scripts/package.py /path/outside/repository/youtube-chatgpt-project-intake-0.1.3.zip
+```
+
+The archive contains the committed runtime files and product documentation, with version and exact commit in `BUILD.txt`. No dependencies or developer tests are needed to load it unpacked.

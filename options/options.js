@@ -71,7 +71,7 @@ async function addDestination() {
   const name = newNameEl.value.trim();
   const url = validateUrl(newUrlEl.value);
   if (!name) return showMessage('Give the destination a name.', true);
-  if (!url) return showMessage('Enter a valid https://chatgpt.com URL.', true);
+  if (!url) return showMessage(YT2GPTDestination.REPAIR, true);
 
   const destinations = await getDestinations();
   destinations.push({
@@ -93,7 +93,7 @@ async function editDestination(dest) {
   const urlInput = prompt('ChatGPT URL:', dest.url);
   if (urlInput === null) return;
   const url = validateUrl(urlInput);
-  if (!name.trim() || !url) return showMessage('Name or URL was invalid.', true);
+  if (!name.trim() || !url) return showMessage(!url ? YT2GPTDestination.REPAIR : 'Name or URL was invalid.', true);
 
   const destinations = await getDestinations();
   const index = destinations.findIndex((d) => d.id === dest.id);
@@ -119,11 +119,7 @@ async function deleteDestination(id) {
 }
 
 function validateUrl(value) {
-  try {
-    const url = new URL(String(value || '').trim());
-    if (url.origin !== 'https://chatgpt.com') return null;
-    return url.toString();
-  } catch { return null; }
+  return YT2GPTDestination.normalize(value);
 }
 
 function showMessage(message, isError=false) {
