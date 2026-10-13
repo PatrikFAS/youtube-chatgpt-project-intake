@@ -32,7 +32,15 @@ globalThis.YT2GPTDestination = (() => {
     const current = parse(actual);
     if (!saved || !current) return false;
     // Keep query and fragment meaning intact; do not guess at product overrides.
-    return saved.path === current.path && saved.url.search === current.url.search && saved.url.hash === current.url.hash;
+    if (saved.url.search !== current.url.search || saved.url.hash !== current.url.hash) return false;
+    if (saved.path === current.path) return true;
+
+    // A saved Project landing page can open a conversation inside that Project.
+    // Only this directional transition is allowed: a saved conversation still
+    // requires its exact path, and another Project or general chat is refused.
+    const project = saved.path.match(/^\/g\/(g-p-[^/]+)\/project$/);
+    const conversation = current.path.match(/^\/g\/(g-p-[^/]+)\/c\/[^/]+$/);
+    return Boolean(project && conversation && project[1] === conversation[1]);
   }
 
   return Object.freeze({ normalize, matches, REPAIR });

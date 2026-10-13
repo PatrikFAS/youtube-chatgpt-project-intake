@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.4
+
+- Fixes the destination warning when a saved Project landing page opens a conversation inside the same Project. Both the injector and background handoff accept this specific transition while opening the saved URL unchanged.
+- Keeps exact matching for saved conversations, queries and fragments; different Projects, general-chat redirects, Codex, unknown routes and uncertain composers still use the clipboard fallback. Existing drafts remain protected and prompts are never sent automatically.
+- Adds regression fixtures for the reported URL transition using synthetic identifiers. The affected Edge installation still needs testing of this update; fixture checks do not prove authenticated composer insertion.
+
 ## 0.1.3
 
 - Validates saved ChatGPT destinations with a bounded route check and keeps their intended path, query and fragment intact.

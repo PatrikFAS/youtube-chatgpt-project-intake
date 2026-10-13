@@ -76,6 +76,21 @@ async function testBackground() {
     assert.equal(destination.normalize(url), null, `must reject ${url}`);
   }
 
+  const savedProject = 'https://chatgpt.com/g/g-p-fixture-project/project';
+  const projectConversation = 'https://chatgpt.com/g/g-p-fixture-project/c/c-fixture-conversation';
+  assert.equal(destination.matches(savedProject, savedProject), true, 'saved Project route must still match exactly');
+  assert.equal(destination.matches(savedProject, projectConversation), true, 'saved Project may resolve to a conversation in that same Project');
+  assert.equal(destination.matches(savedProject, 'https://chatgpt.com/g/g-p-fixture-other/c/c-fixture-conversation'), false, 'a conversation in another Project must not match');
+  assert.equal(destination.matches(savedProject, 'https://chatgpt.com/g/g-p-fixture-project/c/c-fixture-other'), true, 'the Project identity is preserved across its conversation route');
+  assert.equal(destination.matches(savedProject, 'https://chatgpt.com/g/g-p-fixture-project/project?source=fixture'), false, 'query changes must remain rejected');
+  assert.equal(destination.matches(savedProject, `${projectConversation}?source=fixture`), false, 'query changes on a resolved Project conversation must remain rejected');
+  assert.equal(destination.matches(savedProject, `${projectConversation}#fixture`), false, 'fragment changes must remain rejected');
+  assert.equal(destination.matches(savedProject, 'https://chatgpt.com/g/g-p-fixture-project/project?mode=codex'), false, 'Codex selector query must remain rejected');
+  assert.equal(destination.matches(savedProject, 'https://chatgpt.com/g/g-p-fixture-project/c/c-fixture-conversation?mode=codex'), false, 'Codex selector query on a resolved conversation must remain rejected');
+  assert.equal(destination.matches(projectConversation, savedProject), false, 'saved conversation must not broaden to its Project landing');
+  assert.equal(destination.matches(projectConversation, 'https://chatgpt.com/g/g-p-fixture-project/c/c-fixture-other'), false, 'saved conversation must not broaden to another conversation');
+  assert.equal(destination.matches(projectConversation, 'https://chatgpt.com/'), false, 'saved Project conversation must not broaden to general chat');
+
   const movingSource = { id: 11, windowId: 7, index: 4 };
   const background = createBackground({ source: movingSource });
   for (const [index, url] of urls.entries()) {
@@ -146,6 +161,27 @@ async function testBackground() {
   const refused = await wrongRoute.message({ type: 'CLAIM_PENDING_PAYLOAD' }, { ...sender, url: 'https://chatgpt.com/' });
   assert.equal(refused.ok, false, 'redirected route must not claim');
   assert.equal(wrongRoute.pending.has('pending_44'), true, 'wrong route must leave payload for safe recovery');
+
+  const projectPending = createBackground({ initialPending: {
+    pending_44: { ...stored, destinationUrl: savedProject }
+  } });
+  const projectClaim = await projectPending.message({ type: 'CLAIM_PENDING_PAYLOAD' }, {
+    ...sender,
+    url: projectConversation
+  });
+  assert.equal(projectClaim.ok, true, 'real background claim must accept a conversation under the saved Project');
+  assert.equal(projectClaim.payload, stored.payload);
+  assert.equal(projectPending.pending.has('pending_44'), false, 'accepted same-Project claim consumes the pending payload');
+
+  const otherProjectPending = createBackground({ initialPending: {
+    pending_44: { ...stored, destinationUrl: savedProject }
+  } });
+  const otherProjectClaim = await otherProjectPending.message({ type: 'CLAIM_PENDING_PAYLOAD' }, {
+    ...sender,
+    url: 'https://chatgpt.com/g/g-p-fixture-other/c/c-fixture-conversation'
+  });
+  assert.equal(otherProjectClaim.ok, false, 'real background claim must reject another Project');
+  assert.equal(otherProjectPending.pending.has('pending_44'), true, 'rejected other-Project claim must preserve pending payload');
 
   const gate = deferred();
   const concurrent = createBackground({ initialPending: { pending_44: stored } });
@@ -226,14 +262,23 @@ function makePage({
   let pending = { ok: true, payload, destinationUrl: expectedDestination };
   let claimCount = 0;
   let clearCount = 0;
+  function applyClaimChange() {
+    if (onClaim) onClaim(composer, {
+      setMode(value) { model.textContent = value; model.innerText = value; },
+      setUrl(value) { page.location.href = value; }
+    });
+  }
   const runtime = {
     async sendMessage(message) {
       messages.push(message.type);
-      if (backgroundBridge) return backgroundBridge(message, { tab: { id: 90 }, frameId: 0, url });
+      if (backgroundBridge) {
+        if (message.type === 'CLAIM_PENDING_PAYLOAD') applyClaimChange();
+        return backgroundBridge(message, { tab: { id: 90 }, frameId: 0, url: page.location.href });
+      }
       if (message.type === 'GET_PENDING_PAYLOAD') return pending;
       if (message.type === 'CLAIM_PENDING_PAYLOAD') {
         claimCount += 1;
-        if (onClaim) onClaim(composer, { setMode(value) { model.textContent = value; model.innerText = value; }, setUrl(value) { page.location.href = value; } });
+        applyClaimChange();
         if (claimResult) return claimResult;
         pending = { ...pending, payload: null };
         return { ok: true, payload, destinationUrl: expectedDestination };
@@ -302,7 +347,8 @@ async function testInjector() {
   assert.match(valid.page.toasts.join(' '), /press Send/);
   assert.equal(valid.generic.innerText, '', 'unrelated editable must remain untouched');
 
-  const route = 'https://chatgpt.com/g/workspace-123/project';
+  const route = 'https://chatgpt.com/g/g-p-fixture-project/project';
+  const conversation = 'https://chatgpt.com/g/g-p-fixture-project/c/c-fixture-conversation';
   const handoff = createBackground({ initialPending: {
     pending_90: { payload: 'sample prompt', createdAt: Date.now(), destinationUrl: route }
   } });
@@ -311,23 +357,75 @@ async function testInjector() {
     backgroundCalls.push(message.type);
     return handoff.message(message, sender);
   };
-  const connected = makePage({ backgroundBridge: bridge });
+  const connected = makePage({ url: conversation, expectedDestination: route, backgroundBridge: bridge });
   await settle();
   assert.equal(connected.composer.innerText, 'sample prompt');
   assert.equal(connected.composer.replaceCount, 1);
   assert.equal(handoff.pending.has('pending_90'), false, 'actual claim must consume the pending payload');
   assert.equal(backgroundCalls.filter((type) => type === 'CLAIM_PENDING_PAYLOAD').length, 1);
 
-  const reload = makePage({ backgroundBridge: bridge });
+  const exactHandoff = createBackground({ initialPending: {
+    pending_90: { payload: 'sample prompt', createdAt: Date.now(), destinationUrl: route }
+  } });
+  const exactConnected = makePage({
+    url: route,
+    expectedDestination: route,
+    backgroundBridge: (message, sender) => exactHandoff.message(message, sender)
+  });
+  await settle();
+  assert.equal(exactConnected.composer.innerText, 'sample prompt', 'exact saved Project route must retain the existing happy path');
+  assert.equal(exactHandoff.pending.has('pending_90'), false);
+
+  const reload = makePage({ url: conversation, expectedDestination: route, backgroundBridge: bridge });
   // A new document uses the real listener again after the first claim consumed session state.
   await settle();
   assert.equal(reload.composer.innerText, '');
   assert.equal(reload.page.claimCount, 0);
   assert.equal(backgroundCalls.filter((type) => type === 'CLAIM_PENDING_PAYLOAD').length, 1, 'reload must not claim or insert again');
 
+  const routeChangeHandoff = createBackground({ initialPending: {
+    pending_90: { payload: 'sample prompt', createdAt: Date.now(), destinationUrl: route }
+  } });
+  let changedRouteDuringClaim;
+  const routeChangeBridge = async (message, sender) => {
+    const response = await routeChangeHandoff.message(message, sender);
+    if (message.type === 'CLAIM_PENDING_PAYLOAD' && response?.ok && response.payload) {
+      changedRouteDuringClaim.page.location.href = 'https://chatgpt.com/';
+    }
+    return response;
+  };
+  changedRouteDuringClaim = makePage({
+    url: conversation,
+    expectedDestination: route,
+    backgroundBridge: routeChangeBridge
+  });
+  await settle();
+  assert.equal(changedRouteDuringClaim.composer.replaceCount || 0, 0, 'route change during claim must block insertion');
+  assert.equal(changedRouteDuringClaim.page.send.clicks, 0, 'route change during claim must never submit');
+  assert.match(changedRouteDuringClaim.page.toasts.join(' '), /clipboard|paste/i, 'route change during claim must show clipboard fallback');
+  assert.equal(routeChangeHandoff.pending.has('pending_90'), false, 'successful real claim consumes payload before the post-claim route check');
+
+  const projectDraft = makePage({
+    url: conversation,
+    expectedDestination: route,
+    composerText: 'existing draft'
+  });
+  await settle();
+  assert.equal(projectDraft.composer.innerText, 'existing draft', 'same-Project conversation transition must leave an existing draft untouched');
+  assert.equal(projectDraft.page.claimCount, 0, 'existing draft must prevent claiming on a same-Project transition');
+
+  const projectCodex = makePage({
+    url: conversation,
+    expectedDestination: route,
+    mode: 'Codex'
+  });
+  await settle();
+  assert.equal(projectCodex.composer.replaceCount || 0, 0, 'same-Project transition must not bypass the Codex guard');
+  assert.match(projectCodex.page.toasts.join(' '), /Codex/i);
+
   for (const scenario of [
-    { name: 'Codex selected at same URL', options: { mode: 'Codex' } },
-    { name: 'root/project redirect mismatch', options: { url: 'https://chatgpt.com/', expectedDestination: 'https://chatgpt.com/g/workspace-123/project' } },
+    { name: 'Codex selected at same Project conversation', options: { url: conversation, expectedDestination: route, mode: 'Codex' } },
+    { name: 'Project redirect to general root', options: { url: 'https://chatgpt.com/', expectedDestination: 'https://chatgpt.com/g/g-p-fixture-project/project' } },
     { name: 'sign-in dialog', options: { login: true } },
     { name: 'blocking dialog', options: { dialog: true } },
     { name: 'generic editor only', options: { noComposer: true, genericEditor: true } },

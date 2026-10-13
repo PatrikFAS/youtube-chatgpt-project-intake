@@ -2,7 +2,7 @@
 
 ## Current status
 
-**READY TO TEST / BLOCKED ON LIVE REPRODUCTION.** Issue #1's reported live misrouting has not been reproduced. The current automated transcript checks use simulated browser objects; they are useful fixture evidence, not an authenticated YouTube → ChatGPT end-to-end test. No authenticated browser verification has been completed. Keep issue #1 open after merge until the user tests both requested outcomes in the affected browser.
+**READY TO TEST v0.1.4 / LIVE UPDATE TEST STILL NEEDED.** Private Edge feedback identified the v0.1.3 destination warning: a saved Project landing page (`/g/g-p-fixture-example/project`, synthetic identifier) opened a conversation inside the same Project (`/g/g-p-fixture-example/c/fixture-conversation`). The strict path comparison refused it. v0.1.4 allows this specific transition in the shared helper used by both the injector and background claim. The user confirmed adjacent-tab placement for their ordinary source-tab case. Automatic insertion on the current authenticated interface and pinned/grouped cases remain unverified. Keep issue #1 open after merge until the user confirms destination routing with the update.
 
 ## Automated checks
 
@@ -22,12 +22,19 @@ npm test
 - Updated `npm run verify` passed Manifest V3, unchanged narrow permissions, version consistency and 12 JavaScript syntax checks. Updated `npm test` passed both original caption tests and the routing/handoff and popup/options suites, executing the actual changed extension source with simulated browser objects.
 - The available browser started with only `about:blank`; navigating to `https://chatgpt.com/` returned HTTP 403 and a “Just a moment…” page. No authenticated ChatGPT surface was accessible. Live destination routing, the current composer markers, real tab placement, pinned/grouped tabs and update retention remain **not run** in the affected browser.
 
+## Evidence recorded for v0.1.4 (2026-10-13)
+
+- Private user feedback supplied the saved Project URL and the opened same-Project conversation URL. Only synthetic identifiers are used in documentation and regression fixtures.
+- The new same-Project regression failed with v0.1.3's strict matcher and passed after the shared helper change. `npm run verify`, all four `npm test` suites and `git diff --check` passed for v0.1.4; the verifier required subprocess access after sandbox `spawnSync EPERM`.
+- Regression checks execute the actual helper, background listener and injector for the Project landing-to-conversation transition. Different Projects, saved-conversation changes, queries/fragments and Codex remain rejected; existing draft and no-automatic-Send protections remain in place.
+- Fixture checks do not establish insertion into the current authenticated composer. Update the existing installation in place, refresh open tabs, and repeat the saved-Project handoff before confirming the fix in Edge.
+
 ## Focused browser acceptance checks
 
 Load or update the unpacked extension, then refresh the YouTube and ChatGPT tabs. Keep the existing unpacked folder and reload its extension entry so saved destinations and preferences remain available.
 
 - [ ] From a YouTube video, send to a saved ordinary ChatGPT conversation and confirm the exact intended URL, including meaningful path, query and fragment, remains selected.
-- [ ] Repeat with a saved ChatGPT Project and confirm the actual destination is that Project, not a Codex conversation or general chat. Record the URL shape and visible product/mode. Do not publish private Project IDs or conversation contents.
+- [ ] Repeat with a saved ChatGPT Project. If its landing page opens a conversation, confirm it is inside the same Project and no destination-mismatch warning appears. Confirm insertion or record the exact clipboard-fallback reason, and verify the active mode is ChatGPT. Do not publish private Project IDs or conversation contents.
 - [ ] Confirm the result opens in the same browser window immediately to the right of the originating YouTube tab. During transcript extraction, move the source tab and repeat; placement should follow its current index. Repeat with multiple windows to ensure the source window is used.
 - [ ] Pin the source tab and record the browser's placement: browser behavior can clamp a new result after the pinned-tab area. Test with a grouped source tab and note the browser's group behavior; group inheritance is browser-dependent and the extension does not request group-management permission.
 - [ ] Close the source tab during extraction and confirm the handoff fails visibly without selecting an unrelated tab as the source. Simulate or observe tab-creation failure and confirm the prompt remains available from the clipboard.
@@ -36,7 +43,7 @@ Load or update the unpacked extension, then refresh the YouTube and ChatGPT tabs
 - [ ] Confirm both composer insertion and visible clipboard fallback paths. In either path, verify that the extension never triggers **Send** automatically; review and send manually.
 - [ ] Confirm the three modes, optional question, saved destinations/preferences, transcript view/copy and caption fallback still work after reloading the extension.
 
-Record each result as **pass**, **fail**, or **not run** and name the browser/version. A fixture or code inspection does not count as a pass for a live browser item. The original routing failure needs a live reproduction before claiming its cause is confirmed.
+Record each result as **pass**, **fail**, or **not run** and name the browser/version. A fixture or code inspection does not count as a pass for a live browser item. The supplied links explain the destination warning; they do not establish the original Codex report's cause or prove successful insertion with this update.
 
 ## Existing transcript acceptance checks
 
