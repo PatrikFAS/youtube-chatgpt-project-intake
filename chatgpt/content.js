@@ -6,6 +6,7 @@
 
   const MAX_WAIT_MS = 30000;
   const POLL_MS = 500;
+  const COMPOSER_SELECTOR = '#prompt-textarea, [data-testid="composer-input"], form[data-chatgpt-composer] [data-composer-input] [data-composer-markdown][role="textbox"][aria-multiline="true"][contenteditable="true"]';
 
   attemptPendingInsert();
 
@@ -17,7 +18,7 @@
       try {
         const response = await chrome.runtime.sendMessage({ type: 'GET_PENDING_PAYLOAD' });
         if (response?.ok && response.payload) {
-          pending = response.payload;
+          pending = response;
           break;
         }
       } catch {}
@@ -28,53 +29,134 @@
 
     const insertStarted = Date.now();
     while (Date.now() - insertStarted < MAX_WAIT_MS) {
+      const problem = destinationProblem(pending.destinationUrl);
+      if (problem) return failVisible(problem);
       const composer = findComposer();
       if (composer) {
-        const ok = insertIntoComposer(composer, pending);
-        if (ok) {
-          showToast('YouTube → ChatGPT: prompt inserted. Review it, then press Send.');
-          await clearPending();
-          return;
+        if (hasDraft(composer)) {
+          return failVisible('Your existing draft was left untouched. Review it before pasting the copied prompt.', false);
         }
+        let claimed;
+        try {
+          claimed = await chrome.runtime.sendMessage({ type: 'CLAIM_PENDING_PAYLOAD' });
+        } catch {
+          return failVisible('The handoff could not be claimed safely.');
+        }
+        if (!claimed?.ok) return failVisible('The destination changed or the handoff could not be claimed safely.');
+        if (!claimed.payload) return; // Already consumed by another document.
+
+        // Claiming involves asynchronous storage. Recheck mode, route, composer
+        // identity and draft immediately before the single editing attempt.
+        if (destinationProblem(claimed.destinationUrl) || findComposer() !== composer || hasDraft(composer)) {
+          return failVisible('The page or draft changed while preparing the prompt. Nothing was inserted.', false);
+        }
+        const ok = insertIntoComposer(composer, claimed.payload, claimed.destinationUrl);
+        if (ok) showToast('YouTube → ChatGPT: prompt inserted. Review it, then press Send.');
+        else showToast('YouTube → ChatGPT: insertion could not be confirmed. Check the composer before pasting; the complete prompt remains on your clipboard.', true);
+        return;
       }
       await sleep(POLL_MS);
     }
 
-    showToast('YouTube → ChatGPT: automatic insertion failed. The prompt is already on your clipboard; press Ctrl+V.', true);
-    await clearPending();
+    await failVisible('This ChatGPT message box could not be recognized. Your saved destination was kept.', false);
+  }
+
+  function destinationProblem(expected) {
+    if (!YT2GPTDestination.matches(expected, location.href)) {
+      return 'The opened page does not match the saved ChatGPT destination.';
+    }
+    if (hasCodexMode()) return 'Codex is selected on this page.';
+    if ([...document.querySelectorAll('[role="dialog"], input[type="password"], form[action*="login"]')].some(isVisible)) {
+      return 'A dialog or sign-in screen needs your attention.';
+    }
+    return '';
+  }
+
+  function hasCodexMode() {
+    // Inspect selected controls and composer/header product controls. A sidebar
+    // link advertising Codex is not evidence that the active composer is Codex.
+    const controls = document.querySelectorAll([
+      '[aria-pressed="true"]', '[aria-selected="true"]', 'select',
+      '[data-testid="model-switcher-dropdown-button"]',
+      '[data-testid="product-switcher"]',
+      'header button[aria-haspopup]', 'form button',
+      'form [data-testid*="codex"]'
+    ].join(','));
+    return [...controls].some((el) => {
+      if (!isVisible(el)) return false;
+      const text = el.tagName === 'SELECT'
+        ? [...el.selectedOptions].map((o) => o.textContent).join(' ')
+        : `${el.textContent || ''} ${el.getAttribute('aria-label') || ''} ${el.getAttribute('data-testid') || ''}`;
+      return /\bcodex\b/i.test(text);
+    });
   }
 
   function findComposer() {
-    const selectors = [
-      '#prompt-textarea',
-      '[data-testid="composer-input"]',
-      'div[contenteditable="true"][data-lexical-editor="true"]',
-      'div[contenteditable="true"].ProseMirror',
-      'form div[contenteditable="true"]',
-      'textarea[placeholder*="Message"]',
-      'form textarea'
-    ];
+    // Positive ChatGPT evidence is required alongside the expected URL. Never
+    // use generic textareas, ProseMirror/Lexical editors or placeholders alone.
+    const candidates = [...document.querySelectorAll(COMPOSER_SELECTOR)].filter(isVisibleAndEditable);
+    if (candidates.length !== 1) return null;
+    const composer = candidates[0];
+    const form = composer.closest('form');
+    if (!form) return null;
 
-    for (const selector of selectors) {
-      const nodes = [...document.querySelectorAll(selector)];
-      const visible = nodes.find(isVisibleAndEditable);
-      if (visible) return visible;
+    // Verified Project-page markup identifies the ChatGPT form and its editor
+    // explicitly. Its model label can be "Pro", and an empty editor shows
+    // "Start Voice" instead of Send. Neither label is used as editor identity.
+    if (form.getAttribute('data-chatgpt-composer') !== null) {
+      const body = form.querySelector('[data-composer-body]');
+      const input = form.querySelector('[data-composer-input]');
+      const modelControls = [...form.querySelectorAll('button[aria-label="Select ChatGPT model"]')].filter(isVisible);
+      if (!body?.contains(composer) || !input?.contains(composer) || modelControls.length !== 1) return null;
+      return composer;
     }
-    return null;
+
+    const modelControls = [...document.querySelectorAll('[data-testid="model-switcher-dropdown-button"]')].filter(isVisible);
+    if (modelControls.length !== 1 || !/^ChatGPT\b/i.test((modelControls[0].textContent || '').trim())) return null;
+    const background = form?.querySelector('#composer-background');
+    if (!background?.contains(composer)) return null;
+    const sendControls = [...form.querySelectorAll('[data-testid="send-button"], [data-testid="composer-send-button"]')].filter(isVisible);
+    if (sendControls.length !== 1) return null;
+    return composer;
   }
 
-  function isVisibleAndEditable(el) {
+  function isVisible(el) {
     if (!el) return false;
     const rect = el.getBoundingClientRect();
     const style = getComputedStyle(el);
-    if (rect.width < 20 || rect.height < 10 || style.display === 'none' || style.visibility === 'hidden') return false;
-    if (el.disabled || el.getAttribute('aria-disabled') === 'true') return false;
-    return el.matches('textarea,input') || el.getAttribute('contenteditable') === 'true' || el.isContentEditable;
+    return rect.width >= 20 && rect.height >= 10 && style.display !== 'none' && style.visibility !== 'hidden';
   }
 
-  function insertIntoComposer(el, text) {
+  function readComposer(el) {
+    if (el instanceof HTMLTextAreaElement || el instanceof HTMLInputElement) return el.value || '';
+    return el.innerText || el.textContent || '';
+  }
+
+  function hasDraft(el) {
+    const form = el.closest('form');
+    return Boolean(readComposer(el).trim() ||
+      el.querySelector('img, video, audio, iframe, [data-type="mention"], [data-testid*="attachment"]') ||
+      form?.querySelector('[data-testid="attachment"], [data-testid="attachment-preview"], [data-testid="file-preview"], img') ||
+      [...(form?.querySelectorAll('[data-composer-attachments]') || [])].some((container) => container.childElementCount > 0));
+  }
+
+  async function failVisible(reason, needsRepair = true) {
+    showToast(`YouTube → ChatGPT: ${reason} ${needsRepair ? YT2GPTDestination.REPAIR + ' ' : ''}The complete prompt remains on your clipboard; paste it only after checking the destination.`, true);
+    await clearPending();
+  }
+
+  function isVisibleAndEditable(el) {
+    if (!isVisible(el)) return false;
+    if (el.disabled || el.readOnly || el.getAttribute('aria-disabled') === 'true' || el.getAttribute('aria-readonly') === 'true') return false;
+    return el.matches('textarea') || el.getAttribute('contenteditable') === 'true' || el.isContentEditable;
+  }
+
+  function insertIntoComposer(el, text, destinationUrl) {
     try {
+      if (hasDraft(el)) return false;
       el.focus();
+      // Focusing can synchronously trigger framework updates or a draft restore.
+      if (hasDraft(el) || destinationProblem(destinationUrl) || findComposer() !== el) return false;
 
       if (el instanceof HTMLTextAreaElement || el instanceof HTMLInputElement) {
         setNativeValue(el, text);
@@ -82,21 +164,13 @@
         return verifyInserted(el, text);
       }
 
-      // Prefer browser-native editing because React/ProseMirror/Lexical are more
-      // likely to observe real editing events than a bare textContent mutation.
       selectAllContents(el);
       let inserted = false;
-      try {
-        inserted = document.execCommand('insertText', false, text);
-      } catch {}
-
-      if (!inserted || !verifyInserted(el, text)) {
-        // Fallback: replace DOM content, then emit input events. This is not as
-        // robust as native editing but keeps the clipboard fallback available.
+      try { inserted = document.execCommand('insertText', false, text); } catch {}
+      if (!inserted && !readComposer(el).trim()) {
         el.replaceChildren(document.createTextNode(text));
         dispatchInput(el, text);
       }
-
       return verifyInserted(el, text);
     } catch (error) {
       console.warn('YT2GPT insertion failed', error);
@@ -144,13 +218,8 @@
   }
 
   function verifyInserted(el, text) {
-    const actual = el instanceof HTMLTextAreaElement || el instanceof HTMLInputElement
-      ? el.value
-      : (el.innerText || el.textContent || '');
-
-    const probe = text.replace(/\s+/g, ' ').trim().slice(0, 80);
-    const normalizedActual = String(actual || '').replace(/\s+/g, ' ').trim();
-    return probe.length > 0 && normalizedActual.includes(probe.slice(0, Math.min(50, probe.length)));
+    const normalize = (value) => String(value || '').replace(/\s+/g, ' ').trim();
+    return normalize(text).length > 0 && normalize(readComposer(el)) === normalize(text);
   }
 
   async function clearPending() {
@@ -165,6 +234,7 @@
 
     const toast = document.createElement('div');
     toast.id = 'yt2gpt-toast';
+    toast.setAttribute('role', isError ? 'alert' : 'status');
     toast.textContent = message;
     toast.style.cssText = [
       'position:fixed',
@@ -181,7 +251,7 @@
     ].join(';');
 
     document.documentElement.appendChild(toast);
-    setTimeout(() => toast.remove(), isError ? 9000 : 5000);
+    if (!isError) setTimeout(() => toast.remove(), 5000);
   }
 
   function sleep(ms) {

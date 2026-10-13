@@ -1,8 +1,11 @@
 'use strict';
 
+importScripts('shared/destination.js');
+
 const CHATGPT_ORIGIN = 'https://chatgpt.com';
 const PENDING_PREFIX = 'pending_';
 const PENDING_TTL_MS = 10 * 60 * 1000;
+const claimingTabs = new Set();
 
 chrome.runtime.onInstalled.addListener(async () => {
   const current = await chrome.storage.local.get(['destinations', 'lastMode', 'lastDestinationId']);
@@ -41,6 +44,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
 
+  if (message.type === 'CLAIM_PENDING_PAYLOAD') {
+    claimPendingForSender(sender)
+      .then(sendResponse)
+      .catch(() => sendResponse({ ok: false, error: 'Could not claim the handoff. Use the clipboard fallback.' }));
+    return true;
+  }
+
   if (message.type === 'CLEAR_PENDING_PAYLOAD') {
     clearPendingForSender(sender)
       .then(() => sendResponse({ ok: true }))
@@ -54,36 +64,58 @@ async function handleOpenChatGPT(message) {
   const destinationUrl = normalizeChatGPTUrl(message.destinationUrl);
 
   if (!payload) throw new Error('Prompt payload is empty.');
-  if (!destinationUrl) throw new Error('Destination must be a chatgpt.com URL.');
+  if (!destinationUrl) throw new Error(YT2GPTDestination.REPAIR);
 
-  const tab = await chrome.tabs.create({ url: destinationUrl, active: true });
-  if (!tab?.id) throw new Error('Could not open ChatGPT tab.');
+  if (!Number.isInteger(message.sourceTabId) || message.sourceTabId < 0) {
+    throw new Error('The originating YouTube tab is unavailable. Return to that video and try again.');
+  }
+
+  let source;
+  try {
+    source = await chrome.tabs.get(message.sourceTabId);
+  } catch {
+    throw new Error('The originating YouTube tab was closed. Open the intended ChatGPT destination and paste the copied prompt.');
+  }
+  if (source?.id !== message.sourceTabId || !Number.isInteger(source.windowId) || !Number.isInteger(source.index)) {
+    throw new Error('Could not locate the originating YouTube tab. The prompt can be pasted into the intended ChatGPT destination.');
+  }
+
+  let tab;
+  try {
+    // Resolve the captured source now, after caption extraction. Another active
+    // tab/window must never become the opener by accident.
+    tab = await chrome.tabs.create({
+      url: destinationUrl,
+      active: true,
+      windowId: source.windowId,
+      index: source.index + 1,
+      openerTabId: source.id,
+      pinned: false
+    });
+  } catch {
+    throw new Error('Could not open ChatGPT beside the YouTube tab. Open the intended destination and paste the copied prompt.');
+  }
+  if (!Number.isInteger(tab?.id) || tab.id < 0) throw new Error('Could not open ChatGPT tab. Paste the copied prompt into the intended destination.');
 
   const key = `${PENDING_PREFIX}${tab.id}`;
-  await chrome.storage.session.set({
-    [key]: {
-      payload,
-      createdAt: Date.now(),
-      destinationUrl
-    }
-  });
+  try {
+    await chrome.storage.session.set({
+      [key]: { payload, createdAt: Date.now(), destinationUrl }
+    });
+  } catch {
+    throw new Error('ChatGPT opened, but automatic insertion could not be prepared. Paste the copied prompt into the intended destination.');
+  }
 
   return { ok: true, tabId: tab.id };
 }
 
 function normalizeChatGPTUrl(value) {
-  try {
-    const url = new URL(String(value || ''));
-    if (url.origin !== CHATGPT_ORIGIN) return null;
-    return url.toString();
-  } catch {
-    return null;
-  }
+  return YT2GPTDestination.normalize(value);
 }
 
 async function getPendingForSender(sender) {
   const tabId = sender?.tab?.id;
-  if (!tabId) return { ok: true, payload: null };
+  if (!Number.isInteger(tabId) || tabId < 0 || (sender.frameId ?? 0) !== 0) return { ok: true, payload: null };
 
   const key = `${PENDING_PREFIX}${tabId}`;
   const result = await chrome.storage.session.get(key);
@@ -96,11 +128,29 @@ async function getPendingForSender(sender) {
     return { ok: true, payload: null };
   }
 
-  return { ok: true, payload: pending.payload, createdAt: pending.createdAt };
+  return { ok: true, payload: pending.payload, createdAt: pending.createdAt, destinationUrl: pending.destinationUrl };
+}
+
+async function claimPendingForSender(sender) {
+  const tabId = sender?.tab?.id;
+  if (claimingTabs.has(tabId)) return { ok: true, payload: null };
+  claimingTabs.add(tabId);
+  try {
+    const pending = await getPendingForSender(sender);
+    if (!pending.payload) return pending;
+    if (!YT2GPTDestination.matches(pending.destinationUrl, sender.url)) {
+      return { ok: false, error: YT2GPTDestination.REPAIR };
+    }
+    // Consume before editing so a reload or second document cannot insert twice.
+    await clearPendingForSender(sender);
+    return pending;
+  } finally {
+    claimingTabs.delete(tabId);
+  }
 }
 
 async function clearPendingForSender(sender) {
   const tabId = sender?.tab?.id;
-  if (!tabId) return;
+  if (!Number.isInteger(tabId) || tabId < 0 || (sender.frameId ?? 0) !== 0) return;
   await chrome.storage.session.remove(`${PENDING_PREFIX}${tabId}`);
 }
