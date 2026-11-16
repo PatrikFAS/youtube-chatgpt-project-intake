@@ -2,7 +2,15 @@
 
 ## Current status
 
-**READY TO TEST v0.1.5 / LIVE UPDATE TEST STILL NEEDED.** Private Edge feedback identified the earlier destination warning and a later composer-recognition failure. The saved Project landing-to-conversation transition is covered by v0.1.4; v0.1.5 recognizes the actual current Project composer using privately supplied form markup. The user confirmed adjacent-tab placement for their ordinary source-tab case. Automatic insertion in the affected Edge installation and pinned/grouped cases remain unverified. Keep issue #1 open after merge until the user confirms destination routing with the update.
+**v0.1.6 naming / Edge sidebar check pending.** The user confirmed v0.1.5 worked in Edge after earlier confirmation of ordinary source-adjacent tab placement. Pinned and grouped source tabs remain untested. For v0.1.6, tests verify the outgoing prompt, while checking the actual sidebar title requires a signed-in ChatGPT session.
+
+Popup fixtures verify the exact title and clipboard payload for all three modes, and omission on existing or ambiguous routes. The browser tool's request to ChatGPT received HTTP 403, and the local browser connection did not expose the signed-in Edge session. No actual sidebar title was observed.
+
+## Naming experiment in Edge (v0.1.6)
+
+- [ ] Open a captioned video with a distinctive title and use **Summarize** with **General ChatGPT**. After pressing **Send** yourself, let ChatGPT set the title. Verify the title shown in the ChatGPT sidebar is exactly `YT · <original YouTube title>`, including punctuation. Text in ChatGPT's reply does not count.
+- [ ] Repeat with **Analyze** and **Apply to Project** from fresh chats, including at least one saved Project landing page. Record the actual sidebar titles even if they differ from the request.
+- [ ] Send to a saved conversation. Confirm the prompt has no `CHAT TITLE` block and the sidebar still shows the previous chat title.
 
 ## Automated checks
 

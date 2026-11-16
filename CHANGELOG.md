@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.6
+
+- All three modes ask ChatGPT to title a new chat `YT · <original YouTube title>` when opening General ChatGPT or a recognized Project landing page. Saved conversations and ambiguous destinations receive no naming instruction.
+- This is a prompt instruction. ChatGPT controls the actual sidebar title; the extension does not rename chats directly.
+
 ## 0.1.5
 
 - Recognizes the verified current ChatGPT Project composer: a marked ChatGPT form, its markdown textbox inside the composer input/body, and its accessible ChatGPT model control. A Pro model label and the empty editor's voice controls no longer prevent insertion.

@@ -27,6 +27,13 @@ globalThis.YT2GPTDestination = (() => {
     return parse(value)?.url.toString() || null;
   }
 
+  function isNewChatEntry(value) {
+    const entry = parse(value);
+    // Only recognized landing pages without extra URL state qualify for naming.
+    return Boolean(entry && !entry.url.search && !entry.url.hash &&
+      (entry.path === '/' || /^\/g\/g-p-[^/]+\/project$/.test(entry.path)));
+  }
+
   function matches(expected, actual) {
     const saved = parse(expected);
     const current = parse(actual);
@@ -43,5 +50,5 @@ globalThis.YT2GPTDestination = (() => {
     return Boolean(project && conversation && project[1] === conversation[1]);
   }
 
-  return Object.freeze({ normalize, matches, REPAIR });
+  return Object.freeze({ normalize, matches, isNewChatEntry, REPAIR });
 })();

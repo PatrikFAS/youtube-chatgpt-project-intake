@@ -35,7 +35,12 @@ function makeElement(id) {
   };
 }
 
-async function makePopup({ runtimeOk = false } = {}) {
+async function makePopup({
+  runtimeOk = false,
+  destinationUrl = 'https://chatgpt.com/',
+  videoTitle = 'Example video',
+  mode = 'analyze'
+} = {}) {
   const ids = [
     'loadingView','youtubeView','chatgptView','otherView','videoTitle','videoMeta','transcriptStatus',
     'trackSelect','destinationSelect','optionalQuestion','warning','error','sendButton','viewTranscript',
@@ -44,11 +49,11 @@ async function makePopup({ runtimeOk = false } = {}) {
     'openOptionsTop','openOptionsOther'
   ];
   const els = Object.fromEntries(ids.map((id) => [id, makeElement(id)]));
-  const radios = ['apply','analyze','summarize'].map((value) => Object.assign(makeElement(`mode-${value}`), { value, checked: value === 'analyze' }));
+  const radios = ['apply','analyze','summarize'].map((value) => Object.assign(makeElement(`mode-${value}`), { value, checked: value === mode }));
   const events = [];
   const storageData = {
-    destinations: [{ id: 'general', name: 'General ChatGPT', url: 'https://chatgpt.com/', builtIn: true }],
-    lastMode: 'analyze', lastDestinationId: 'general', preferredTranscriptLanguage: 'en'
+    destinations: [{ id: 'general', name: 'General ChatGPT', url: destinationUrl, builtIn: true }],
+    lastMode: mode, lastDestinationId: 'general', preferredTranscriptLanguage: 'en'
   };
   let activeId = 41;
   let queriedTabs = 0;
@@ -80,7 +85,7 @@ async function makePopup({ runtimeOk = false } = {}) {
       async sendMessage(tabId, message) {
         events.push(`tab:${tabId}:${message.type}`);
         if (message.type === 'YT2GPT_GET_CONTEXT') return { ok: true, data: {
-          videoId: 'abc', title: 'Example video', channel: 'Example channel', url: 'https://www.youtube.com/watch?v=abc',
+          videoId: 'abc', title: videoTitle, channel: 'Example channel', url: 'https://www.youtube.com/watch?v=abc',
           tracks: [{ languageCode: 'en', name: 'English' }]
         } };
         activeId = 99; // The active browser tab changes while transcript retrieval is in flight.
@@ -123,6 +128,44 @@ assert.match(popup.events.clipboard, /SPECIFIC QUESTION[\s\S]*Could this help ou
 assert.match(popup.events.clipboard, /Transcript contents\./);
 assert.match(popup.els.error.textContent, /Simulated opening failure\..*complete prompt is already on your clipboard/);
 assert.equal(popup.closed(), false, 'failed open leaves the popup available');
+
+const modeInstructions = {
+  apply: 'Analyze this YouTube video as incoming research',
+  analyze: 'Critically analyze the following YouTube video',
+  summarize: 'Give me a concise but sufficiently complete summary'
+};
+const titledNewChatRoutes = ['https://chatgpt.com/', 'https://chatgpt.com/g/g-p-fixture-x/project'];
+const titleWithQuotes = 'Why “AI” works: café, 東京 & "quotes"?';
+for (const destinationUrl of titledNewChatRoutes) {
+  for (const mode of ['apply', 'analyze', 'summarize']) {
+    const titledPopup = await makePopup({ runtimeOk: true, destinationUrl, videoTitle: titleWithQuotes, mode });
+    await vm.runInContext('sendToChatGPT()', titledPopup.context);
+    const titleLine = `${JSON.stringify(`YT · ${titleWithQuotes}`)}\n`;
+    assert.ok(titledPopup.events.clipboard.startsWith('CHAT TITLE\n'), `${mode} on ${destinationUrl} puts the title header first`);
+    assert.ok(titledPopup.events.clipboard.includes(titleLine), `${mode} on ${destinationUrl} includes the video title as a JSON string`);
+    assert.ok(titledPopup.events.clipboard.includes(modeInstructions[mode]), `${mode} instruction remains in the prompt`);
+    assert.match(titledPopup.events.clipboard, /SOURCE[\s\S]*Title: Why “AI” works: café, 東京 & "quotes"\?/);
+    assert.match(titledPopup.events.clipboard, /Transcript contents\./);
+    assert.equal(titledPopup.events.message.payload, titledPopup.events.clipboard, 'clipboard and ChatGPT receive the same complete prompt');
+  }
+}
+
+const routesWithoutNewTitle = [
+  'https://chatgpt.com/c/existing-chat',
+  'https://chatgpt.com/g/g-p-fixture-x/c/existing-project-chat',
+  'https://chatgpt.com/g/custom-gpt',
+  'https://chatgpt.com/?mode=temporary',
+  'https://chatgpt.com/g/g-p-fixture-x/project?mode=temporary',
+  'https://chatgpt.com/g/g-p-fixture-x/project#draft'
+];
+for (const destinationUrl of routesWithoutNewTitle) {
+  const existingPopup = await makePopup({ runtimeOk: true, destinationUrl, videoTitle: titleWithQuotes });
+  await vm.runInContext('sendToChatGPT()', existingPopup.context);
+  assert.ok(!existingPopup.events.clipboard.startsWith('CHAT TITLE\n'), `${destinationUrl} does not get a new-chat title header`);
+  assert.match(existingPopup.events.clipboard, /Critically analyze the following YouTube video/);
+  assert.match(existingPopup.events.clipboard, /SOURCE[\s\S]*Title: Why “AI” works: café, 東京 & "quotes"\?/);
+  assert.equal(existingPopup.events.message.payload, existingPopup.events.clipboard, 'existing destination prompt remains identical on clipboard and ChatGPT');
+}
 
 const modePrompt = vm.runInContext(`(() => {
   videoContext = { title:'T', url:'https://youtube.com/watch?v=x' };
