@@ -2,11 +2,15 @@
 
 ## Current status
 
-**v0.1.10 guarded Claude insertion: implemented and ready for Patrik's browser
-test.** Patrik accepted the v0.1.9 UI/workflow and explicitly requested adding
+**v0.1.10 guarded Claude insertion: user-confirmed working.** On 2026-11-17,
+Patrik explicitly confirmed Claude inserted automatically without manual paste
+and requested pushing/merging this version. His exact browser version and
+destination were not reported; no new private browser data was collected.
+
+Initial implementation evidence:  Patrik accepted the v0.1.9 UI/workflow and explicitly requested adding
 automatic pasting despite the isolated browser's lack of signed-in access.
 This replaces the previous decision to leave Claude insertion disabled; it
-does not establish that insertion works in his authenticated Claude session.
+was initially fixture-only evidence. The later confirmation above records user acceptance of his tested signed-in case, not independent live inspection.
 
 The new injector uses source-reported input/control markers and refuses
 unrecognized surfaces. Its real-DOM fixture passes all 28 cases: native complete
@@ -39,11 +43,12 @@ timers are accelerated in the fixture; DOM editing/input events are native.
    already covered. With any fallback, inspect the composer for existing or
    partial text before pasting, to avoid duplication.
 
-**Pending:** signed-in Claude insertion/framework synchronization and user
-acceptance. The available isolated public-page inspection reached security
-verification, not the composer. That is not evidence that the user's browser
-will fail. Neither a fixture pass nor a source report counts as live proof.
-Push/merge remains a possible follow-up after the user confirms this beta.
+**Accepted:** Patrik confirmed automatic insertion and approved push/merge.
+**Not independently observed:** live composer markup/framework internals, every
+Project/route, or live draft/attachment safety cases. Sarah's separate acceptance
+is unrecorded. The isolated tool browser reached security verification, not the
+composer; this does not contradict the user-confirmed working case. Fixture
+passes remain distinct from authenticated user feedback.
 
 ### Candidate evidence and reproducible checks
 

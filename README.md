@@ -2,11 +2,11 @@
 
 A lightweight Chrome/Edge browser extension that extracts YouTube transcripts and routes them to ChatGPT or Claude for summarization, critical analysis, or project-specific application.
 
-**Current beta: v0.1.10 - guarded Claude insertion ready for your browser test**
+**Current beta: v0.1.10 - user-confirmed Claude automatic insertion**
 
-Patrik confirmed the v0.1.9 UI and workflow look good and work well. The remaining immediate test is Claude automatic insertion in his signed-in browser; Sarah's own acceptance is not recorded. See [PROJECT_PLAN.md](PROJECT_PLAN.md) for milestones, owners and the next action.
+Patrik confirmed the v0.1.9 UI and workflow look good and work well. Patrik also confirmed Claude inserted the prompt automatically and approved pushing/merging this version. Sarah's own acceptance is not recorded. See [PROJECT_PLAN.md](PROJECT_PLAN.md) for milestones, owners and the next action.
 
-The extension does **not** run its own AI. It extracts YouTube captions locally, packages them with a focused instruction and copies the complete prompt before opening your selected destination. ChatGPT uses the existing guarded composer insertion. Claude now attempts **guarded automatic insertion** in a recognized empty message box on the exact saved route. Its signed-in behavior is still unverified: this beta is for your live test. Drafts/attachments are preserved, the complete prompt stays copied, and you review and send yourself.
+The extension does **not** run its own AI. It extracts YouTube captions locally, packages them with a focused instruction and copies the complete prompt before opening your selected destination. ChatGPT uses the existing guarded composer insertion. Claude now attempts **guarded automatic insertion** in a recognized empty message box on the exact saved route. Patrik confirmed automatic insertion in his signed-in browser; his exact browser version and destination were not recorded. Drafts/attachments are preserved, the complete prompt stays copied, and you review and send yourself.
 
 ## Core modes
 
@@ -84,7 +84,7 @@ You can edit or delete saved destinations from **Manage destinations**.
 2. Open the actual Project or conversation you want.
 3. Click the extension, give it a name, and click **Save current destination**.
 
-**Claude** is a top-level assistant choice. Under it, **New chat** is built in; saved Projects and conversations are labelled separately. Saved Claude URLs keep their path, query and fragment. The extension never guesses a Project URL or appends prompt parameters. It edits only a uniquely recognized empty composer on the exact saved route. If Claude redirects or needs login, check/navigate to the right context before pasting. Claude insertion has native-DOM fixture coverage, but no signed-in acceptance yet. A Project redirect to a chat is not assumed to prove Project membership; it uses clipboard fallback.
+**Claude** is a top-level assistant choice. Under it, **New chat** is built in; saved Projects and conversations are labelled separately. Saved Claude URLs keep their path, query and fragment. The extension never guesses a Project URL or appends prompt parameters. It edits only a uniquely recognized empty composer on the exact saved route. If Claude redirects or needs login, check/navigate to the right context before pasting. Claude insertion has native-DOM fixture coverage and user-confirmed automatic insertion in Patrik's browser. A Project redirect to a chat is not assumed to prove Project membership; it uses clipboard fallback.
 
 ## Daily use
 
@@ -154,7 +154,7 @@ If direct caption retrieval still fails, the extension automatically expands the
 - YouTube caption internals are undocumented and may change. The code is designed with fallbacks, but YouTube can still break extraction temporarily.
 - ChatGPT composer auto-insertion depends on ChatGPT's page structure. Clipboard-first handoff is the permanent fallback.
 - Saved destinations use normal web URLs; no internal Project API is used for either provider.
-- Claude insertion is a guarded beta with pending signed-in acceptance. Unrecognized, ambiguous, redirected or busy composers get clipboard fallback; no generic editor fallback is used.
+- Claude insertion is user-confirmed in Patrik's tested case; other layouts and account/browser combinations still need their own acceptance. Unrecognized, ambiguous, redirected or busy composers get clipboard fallback; no generic editor fallback is used.
 - Very long transcripts produce a warning rather than being automatically chunked.
 
 ## If something breaks
@@ -191,4 +191,4 @@ python3 scripts/package.py /path/outside/repository/youtube-chatgpt-project-inta
 
 The archive contains the committed runtime files and product documentation, with version and exact commit in `BUILD.txt`. No dependencies or developer tests are needed to load it unpacked.
 
-Claude automation status: at Patrik's explicit request this beta enables a narrowly recognized insertion attempt for his browser test, despite the isolated tool browser being blocked by security verification. Source-reported markers and a reconstructed DOM are tested; this is not authenticated Claude proof. Clipboard fallback stays available. Run the optional native editing checks with npm run test:claude-browser -- /absolute/path/to/chromium.
+Claude automation status: at Patrik's explicit request this beta enables a narrowly recognized insertion attempt for his browser test, despite the isolated tool browser being blocked by security verification. Source-reported markers and a reconstructed DOM are tested. Patrik subsequently confirmed automatic insertion in his signed-in browser; this is user-reported acceptance, not tool-observed verification of every guard or route. Clipboard fallback stays available. Run the optional native editing checks with npm run test:claude-browser -- /absolute/path/to/chromium.

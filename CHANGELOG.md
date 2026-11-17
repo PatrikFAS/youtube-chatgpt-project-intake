@@ -5,7 +5,7 @@
 - Adds guarded Claude composer insertion at Patrik's explicit request after he accepted the v0.1.9 UI/workflow. Adds only the exact `https://claude.ai/*` host and a local content script; no API, backend, analytics or automatic Send.
 - Claude handoffs use the existing session-only one-time claim. Insertion requires the exact saved route/query/fragment, a unique source-reported input marker and nearby Claude Send marker, and an empty, editable, nonbusy composer without a dialog or attachments. Unproven Project-to-chat redirects remain clipboard-only.
 - Uses native editing and verifies the full text plus editor readiness. Drafts restored during claim/focus, partial or rejected edits, duplicate scripts and uncertain surfaces receive safe fallback without retries, DOM replacement, Enter or Send clicks.
-- Adds 28 real-DOM fixture cases using the actual Claude injector, plus worker routing/claim coverage. The accepted popup still passes its 18 native mode/destination/reload cases. These are synthetic fixtures, not authenticated Claude verification; the user's live insertion test remains pending.
+- Adds 28 real-DOM fixture cases using the actual Claude injector, plus worker routing/claim coverage. The accepted popup still passes its 18 native mode/destination/reload cases. These are synthetic fixtures. Patrik subsequently confirmed automatic insertion in his signed-in Claude browser and approved this version for push/merge; this is user-reported acceptance of that tested case.
 - Retains all three modes, saved links/preferences, source-adjacent tabs, title/link reply instructions and Copy title. Updates permission explanations, acceptance steps and the project plan.
 
 ## 0.1.9
