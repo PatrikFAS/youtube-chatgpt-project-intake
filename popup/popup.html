@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>YouTube → ChatGPT</title>
+  <title>YouTube → ChatGPT / Claude</title>
   <link rel="stylesheet" href="popup.css">
 </head>
 <body>
@@ -11,7 +11,7 @@
     <header class="header">
       <div>
         <div class="eyebrow">PROJECT INTAKE</div>
-        <h1>YouTube → ChatGPT</h1>
+        <h1>YouTube → ChatGPT / Claude</h1>
       </div>
       <button id="openOptionsTop" class="icon-button" title="Manage destinations" aria-label="Manage destinations">⚙</button>
     </header>
@@ -78,6 +78,7 @@
       <div id="error" class="error hidden"></div>
 
       <button id="sendButton" class="primary wide">Send to ChatGPT</button>
+      <p id="handoffHelp" class="muted" aria-live="polite"></p>
 
       <div class="utility-row">
         <button id="viewTranscript" class="link-button">View transcript</button>
@@ -99,8 +100,8 @@
     <section id="chatgptView" class="hidden">
       <div class="card">
         <div class="eyebrow">SAVE DESTINATION</div>
-        <h2>Save this ChatGPT destination</h2>
-        <p class="muted">Navigate to the Project or ChatGPT page you want the extension to reopen, then save it here.</p>
+        <h2>Save this destination</h2>
+        <p class="muted">Open the ChatGPT or Claude conversation or Project you want to reopen, then save it here. Claude uses copy/open/paste; the extension leaves its message box untouched.</p>
 
         <div class="field">
           <label for="destinationName">Name</label>
@@ -117,8 +118,8 @@
 
     <section id="otherView" class="hidden">
       <div class="card centered">
-        <h2>Open YouTube or ChatGPT</h2>
-        <p class="muted">On YouTube, this extension extracts the transcript. On ChatGPT, it can save the current page as a reusable destination.</p>
+        <h2>Open YouTube, ChatGPT or Claude</h2>
+        <p class="muted">On YouTube, this extension extracts the transcript. On ChatGPT or Claude, it can save the current page as a reusable destination.</p>
         <button id="openOptionsOther" class="secondary">Manage destinations</button>
       </div>
     </section>

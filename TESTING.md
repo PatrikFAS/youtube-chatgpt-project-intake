@@ -2,6 +2,65 @@
 
 ## Current status
 
+**v0.1.7 Claude beta: implemented; Sarah's acceptance not run.** The existing
+Chrome and Edge workflow is user-confirmed working. This update preserves the
+v0.1.6 title experiment below; its actual sidebar title remains unverified.
+Ordinary Chrome/Edge acceptance does not need repeating without a new regression.
+
+Claude uses copy/open/paste only. No live browser inspection tool is available
+in this session, so no Claude editor selectors or automatic insertion are
+claimed verified. There is no Claude injector or Claude host permission; the
+extension cannot edit its composer, draft or Send control. Actual Claude
+routing, paste behavior, account access,
+framework synchronization and Sarah's acceptance are **not run**.
+
+The bounded web routes use the new/chat/project URL shapes described in
+[Claude's official link documentation](https://support.claude.com/en/articles/14729294-open-claude-desktop-with-a-link).
+This reference identifies chat/project IDs as those in the web URL; its Desktop
+prefill parameters are not assumed to be a web API. Project IDs are never
+invented, and a saved Project URL is opened exactly as saved without inferring
+which chat it might create. Queries and fragments are preserved.
+
+### Sarah's short Claude acceptance check
+
+1. Extract v0.1.7 to a permanent folder, then use **Load unpacked** from
+   `chrome://extensions/` or `edge://extensions/` with Developer mode on. For an
+   existing installation, update files in its existing folder and **Reload** the
+   same extension entry; do not uninstall. Refresh the YouTube tab.
+2. Sign into Claude normally. For a Project/conversation, open its actual page,
+   click the extension, name it and **Save current destination**. General Claude
+   is already available; no Project URL needs to be typed or guessed.
+3. Open a captioned YouTube video, choose **General Claude**, **Summarize**, and
+   an optional question. Click **Copy & open Claude**. Confirm the new Claude
+   tab opens beside YouTube in the same window. Check the context, paste with
+   `Ctrl+V`, and confirm the title, URL, transcript, mode and question are present.
+   Review and send yourself.
+4. Repeat **Analyze** and **Apply to Project** with a saved Claude conversation
+   or Project. Confirm the saved context is the intended one before pasting.
+   If Claude redirects or needs login, navigate to that context yourself and
+   paste there; the extension makes no claim about editor identity.
+5. Leave a draft in an existing Claude tab and repeat a handoff: confirm the
+   extension leaves it untouched. Do not paste over a draft you want to keep.
+   Reopen the popup to confirm the last mode/destination and caption preference
+   remain selected. Report browser/version and pass, fail or not run.
+
+### v0.1.7 regression evidence
+
+- `npm run verify` passes Manifest V3, version synchronization, existing narrow
+  permissions and all JavaScript syntax checks. `npm test` passes all four
+  suites, including the unchanged extraction fallbacks and ChatGPT injector
+  draft/attachment/route protections.
+- Added fixtures execute the actual worker, popup, options and destination
+  helper for all three Claude modes, source-tab anchoring, exact URL state,
+  clipboard-before-open, blocked clipboard/open failure, no missing-selection
+  redirect, built-in migration, saved destinations/preferences and cross-provider
+  handoff rejection. No Claude prompt is stored for automatic insertion.
+- These checks are automated fixture passes, not authenticated Claude or Sarah
+  acceptance. Existing title instructions remain covered by the original
+  v0.1.6 tests.
+
+## Previous title experiment status (v0.1.6)
+
 **v0.1.6 naming / Edge sidebar check pending.** The user confirmed v0.1.5 worked in Edge after earlier confirmation of ordinary source-adjacent tab placement. Pinned and grouped source tabs remain untested. For v0.1.6, tests verify the outgoing prompt, while checking the actual sidebar title requires a signed-in ChatGPT session.
 
 Popup fixtures verify the exact title and clipboard payload for all three modes, and omission on existing or ambiguous routes. The browser tool's request to ChatGPT received HTTP 403, and the local browser connection did not expose the signed-in Edge session. No actual sidebar title was observed.

@@ -12,12 +12,11 @@ addButton.addEventListener('click', addDestination);
 
 async function getDestinations() {
   let { destinations = [] } = await chrome.storage.local.get('destinations');
-  if (!Array.isArray(destinations)) destinations = [];
-  if (!destinations.some((d) => d.id === 'general')) {
-    destinations.unshift({ id:'general', name:'General ChatGPT', url:'https://chatgpt.com/', builtIn:true });
-    await chrome.storage.local.set({ destinations });
+  const updated = YT2GPTDestination.withBuiltIns(destinations);
+  if (!Array.isArray(destinations) || updated.length !== destinations.length) {
+    await chrome.storage.local.set({ destinations: updated });
   }
-  return destinations;
+  return updated;
 }
 
 async function render() {
@@ -90,7 +89,7 @@ async function addDestination() {
 async function editDestination(dest) {
   const name = prompt('Destination name:', dest.name);
   if (name === null) return;
-  const urlInput = prompt('ChatGPT URL:', dest.url);
+  const urlInput = prompt('ChatGPT or Claude URL:', dest.url);
   if (urlInput === null) return;
   const url = validateUrl(urlInput);
   if (!name.trim() || !url) return showMessage(!url ? YT2GPTDestination.REPAIR : 'Name or URL was invalid.', true);

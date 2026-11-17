@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.7
+
+- Adds a built-in Claude destination and saved Claude conversations/Projects alongside existing ChatGPT destinations, preserving names, URLs, selected mode/destination and caption preferences.
+- Claude uses clipboard-first copy/open/paste with clear popup guidance, source-adjacent tab placement and manual Send. Its live composer is unverified, so no auto-insertion, Claude host permission, API or prompt-in-URL contract is introduced.
+- Reuses caption extraction and all three modes; Claude prompts refer to Claude context without ChatGPT naming or personal Hermes handoff assumptions. Retains v0.1.6 ChatGPT title requests and the existing guarded ChatGPT injector.
+- Adds focused regression coverage for Claude routing, migration, prompt copying, failure recovery and provider isolation, plus a durable project plan and Sarah's acceptance checklist. Existing Chrome/Edge behavior is user-confirmed; Sarah's Claude acceptance is not yet performed.
+
 ## 0.1.6
 
 - All three modes ask ChatGPT to title a new chat `YT · <original YouTube title>` when opening General ChatGPT or a recognized Project landing page. Saved conversations and ambiguous destinations receive no naming instruction.

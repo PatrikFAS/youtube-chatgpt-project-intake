@@ -22,15 +22,16 @@ function deferred() {
   return { promise, resolve };
 }
 
-function createBackground({ source = { id: 11, windowId: 4, index: 2 }, nextTabId = 90, failGet = false, failCreate = false, failStorageSet = false, initialPending = {} } = {}) {
+function createBackground({ source = { id: 11, windowId: 4, index: 2 }, nextTabId = 90, failGet = false, failCreate = false, failStorageSet = false, initialPending = {}, localData = {} } = {}) {
   let listener;
+  let installed;
   const pending = new Map(Object.entries(initialPending));
   const creates = [];
   const gets = [];
   let queried = false;
   let storageGetGate = null;
   const chrome = {
-    runtime: { onInstalled: { addListener() {} }, onMessage: { addListener(fn) { listener = fn; } } },
+    runtime: { onInstalled: { addListener(fn) { installed = fn; } }, onMessage: { addListener(fn) { listener = fn; } } },
     tabs: {
       async get(id) { gets.push(id); if (failGet) throw new Error('closed'); return { ...source, id }; },
       async create(options) { creates.push(options); if (failCreate) throw new Error('create failed'); return { id: nextTabId }; },
@@ -43,7 +44,7 @@ function createBackground({ source = { id: 11, windowId: 4, index: 2 }, nextTabI
       },
       async get(key) { if (storageGetGate) await storageGetGate.promise; return { [key]: pending.get(key) }; },
       async remove(key) { pending.delete(key); }
-    }, local: { async get() { return {}; }, async set() {} } }
+    }, local: { async get() { return localData; }, async set(values) { Object.assign(localData, values); } } }
   };
   const context = vm.createContext({
     chrome, URL, Date, String, Error, Number, Array, Set, Object,
@@ -57,7 +58,7 @@ function createBackground({ source = { id: 11, windowId: 4, index: 2 }, nextTabI
     });
   }
   return {
-    message, pending, creates, gets,
+    message, pending, creates, gets, installed: () => installed(),
     get queried() { return queried; },
     setStorageGetGate(gate) { storageGetGate = gate; }
   };
@@ -65,6 +66,51 @@ function createBackground({ source = { id: 11, windowId: 4, index: 2 }, nextTabI
 
 async function testBackground() {
   const destination = loadDestination();
+  const manifest = JSON.parse(read('manifest.json'));
+  assert.deepEqual(manifest.permissions, ['activeTab', 'storage', 'clipboardWrite']);
+  assert.deepEqual(manifest.host_permissions, ['https://www.youtube.com/*', 'https://youtube.com/*', 'https://m.youtube.com/*', 'https://chatgpt.com/*'], 'Claude copy/open/paste adds no host permission');
+  assert.ok(manifest.content_scripts.every((script) => script.matches.every((url) => !url.includes('claude'))), 'no unverified Claude injector is registered');
+
+  const claudeUrls = ['https://claude.ai/', 'https://claude.ai/new', 'https://claude.ai/chat/fixture-chat?view=saved#notes', 'https://claude.ai/project/fixture-project'];
+  for (const url of claudeUrls) {
+    assert.equal(destination.normalize(url), url);
+    assert.equal(destination.provider(url), 'claude');
+    assert.equal(destination.matches(url, url), false, 'Claude must never qualify for an automatic insertion claim');
+    assert.equal(destination.isNewChatEntry(url), false, 'unverified Claude naming is not requested');
+    const claude = createBackground({ failStorageSet: true });
+    const opened = await claude.message({ type: 'OPEN_DESTINATION_WITH_PAYLOAD', payload: 'Claude fixture', destinationUrl: url, sourceTabId: 11 });
+    assert.equal(opened.ok, true, 'Claude opens without preparing an automatic handoff');
+    assert.equal(opened.clipboardOnly, true);
+    assert.equal(claude.pending.size, 0, 'Claude prompt is never placed in pending session storage');
+    assert.deepEqual(JSON.parse(JSON.stringify(claude.creates[0])), { url, active: true, windowId: 4, index: 3, openerTabId: 11, pinned: false });
+    assert.equal(claude.queried, false);
+  }
+  for (const url of ['http://claude.ai/new', 'https://claude.ai.evil.example/new', 'https://user:password@claude.ai/new', 'https://claude.ai/settings', 'https://claude.ai/code/new', 'https://claude.ai/project/id/unknown', 'javascript:alert(1)']) {
+    assert.equal(destination.normalize(url), null);
+    const refused = createBackground();
+    assert.equal((await refused.message({ type: 'OPEN_DESTINATION_WITH_PAYLOAD', payload: 'fixture', destinationUrl: url, sourceTabId: 11 })).ok, false);
+    assert.equal(refused.creates.length, 0);
+  }
+  for (const failure of [{ failGet: true }, { failCreate: true }]) {
+    const claude = createBackground(failure);
+    assert.equal((await claude.message({ type: 'OPEN_DESTINATION_WITH_PAYLOAD', payload: 'fixture', destinationUrl: 'https://claude.ai/new', sourceTabId: 11 })).ok, false);
+    assert.equal(claude.pending.size, 0);
+    assert.equal(claude.queried, false);
+  }
+
+  const localData = {
+    destinations: [{ id: 'general', name: 'General ChatGPT', url: 'https://chatgpt.com/', builtIn: true }, { id: 'saved-project', name: 'Existing Project', url: 'https://chatgpt.com/g/g-p-fixture/project?view=saved#notes', builtIn: false }],
+    lastMode: 'summarize', lastDestinationId: 'saved-project', preferredTranscriptLanguage: 'fr'
+  };
+  const oldDestinations = JSON.stringify(localData.destinations);
+  const migration = createBackground({ localData });
+  await migration.installed();
+  await migration.installed();
+  assert.equal(JSON.stringify(localData.destinations.slice(0, 2)), oldDestinations, 'update preserves saved URLs, names and IDs');
+  assert.equal(localData.destinations.filter((d) => d.id === 'claude-general').length, 1, 'repeated installation is idempotent');
+  assert.equal(localData.lastMode, 'summarize');
+  assert.equal(localData.lastDestinationId, 'saved-project');
+  assert.equal(localData.preferredTranscriptLanguage, 'fr');
   const urls = [
     'https://chatgpt.com/',
     'https://chatgpt.com/c/conversation-123',
@@ -146,6 +192,9 @@ async function testBackground() {
   assert.equal(storageFailure.queried, false);
 
   const stored = { payload: 'one prompt', createdAt: Date.now(), destinationUrl: urls[1] };
+  const crossProvider = createBackground({ initialPending: { pending_44: stored } });
+  assert.equal((await crossProvider.message({ type: 'CLAIM_PENDING_PAYLOAD' }, { tab: { id: 44 }, frameId: 0, url: 'https://claude.ai/new' })).ok, false, 'a Claude page cannot claim a ChatGPT handoff');
+  assert.equal(crossProvider.pending.has('pending_44'), true);
   const pending = createBackground({ initialPending: { pending_44: stored } });
   const sender = { tab: { id: 44 }, frameId: 0, url: urls[1] };
   const got = await pending.message({ type: 'GET_PENDING_PAYLOAD' }, sender);

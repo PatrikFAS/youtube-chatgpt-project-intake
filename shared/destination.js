@@ -3,7 +3,7 @@
 // Used by the worker, popup, options page and injector. Unknown destinations
 // require an explicit repair; never replace a saved Project with general chat.
 globalThis.YT2GPTDestination = (() => {
-  const REPAIR = 'Open the intended ChatGPT conversation or Project, select ChatGPT rather than Codex, then edit/resave this destination in Manage destinations. Your saved destinations have been kept.';
+  const REPAIR = 'Open the intended ChatGPT or Claude conversation or Project, then edit/resave this destination in Manage destinations. For ChatGPT, select ChatGPT rather than Codex. Your saved destinations have been kept; paste the copied prompt only after checking the destination.';
 
   function parse(value) {
     try {
@@ -23,8 +23,37 @@ globalThis.YT2GPTDestination = (() => {
     } catch { return null; }
   }
 
+  function parseClaude(value) {
+    try {
+      const url = new URL(String(value || '').trim());
+      if (url.origin !== 'https://claude.ai' || url.username || url.password) return null;
+      // Open user-saved web destinations only. Never construct Project IDs,
+      // append prompt parameters, or infer a Project-to-chat relationship.
+      const path = url.pathname.replace(/\/$/, '') || '/';
+      if (!/^(?:\/|\/new|\/(?:chat|project)\/[^/]+)$/.test(path)) return null;
+      return { url, path };
+    } catch { return null; }
+  }
+
   function normalize(value) {
-    return parse(value)?.url.toString() || null;
+    return (parse(value) || parseClaude(value))?.url.toString() || null;
+  }
+
+  function provider(value) {
+    if (parse(value)) return 'chatgpt';
+    if (parseClaude(value)) return 'claude';
+    return null;
+  }
+
+  function withBuiltIns(value) {
+    const destinations = Array.isArray(value) ? [...value] : [];
+    if (!destinations.some((d) => d.id === 'general')) {
+      destinations.unshift({ id: 'general', name: 'General ChatGPT', url: 'https://chatgpt.com/', builtIn: true });
+    }
+    if (!destinations.some((d) => d.id === 'claude-general')) {
+      destinations.push({ id: 'claude-general', name: 'General Claude (paste manually)', url: 'https://claude.ai/new', builtIn: true });
+    }
+    return destinations;
   }
 
   function isNewChatEntry(value) {
@@ -50,5 +79,7 @@ globalThis.YT2GPTDestination = (() => {
     return Boolean(project && conversation && project[1] === conversation[1]);
   }
 
-  return Object.freeze({ normalize, matches, isNewChatEntry, REPAIR });
+  // matches/isNewChatEntry deliberately remain ChatGPT-only: Claude has no
+  // verified injector or automatic naming behavior in this beta.
+  return Object.freeze({ normalize, provider, withBuiltIns, matches, isNewChatEntry, REPAIR });
 })();

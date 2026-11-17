@@ -1,0 +1,46 @@
+# YouTube transcript intake: project plan
+
+Updated 2026-11-17. This is the durable delivery plan for the existing
+`PatrikFAS/youtube-chatgpt-project-intake` extension. Technical test evidence and
+acceptance steps live in [TESTING.md](TESTING.md); installation is in
+[README.md](README.md).
+
+## Goal and boundaries
+
+Make it easy to move a captioned YouTube video into the user's chosen ChatGPT
+or Claude context, with Apply to Project, Analyze or Summarize and an optional
+question. Keep the extension local, small and understandable. Users review and
+send themselves. No backend, AI API, analytics, automatic sending or payment
+infrastructure is part of this beta. Revenue is uncertain.
+
+## Current state
+
+- The existing Chrome and Edge workflow is **user-confirmed working**, including
+  the tested ordinary source-adjacent tab behavior. Pinned/grouped tabs remain
+  browser-dependent; no group-management permission is requested.
+- v0.1.6's exact ChatGPT sidebar-title request is retained. Its outgoing prompt
+  has fixture coverage; the actual resulting sidebar title is **not accepted**.
+- v0.1.7 implements Claude destinations and copy/open/paste in this same
+  extension. Claude auto-insertion is **unverified and disabled**: no live
+  composer inspection tool is available in this session, and no Claude host
+  permission or content script is added. Saved Project URLs come from the user.
+- Automated verification and regression checks pass for the beta source. They
+  do not prove an authenticated session. **Sarah's Claude acceptance is not run**.
+- Delivery is a committed local beta ZIP and draft code review. No store
+  submission, public deployment or merge is authorized by this plan.
+
+## Milestones and next actions
+
+| Milestone | Owner | Status and next action | Done when |
+| --- | --- | --- | --- |
+| Claude beta for Sarah | Codex implements; Sarah accepts; Patrik supplies beta | Implemented; Sarah installs/updates v0.1.7 and follows the short Claude check in TESTING.md. | All three modes copy completely, chosen Claude context opens beside YouTube, manual paste works, existing drafts remain untouched, and Sarah confirms it is usable. |
+| Simple onboarding and reliability | Codex; Patrik prioritizes feedback | Instructions and copy/paste guidance are included. Next fix only problems observed in Sarah's path. Inspect live UI before considering any future Claude auto-insertion. | A new tester completes a video unaided and understands captions, destination selection, clipboard fallback and manual Send. |
+| Chrome Web Store preparation | Patrik owns account/submission; Codex prepares assets | After Sarah's acceptance, prepare concise listing copy, screenshots with synthetic data, icons, privacy disclosure and permission explanations; check current submission requirements then. | Patrik reviews the complete package and separately authorizes submission. Existing scope/terms research is not reopened for this beta. |
+| Small beta | Patrik recruits; Sarah and a few invited testers give feedback | After Sarah's first successful run, invite 3-5 people using their own ChatGPT/Claude accounts. Ask for browser/version, task completed, friction and whether they would reuse it; collect feedback manually without analytics. | Repeated use and main failure patterns are understood; priority bugs have fixes and clear owners. |
+| Promotion experiments | Patrik approves/posts; Codex prepares drafts | After reliable beta use, try a short demo video and one relevant community post where allowed. Compare manually reported installs, repeat use and support effort; no outreach is sent by this plan. | One or two small experiments show whether people understand and want this workflow. |
+| Free plus optional coffee | Patrik decides | Recommend a free useful extension first, with an optional coffee link only if Patrik wants one. No checkout, billing, account system or payment integration now. | Beta feedback shows enough value to justify offering voluntary support. |
+| Later monetization decision | Patrik | Revisit after the small beta and promotion experiments. Compare repeat use, willingness to support/pay, maintenance/support cost and store constraints. | Make an explicit keep-free / optional-support / paid-feature decision before building payment infrastructure. No revenue is promised. |
+
+**Next action:** deliver v0.1.7 to Sarah, then record her Claude result as pass,
+fail or not run with browser/version. Preserve already-confirmed Chrome/Edge
+results; keep actual title acceptance distinct from automated prompt checks.

@@ -72,6 +72,7 @@ textarea { resize: vertical; min-height: 66px; line-height: 1.35; }
 .secondary:hover { background: var(--soft); }
 .small { padding: 7px 9px; font-size: 12px; }
 .wide { width: 100%; margin-top: 8px; }
+#handoffHelp { font-size: 12px; line-height: 1.4; margin: 8px 0 0; }
 .utility-row { display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 11px; color: var(--muted); font-size: 11px; }
 .link-button { border: 0; background: transparent; color: inherit; padding: 3px; text-decoration: underline; text-underline-offset: 2px; }
 .link-button:hover { color: var(--text); }

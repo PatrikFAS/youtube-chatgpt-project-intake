@@ -39,14 +39,17 @@ async function makePopup({
   runtimeOk = false,
   destinationUrl = 'https://chatgpt.com/',
   videoTitle = 'Example video',
-  mode = 'analyze'
+  mode = 'analyze',
+  activeUrl = 'https://www.youtube.com/watch?v=abc',
+  clipboardFails = false,
+  fallbackCopyOk = true
 } = {}) {
   const ids = [
     'loadingView','youtubeView','chatgptView','otherView','videoTitle','videoMeta','transcriptStatus',
     'trackSelect','destinationSelect','optionalQuestion','warning','error','sendButton','viewTranscript',
     'copyTranscript','retryButton','transcriptPanel','transcriptPreview','transcriptCount','destinationName',
     'currentUrl','chatgptSaveStatus','saveDestination','manageDestinations','manageDestinationsChatgpt',
-    'openOptionsTop','openOptionsOther'
+    'openOptionsTop','openOptionsOther','handoffHelp'
   ];
   const els = Object.fromEntries(ids.map((id) => [id, makeElement(id)]));
   const radios = ['apply','analyze','summarize'].map((value) => Object.assign(makeElement(`mode-${value}`), { value, checked: value === mode }));
@@ -70,8 +73,8 @@ async function makePopup({
     },
     createElement(tag) { return makeElement(tag); },
     addEventListener(type, fn) { docListeners[type] = fn; },
-    body: { appendChild(el) { events.push('fallback-copy'); el.select(); }, removeChild() {} },
-    execCommand() { return true; }
+    body: { appendChild(el) { events.push('fallback-copy'); events.fallbackText = el.value; el.select(); }, removeChild() {} },
+    execCommand() { return fallbackCopyOk; }
   };
   Object.defineProperty(els.destinationSelect, 'selectedOptions', {
     get() { return [this.options.find((option) => option.value === this.value) || this.options[0]].filter(Boolean); }
@@ -81,7 +84,7 @@ async function makePopup({
 
   const chrome = {
     tabs: {
-      async query() { queriedTabs++; return [{ id: activeId, url: 'https://www.youtube.com/watch?v=abc' }]; },
+      async query() { queriedTabs++; return [{ id: activeId, url: activeUrl }]; },
       async sendMessage(tabId, message) {
         events.push(`tab:${tabId}:${message.type}`);
         if (message.type === 'YT2GPT_GET_CONTEXT') return { ok: true, data: {
@@ -109,7 +112,10 @@ async function makePopup({
   const context = vm.createContext({
     window, document, chrome, URL, console,
     setTimeout, clearTimeout, Math, Date, RegExp, Object, Array, String, Number, Boolean, JSON,
-    navigator: { language: 'en-US', clipboard: { async writeText(text) { events.push('clipboard'); events.clipboard = text; } } }
+    navigator: { language: 'en-US', clipboard: { async writeText(text) {
+      if (clipboardFails) throw new Error('Clipboard unavailable');
+      events.push('clipboard'); events.clipboard = text;
+    } } }
   });
   vm.runInContext(destinationSource, context, { filename: 'shared/destination.js' });
   vm.runInContext(popupSource, context, { filename: 'popup/popup.js' });
@@ -212,8 +218,84 @@ assert.equal(editOptions.storedPreferences.destinations[1].name, 'Keep me', 'rej
 assert.equal(editOptions.storedPreferences.destinations[1].url, 'https://chatgpt.com/g/project', 'rejected edit preserves the saved URL');
 
 const popupSave = await makePopup();
+const destinationsBeforeRejectedSave = JSON.stringify(popupSave.storageData.destinations);
 vm.runInContext(`activeTab = { id: 9, url: 'https://chatgpt.com/codex' }; els.destinationName.value = 'Codex'; saveCurrentDestination()`, popupSave.context);
 assert.match(popupSave.els.chatgptSaveStatus.textContent, /select ChatGPT rather than Codex/);
-assert.equal(popupSave.storageData.destinations.length, 1, 'rejected popup save leaves stored destinations unchanged');
+assert.equal(JSON.stringify(popupSave.storageData.destinations), destinationsBeforeRejectedSave, 'rejected popup save leaves stored destinations unchanged');
 
-console.log('PASS: popup preserves prompt fallback and source tab; popup/options reject unsafe destination routes without losing settings.');
+// Exercise the same three modes through Claude's copy/open path. These are
+// fixture URLs, not a claim of authenticated Claude acceptance.
+for (const destinationUrl of ['https://claude.ai/new', 'https://claude.ai/chat/fixture-chat?view=saved#notes', 'https://claude.ai/project/fixture-project']) {
+  for (const mode of ['apply', 'analyze', 'summarize']) {
+    const claude = await makePopup({ runtimeOk: true, destinationUrl, mode });
+    assert.equal(claude.els.sendButton.textContent, 'Copy & open Claude');
+    assert.match(claude.els.handoffHelp.textContent, /paste \(Ctrl\+V\).*Existing drafts are left untouched/);
+    await vm.runInContext('sendToChatGPT()', claude.context);
+    assert.ok(claude.events.indexOf('clipboard') < claude.events.indexOf('open'));
+    assert.equal(claude.events.message.type, 'OPEN_DESTINATION_WITH_PAYLOAD');
+    assert.equal(claude.events.message.destinationUrl, destinationUrl, 'Claude URL state is preserved without invented prompt parameters');
+    assert.equal(claude.events.message.sourceTabId, 41);
+    assert.equal(claude.events.message.payload, claude.events.clipboard);
+    assert.ok(claude.events.clipboard.includes(modeInstructions[mode]));
+    assert.match(claude.events.clipboard, /SPECIFIC QUESTION[\s\S]*Could this help our workflow\?/);
+    assert.match(claude.events.clipboard, /SOURCE SAFETY[\s\S]*Transcript contents\./);
+    assert.doesNotMatch(claude.events.clipboard, /CHAT TITLE|ChatGPT|Hermes/, 'Claude prompts avoid ChatGPT naming and personal handoff assumptions');
+    assert.equal(claude.storageData.lastMode, mode);
+    assert.equal(claude.storageData.preferredTranscriptLanguage, 'en');
+    assert.equal(claude.closed(), true);
+  }
+}
+
+const failedClaudeOpen = await makePopup({ destinationUrl: 'https://claude.ai/new' });
+await vm.runInContext('sendToChatGPT()', failedClaudeOpen.context);
+assert.match(failedClaudeOpen.els.error.textContent, /complete prompt is already on your clipboard/);
+assert.equal(failedClaudeOpen.closed(), false);
+
+const deniedCopy = await makePopup({ destinationUrl: 'https://claude.ai/new', clipboardFails: true, fallbackCopyOk: false });
+await vm.runInContext('sendToChatGPT()', deniedCopy.context);
+assert.equal(deniedCopy.events.includes('open'), false, 'do not open Claude without a successful prompt copy');
+assert.match(deniedCopy.els.error.textContent, /Could not copy to clipboard/);
+
+const fallbackCopy = await makePopup({ destinationUrl: 'https://claude.ai/new', clipboardFails: true, runtimeOk: true });
+await vm.runInContext('sendToChatGPT()', fallbackCopy.context);
+assert.ok(fallbackCopy.events.indexOf('fallback-copy') < fallbackCopy.events.indexOf('open'), 'legacy clipboard fallback still precedes opening');
+assert.equal(fallbackCopy.events.fallbackText, fallbackCopy.events.message.payload, 'fallback copy includes the complete prompt');
+
+const missingDestination = await makePopup();
+missingDestination.els.destinationSelect.options.length = 0;
+await vm.runInContext('sendToChatGPT()', missingDestination.context);
+assert.equal(missingDestination.events.includes('open'), false, 'a missing selection must not open general chat silently');
+assert.match(missingDestination.els.error.textContent, /complete prompt is already on your clipboard/);
+
+const legacy = await makePopup({ mode: 'summarize', destinationUrl: 'https://chatgpt.com/g/g-p-existing/project' });
+assert.equal(legacy.storageData.lastDestinationId, 'general');
+assert.equal(legacy.storageData.lastMode, 'summarize');
+assert.equal(legacy.storageData.destinations[0].url, 'https://chatgpt.com/g/g-p-existing/project');
+assert.equal(legacy.storageData.destinations.filter((d) => d.id === 'claude-general').length, 1);
+legacy.els.destinationSelect.value = 'claude-general';
+await vm.runInContext('rememberDestination()', legacy.context);
+assert.equal(legacy.els.sendButton.textContent, 'Copy & open Claude');
+assert.equal(legacy.storageData.lastDestinationId, 'claude-general');
+legacy.els.destinationSelect.value = 'general';
+await vm.runInContext('rememberDestination()', legacy.context);
+assert.equal(legacy.els.sendButton.textContent, 'Send to ChatGPT');
+
+const claudeSave = await makePopup({ activeUrl: 'https://claude.ai/project/fixture-project?view=saved#notes' });
+assert.equal(claudeSave.els.chatgptView.classList.contains('hidden'), false, 'popup recognizes Claude without a content script or host access');
+claudeSave.els.destinationName.value = 'Sarah project';
+await vm.runInContext('saveCurrentDestination()', claudeSave.context);
+const savedClaude = claudeSave.storageData.destinations.find((d) => d.name === 'Sarah project');
+assert.equal(savedClaude.url, 'https://claude.ai/project/fixture-project?view=saved#notes');
+assert.equal(claudeSave.storageData.lastDestinationId, savedClaude.id);
+
+const claudeOptions = await makeOptions();
+claudeOptions.els.newName.value = 'Claude conversation';
+claudeOptions.els.newUrl.value = 'https://claude.ai/chat/fixture-conversation?view=saved#notes';
+await vm.runInContext('addDestination()', claudeOptions.context);
+assert.equal(claudeOptions.storedPreferences.destinations.at(-1).url, 'https://claude.ai/chat/fixture-conversation?view=saved#notes');
+assert.equal(claudeOptions.storedPreferences.destinations.filter((d) => d.id === 'claude-general').length, 1);
+assert.equal(claudeOptions.storedPreferences.lastMode, 'summarize');
+assert.equal(claudeOptions.storedPreferences.lastDestinationId, 'saved');
+assert.equal(claudeOptions.storedPreferences.preferredTranscriptLanguage, 'fr');
+
+console.log('PASS: popup/options preserve settings and ChatGPT titles; all three Claude modes copy before opening with manual-paste guidance.');
