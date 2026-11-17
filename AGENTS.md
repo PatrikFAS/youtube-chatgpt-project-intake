@@ -1,7 +1,7 @@
 # Project guidance
 
 - Keep this a local, dependency-light Manifest V3 extension. Do not add a backend, AI/API service, analytics, broad permissions, or automatic message sending.
-- Preserve the three prompt modes, transcript/caption fallbacks, saved destinations and preferences. Keep the selected ChatGPT or Claude URL intact; if destination or composer identity is uncertain, show a useful clipboard fallback and leave user drafts untouched. Claude currently uses copy/open/paste, with no injector or extra host permission; require inspected live composer evidence before adding auto-insertion.
+- Preserve the three prompt modes, transcript/caption fallbacks, saved destinations and preferences. Keep the selected ChatGPT or Claude URL intact; if destination or composer identity is uncertain, show a useful clipboard fallback and leave user drafts untouched. At Patrik's explicit request, Claude now has a guarded beta injector and the narrow https://claude.ai/* host permission. Candidate markers are source-reported and fixture-tested; signed-in Claude acceptance is pending. Require live composer evidence before loosening recognition rules or claiming live verification. Clipboard fallback remains mandatory.
 - Open the result beside the captured source tab in its current window when available. Browser behavior can constrain pinned tabs and tab groups; do not add group-management permission.
 - Keep `manifest.json` and `package.json` versions synchronized and document releases in `CHANGELOG.md`.
 - Run `npm run verify` and `npm test` from the repository root. Tests use fixtures and do not establish authenticated live-browser behavior.

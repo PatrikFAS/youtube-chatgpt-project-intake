@@ -36,7 +36,7 @@ async function render() {
       const nameWrap = document.createElement('div');
       const name = document.createElement('div');
       name.className = 'name';
-      name.textContent = dest.name;
+      name.textContent = dest.builtIn && YT2GPTDestination.kind(dest.url) === 'new' ? 'New chat' : dest.name;
       nameWrap.appendChild(name);
       const kind = YT2GPTDestination.kind(dest.url);
       if (dest.builtIn || kind === 'project' || kind === 'conversation' || kind === 'unknown') {

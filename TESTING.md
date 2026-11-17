@@ -2,6 +2,76 @@
 
 ## Current status
 
+**v0.1.10 guarded Claude insertion: implemented and ready for Patrik's browser
+test.** Patrik accepted the v0.1.9 UI/workflow and explicitly requested adding
+automatic pasting despite the isolated browser's lack of signed-in access.
+This replaces the previous decision to leave Claude insertion disabled; it
+does not establish that insertion works in his authenticated Claude session.
+
+The new injector uses source-reported input/control markers and refuses
+unrecognized surfaces. Its real-DOM fixture passes all 28 cases: native complete
+insertion, marked wrappers, named textarea, exact chat/Project URLs, replacement
+Send controls, duplicate scripts, ordinary/whitespace/rich drafts, hidden
+attachments, busy/read-only/ambiguous editors, missing markers, dialogs, route
+and draft changes during claim/focus, rejected claims, partial edits, framework
+rejection and readiness failures. Every case asserts zero Send clicks, form
+submits and Enter keys; unrelated draft content remains untouched. Polling
+timers are accelerated in the fixture; DOM editing/input events are native.
+
+### v0.1.10 focused acceptance
+
+1. Update files in the same unpacked folder, Reload that extension entry, and
+   refresh YouTube and Claude/ChatGPT tabs. Confirm **v0.1.10** in the footer.
+   Allow the newly requested **claude.ai** site access if the browser asks.
+   Do not uninstall or load a duplicate entry.
+2. From a captioned video, choose Claude, New chat and Summarize. Click
+   **Open in Claude** and wait for the notice. Verify the full prompt appears
+   without Ctrl+V, the task is Summarize, and nothing is sent. Review and send
+   yourself only when ready. A success notice requires the native edit's full
+   text plus recognized composer/Send readiness; no control is activated.
+3. Repeat using the saved Claude chat or Project you actually use. The script
+   requires its exact saved path/query/fragment. A Project redirect into a chat
+   cannot prove Project membership, so it must show clipboard fallback rather
+   than guess. Record the exact notice if the editor or route is unrecognized.
+4. If Claude restores an existing draft/attachment in a saved destination,
+   verify it remains untouched and the fallback appears. If no draft restores
+   in the new tab, record this live guard check as not run. Fixture guards are
+   already covered. With any fallback, inspect the composer for existing or
+   partial text before pasting, to avoid duplication.
+
+**Pending:** signed-in Claude insertion/framework synchronization and user
+acceptance. The available isolated public-page inspection reached security
+verification, not the composer. That is not evidence that the user's browser
+will fail. Neither a fixture pass nor a source report counts as live proof.
+Push/merge remains a possible follow-up after the user confirms this beta.
+
+### Candidate evidence and reproducible checks
+
+The bounded input markers are supported by the integration author's
+[Claude entry](https://github.com/hanzili/hanzi-browse/blob/main/server/src/agent/domain-skills.json)
+and its reported chat-input editor. The exact Send marker is present in the
+integration author's
+[configuration](https://github.com/dliedke/ChatGPTExtension/blob/master/ai-config.json).
+These are primary reports of their integrations, not inspected current Claude
+markup. No third-party implementation is copied; the new script uses the
+extension's own handoff design and standard DOM editing. No generic editor,
+placeholder-only or broadly selected Send-button fallback is used.
+
+`npm run verify`, all four `npm test` suites, the 28-case Claude native editing
+fixture and the existing 18-case native popup fixture pass. ChatGPT's injector
+is unchanged; its existing destination/draft/attachment guards still pass.
+
+Optional browser checks use Node 22+ and an existing Chromium/Chrome/Edge binary,
+with a fresh isolated profile and synthetic intercepted pages, not personal
+accounts:
+
+```sh
+npm run test:claude-browser -- /absolute/path/to/chromium
+npm run test:browser -- /absolute/path/to/chromium
+```
+
+## Previous UI beta status (v0.1.9, subsequently user-accepted)
+
 **v0.1.9 redesigned popup: ready for Patrik to test.** Patrik confirmed the earlier Claude handoff and Apply to Project work, then reported Summarize producing an Analyze prompt. The cause is not established. The committed v0.1.8 popup was replayed with native mouse clicks from saved Analyze: all three modes across both providers' new chats, saved chats and Projects copied the expected distinct instruction and retained it after reload (18 combinations). This did not reproduce the report. It is a real DOM fixture with mocked extension APIs, not Patrik's authenticated installation.
 
 The new popup captures the visible mode, destination and question at the click, locks changes while preparing the handoff, explicitly restores one mode, and shows a task summary above the action and SELECTED MODE in the copied prompt. Fixtures verify these protections; they do not prove the original failure's cause or an affected-browser fix.

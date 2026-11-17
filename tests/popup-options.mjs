@@ -251,7 +251,7 @@ assert.equal(JSON.stringify(popupSave.storageData.destinations), destinationsBef
 for (const destinationUrl of ['https://claude.ai/new', 'https://claude.ai/chat/fixture-chat?view=saved#notes', 'https://claude.ai/project/fixture-project']) {
   for (const mode of ['apply', 'analyze', 'summarize']) {
     const claude = await makePopup({ runtimeOk: true, destinationUrl, mode });
-    assert.equal(claude.els.sendButton.textContent, 'Copy & open Claude');
+    assert.equal(claude.els.sendButton.textContent, 'Open in Claude');
     assert.match(claude.els.handoffHelp.textContent, /paste \(Ctrl\+V\).*Existing drafts are left untouched/);
     await vm.runInContext('sendToChatGPT()', claude.context);
     assert.ok(claude.events.indexOf('clipboard') < claude.events.indexOf('open'));
@@ -297,7 +297,7 @@ assert.equal(legacy.storageData.lastMode, 'summarize');
 assert.equal(legacy.storageData.destinations[0].url, 'https://chatgpt.com/g/g-p-existing/project');
 assert.equal(legacy.storageData.destinations.filter((d) => d.id === 'claude-general').length, 1);
 await legacy.els.providerClaude.listeners.change();
-assert.equal(legacy.els.sendButton.textContent, 'Copy & open Claude');
+assert.equal(legacy.els.sendButton.textContent, 'Open in Claude');
 assert.equal(legacy.storageData.lastDestinationId, 'claude-general');
 await legacy.els.providerChatGPT.listeners.change();
 assert.equal(legacy.els.sendButton.textContent, 'Open in ChatGPT');

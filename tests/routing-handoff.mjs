@@ -68,23 +68,38 @@ async function testBackground() {
   const destination = loadDestination();
   const manifest = JSON.parse(read('manifest.json'));
   assert.deepEqual(manifest.permissions, ['activeTab', 'storage', 'clipboardWrite']);
-  assert.deepEqual(manifest.host_permissions, ['https://www.youtube.com/*', 'https://youtube.com/*', 'https://m.youtube.com/*', 'https://chatgpt.com/*'], 'Claude copy/open/paste adds no host permission');
-  assert.ok(manifest.content_scripts.every((script) => script.matches.every((url) => !url.includes('claude'))), 'no unverified Claude injector is registered');
+  assert.deepEqual(manifest.host_permissions, ['https://www.youtube.com/*', 'https://youtube.com/*', 'https://m.youtube.com/*', 'https://chatgpt.com/*', 'https://claude.ai/*'], 'Claude insertion adds only its exact HTTPS host');
+  const claudeScript = manifest.content_scripts.find((script) => script.matches.includes('https://claude.ai/*'));
+  assert.deepEqual(claudeScript.js, ['shared/destination.js', 'claude/content.js']);
 
   const claudeUrls = ['https://claude.ai/', 'https://claude.ai/new', 'https://claude.ai/chat/fixture-chat?view=saved#notes', 'https://claude.ai/project/fixture-project'];
   for (const url of claudeUrls) {
     assert.equal(destination.normalize(url), url);
     assert.equal(destination.provider(url), 'claude');
-    assert.equal(destination.matches(url, url), false, 'Claude must never qualify for an automatic insertion claim');
+    assert.equal(destination.matches(url, url), true, 'Claude claims require the exact saved route');
     assert.equal(destination.isNewChatEntry(url), false, 'unverified Claude naming is not requested');
-    const claude = createBackground({ failStorageSet: true });
+    const claude = createBackground();
     const opened = await claude.message({ type: 'OPEN_DESTINATION_WITH_PAYLOAD', payload: 'Claude fixture', destinationUrl: url, sourceTabId: 11 });
-    assert.equal(opened.ok, true, 'Claude opens without preparing an automatic handoff');
-    assert.equal(opened.clipboardOnly, true);
-    assert.equal(claude.pending.size, 0, 'Claude prompt is never placed in pending session storage');
+    assert.equal(opened.ok, true);
+    assert.equal(claude.pending.size, 1, 'Claude receives a session-only one-time handoff');
     assert.deepEqual(JSON.parse(JSON.stringify(claude.creates[0])), { url, active: true, windowId: 4, index: 3, openerTabId: 11, pinned: false });
     assert.equal(claude.queried, false);
+    const claim = await claude.message({ type: 'CLAIM_PENDING_PAYLOAD' }, { tab: { id:90 }, frameId:0, url });
+    assert.equal(claim.payload, 'Claude fixture');
+    assert.equal(claude.pending.size, 0);
+    assert.equal((await claude.message({ type: 'CLAIM_PENDING_PAYLOAD' }, { tab: { id:90 }, frameId:0, url })).payload, null, 'Claude handoff is consumed once');
   }
+  for (const [expected, actual] of [
+    ['https://claude.ai/new', 'https://claude.ai/chat/fixture'],
+    ['https://claude.ai/project/fixture', 'https://claude.ai/chat/fixture'],
+    ['https://claude.ai/project/fixture', 'https://claude.ai/project/other'],
+    ['https://claude.ai/chat/fixture', 'https://claude.ai/chat/fixture?changed=1'],
+    ['https://claude.ai/chat/fixture#draft', 'https://claude.ai/chat/fixture'],
+    ['https://claude.ai/new', 'https://chatgpt.com/']
+  ]) assert.equal(destination.matches(expected, actual), false, 'unknown Project relationships, route state and provider changes must be rejected');
+  const claudeStorageFailure = createBackground({ failStorageSet:true });
+  assert.equal((await claudeStorageFailure.message({ type:'OPEN_DESTINATION_WITH_PAYLOAD', payload:'fixture', destinationUrl:'https://claude.ai/new', sourceTabId:11 })).ok, false);
+  assert.equal(claudeStorageFailure.pending.size, 0);
   for (const url of ['http://claude.ai/new', 'https://claude.ai.evil.example/new', 'https://user:password@claude.ai/new', 'https://claude.ai/settings', 'https://claude.ai/code/new', 'https://claude.ai/project/id/unknown', 'javascript:alert(1)']) {
     assert.equal(destination.normalize(url), null);
     const refused = createBackground();

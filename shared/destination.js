@@ -71,7 +71,7 @@ globalThis.YT2GPTDestination = (() => {
       destinations.unshift({ id: 'general', name: 'General ChatGPT', url: 'https://chatgpt.com/', builtIn: true });
     }
     if (!destinations.some((d) => d.id === 'claude-general')) {
-      destinations.push({ id: 'claude-general', name: 'General Claude (paste manually)', url: 'https://claude.ai/new', builtIn: true });
+      destinations.push({ id: 'claude-general', name: 'General Claude', url: 'https://claude.ai/new', builtIn: true });
     }
     return destinations;
   }
@@ -84,6 +84,14 @@ globalThis.YT2GPTDestination = (() => {
   }
 
   function matches(expected, actual) {
+    const savedClaude = parseClaude(expected);
+    const currentClaude = parseClaude(actual);
+    if (savedClaude || currentClaude) {
+      // A Claude Project-to-chat redirect does not prove Project membership.
+      // Only the exact saved route and URL state may claim its handoff.
+      return Boolean(savedClaude && currentClaude && savedClaude.path === currentClaude.path &&
+        savedClaude.url.search === currentClaude.url.search && savedClaude.url.hash === currentClaude.url.hash);
+    }
     const saved = parse(expected);
     const current = parse(actual);
     if (!saved || !current) return false;
@@ -99,7 +107,6 @@ globalThis.YT2GPTDestination = (() => {
     return Boolean(project && conversation && project[1] === conversation[1]);
   }
 
-  // matches/isNewChatEntry deliberately remain ChatGPT-only: Claude has no
-  // verified injector or automatic naming behavior in this beta.
+  // New-chat naming remains ChatGPT-only. Claude insertion uses exact routes.
   return Object.freeze({ normalize, provider, displayProvider, kind, withBuiltIns, matches, isNewChatEntry, REPAIR });
 })();

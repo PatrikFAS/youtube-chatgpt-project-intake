@@ -87,19 +87,13 @@ async function handleOpenDestination(message) {
   }
   if (!Number.isInteger(tab?.id) || tab.id < 0) throw new Error('Could not open the destination tab. Paste the copied prompt into the intended destination.');
 
-  // Claude's live composer has not been inspected. Copy/open/paste needs no
-  // Claude host access and must never prepare an automatic editing handoff.
-  if (YT2GPTDestination.provider(destinationUrl) === 'claude') {
-    return { ok: true, tabId: tab.id, clipboardOnly: true };
-  }
-
   const key = `${PENDING_PREFIX}${tab.id}`;
   try {
     await chrome.storage.session.set({
       [key]: { payload, createdAt: Date.now(), destinationUrl }
     });
   } catch {
-    throw new Error('ChatGPT opened, but automatic insertion could not be prepared. Paste the copied prompt into the intended destination.');
+    throw new Error('The destination opened, but automatic insertion could not be prepared. Paste the copied prompt into the intended destination.');
   }
 
   return { ok: true, tabId: tab.id };

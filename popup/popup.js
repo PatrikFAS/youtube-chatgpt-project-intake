@@ -403,9 +403,9 @@ async function rememberDestination() {
 
 function updateHandoffHelp() {
   const claude = currentProvider === 'claude';
-  if (!busy) els.sendButton.textContent = claude ? 'Copy & open Claude' : 'Open in ChatGPT';
+  if (!busy) els.sendButton.textContent = claude ? 'Open in Claude' : 'Open in ChatGPT';
   els.handoffHelp.textContent = claude
-    ? 'Prompt copied first. In Claude, check your Project or chat, paste (Ctrl+V), review and send yourself. Existing drafts are left untouched.'
+    ? 'Prompt copied first. We try to fill a recognized empty Claude message box. Review and send yourself; paste (Ctrl+V) if needed. Existing drafts are left untouched.'
     : 'Prompt copied first. We fill a recognized empty message box when possible. Review and send yourself.';
   const selected = els.destinationSelect.selectedOptions[0];
   els.actionSummary.textContent = `${MODE_LABELS[getSelectedMode()]} · ${selected?.textContent || 'Choose a destination'}`;
@@ -438,7 +438,7 @@ function initChatGPT() {
   const name = claude ? 'Claude' : 'ChatGPT';
   const kind = YT2GPTDestination.kind(activeTab.url);
   els.saveHeading.textContent = `Save this ${name} ${kind === 'project' ? 'Project' : 'destination'}`;
-  els.saveHelp.textContent = claude ? 'Give this page a name. It will appear under Claude on YouTube. In this beta, you paste into Claude and send yourself.'
+  els.saveHelp.textContent = claude ? 'Give this page a name. It will appear under Claude on YouTube. This beta tries guarded insertion; clipboard paste stays available. You send yourself.'
     : 'Give this page a name. It will appear under ChatGPT on YouTube. You always review and send yourself.';
   els.currentUrl.textContent = activeTab.url;
   els.destinationName.focus();
