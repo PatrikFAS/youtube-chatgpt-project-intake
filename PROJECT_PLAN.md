@@ -18,9 +18,16 @@ infrastructure is part of this beta. Revenue is uncertain.
 - The existing Chrome and Edge workflow is **user-confirmed working**, including
   the tested ordinary source-adjacent tab behavior. Pinned/grouped tabs remain
   browser-dependent; no group-management permission is requested.
-- v0.1.6's exact ChatGPT sidebar-title request is retained. Its outgoing prompt
-  has fixture coverage; the actual resulting sidebar title is **not accepted**.
-- v0.1.7 implements Claude destinations and copy/open/paste in this same
+- Patrik reports odd names from v0.1.6's ChatGPT sidebar-title request. v0.1.8
+  strengthens that prompt preference and adds **Copy title** for manual Rename.
+  Inspection confirms there is no automatic rename/verification mechanism in
+  the extension. Exact automatic sidebar naming is **not fixed or verified**.
+- v0.1.8 asks both providers to start every video-related reply, including
+  follow-ups, with the full source title, featured people only when explicitly
+  identified by the source title/transcript, then the video link. No participant
+  is invented or inferred from a channel name. Outgoing prompts are tested;
+  actual model response formatting remains **ready for user acceptance**.
+- v0.1.7 introduced Claude destinations and copy/open/paste in this same
   extension. Claude auto-insertion is **unverified and disabled**: no live
   composer inspection tool is available in this session, and no Claude host
   permission or content script is added. Saved Project URLs come from the user.
@@ -33,7 +40,7 @@ infrastructure is part of this beta. Revenue is uncertain.
 
 | Milestone | Owner | Status and next action | Done when |
 | --- | --- | --- | --- |
-| Claude beta for Sarah | Codex implements; Sarah accepts; Patrik supplies beta | Implemented; Sarah installs/updates v0.1.7 and follows the short Claude check in TESTING.md. | All three modes copy completely, chosen Claude context opens beside YouTube, manual paste works, existing drafts remain untouched, and Sarah confirms it is usable. |
+| Claude beta for Sarah | Codex implements; Sarah accepts; Patrik supplies beta | Implemented; Sarah installs/updates v0.1.8 and follows the short Claude check in TESTING.md. | All three modes copy completely, chosen Claude context opens beside YouTube, manual paste works, existing drafts remain untouched, and Sarah confirms it is usable. |
 | Simple onboarding and reliability | Codex; Patrik prioritizes feedback | Instructions and copy/paste guidance are included. Next fix only problems observed in Sarah's path. Inspect live UI before considering any future Claude auto-insertion. | A new tester completes a video unaided and understands captions, destination selection, clipboard fallback and manual Send. |
 | Chrome Web Store preparation | Patrik owns account/submission; Codex prepares assets | After Sarah's acceptance, prepare concise listing copy, screenshots with synthetic data, icons, privacy disclosure and permission explanations; check current submission requirements then. | Patrik reviews the complete package and separately authorizes submission. Existing scope/terms research is not reopened for this beta. |
 | Small beta | Patrik recruits; Sarah and a few invited testers give feedback | After Sarah's first successful run, invite 3-5 people using their own ChatGPT/Claude accounts. Ask for browser/version, task completed, friction and whether they would reuse it; collect feedback manually without analytics. | Repeated use and main failure patterns are understood; priority bugs have fixes and clear owners. |
@@ -41,6 +48,9 @@ infrastructure is part of this beta. Revenue is uncertain.
 | Free plus optional coffee | Patrik decides | Recommend a free useful extension first, with an optional coffee link only if Patrik wants one. No checkout, billing, account system or payment integration now. | Beta feedback shows enough value to justify offering voluntary support. |
 | Later monetization decision | Patrik | Revisit after the small beta and promotion experiments. Compare repeat use, willingness to support/pay, maintenance/support cost and store constraints. | Make an explicit keep-free / optional-support / paid-feature decision before building payment infrastructure. No revenue is promised. |
 
-**Next action:** deliver v0.1.7 to Sarah, then record her Claude result as pass,
-fail or not run with browser/version. Preserve already-confirmed Chrome/Edge
-results; keep actual title acceptance distinct from automated prompt checks.
+**Next action:** deliver the verified v0.1.8 beta through Library for Patrik and
+Sarah. Record reply-header/follow-up behavior and Sarah's Claude result as pass,
+fail or not run with browser/version. Record actual ChatGPT sidebar names
+separately; use Copy title plus manual Rename when an exact name is needed.
+Preserve already-confirmed Chrome/Edge results. Do not claim that stronger
+instructions guarantee either generated titles or model compliance.

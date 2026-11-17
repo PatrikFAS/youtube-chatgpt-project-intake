@@ -2,6 +2,49 @@
 
 ## Current status
 
+**v0.1.8 reply headers implemented; sidebar naming remains unverified.** Patrik
+reports odd automatic names with the inherited v0.1.6 prompt. Inspection shows
+the extension only inserts a naming request into the outgoing prompt; there is
+no sidebar rename call, Rename UI action, title reader or title confirmation.
+No authenticated browser or internal ChatGPT title mechanism was inspected.
+The precise cause of those generated names is not established.
+
+The revised prompt leads with source metadata and strengthens the exact-title
+preference for recognized new ChatGPT chats. Every mode, for both providers and
+existing conversations, requests a reply header of full original video title,
+featured speakers/guests only if explicitly identified by the title/transcript,
+then the video URL. The uploader is not assumed to be a featured person. These
+are model instructions; fixture coverage does not prove actual model compliance.
+**Copy title** copies the exact preferred `YT · <full video title>` for manual
+Rename when the provider's generated sidebar name differs. Existing chats are
+never renamed by the extension, and Claude auto-insertion remains disabled.
+
+### v0.1.8 focused acceptance
+
+1. Update the existing unpacked folder to v0.1.8, Reload the same extension
+   entry, then refresh YouTube and ChatGPT tabs. Do not uninstall or load a
+   duplicate entry. Keep your existing destinations and preferences.
+2. Use a video with a distinctive title in each mode and provider. After sending
+   manually, check that the reply begins with its full original title, any
+   genuinely source-identified featured people, and the video link, before the
+   TL;DR or analysis. Ask a brief follow-up and check that the header repeats.
+3. Use a source with no clearly identified participants: the Featuring line
+   should be absent. A channel alone is not a person's identity.
+4. From General ChatGPT or a saved Project landing page, record the actual new
+   sidebar title separately from the reply heading. Do not count the heading or
+   a model claim as proof of a renamed chat. If the automatic name differs,
+   click **Copy title** on the source video's extension popup and paste into
+   the destination's Rename control yourself. Saved conversations receive no
+   automatic naming request.
+
+`npm run verify`, `npm test` and `git diff --check` pass for v0.1.8. New fixtures
+cover exact source identity (including quotes/Unicode), header requests in both
+providers and all modes, existing-chat behavior, anti-invention instructions,
+exact title-copy and missing-title errors. They do not test generated replies
+or confirm an exact sidebar-title correction. **Both remain ready to test.**
+
+## Previous Claude beta status (v0.1.7)
+
 **v0.1.7 Claude beta: implemented; Sarah's acceptance not run.** The existing
 Chrome and Edge workflow is user-confirmed working. This update preserves the
 v0.1.6 title experiment below; its actual sidebar title remains unverified.
@@ -23,7 +66,7 @@ which chat it might create. Queries and fragments are preserved.
 
 ### Sarah's short Claude acceptance check
 
-1. Extract v0.1.7 to a permanent folder, then use **Load unpacked** from
+1. Extract the current v0.1.8 ZIP to a permanent folder, then use **Load unpacked** from
    `chrome://extensions/` or `edge://extensions/` with Developer mode on. For an
    existing installation, update files in its existing folder and **Reload** the
    same extension entry; do not uninstall. Refresh the YouTube tab.

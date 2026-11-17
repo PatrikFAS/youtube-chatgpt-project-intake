@@ -2,7 +2,7 @@
 
 A lightweight Chrome/Edge browser extension that extracts YouTube transcripts and routes them to ChatGPT or Claude for summarization, critical analysis, or project-specific application.
 
-**Current beta: v0.1.7 - Claude ready for Sarah to test**
+**Current beta: v0.1.8 - reply headers and Claude ready to test**
 
 The existing Chrome and Edge workflow is user-confirmed working. Sarah's Claude acceptance is not run. See [PROJECT_PLAN.md](PROJECT_PLAN.md) for milestones, owners and the next action.
 
@@ -21,7 +21,7 @@ Faithfully compress the video into a TL;DR, key ideas, examples, conclusions, an
 
 The raw transcript is a separate utility rather than a fourth reasoning mode.
 
-## Update an existing installation to v0.1.7
+## Update an existing installation to v0.1.8
 
 1. Extract the versioned ZIP and overwrite its files in the **same unpacked extension folder** you originally loaded. Keep that folder's location. You can back it up first.
 2. Open `edge://extensions/` or `chrome://extensions/` and click **Reload** on the existing extension entry. Do not uninstall it; updating in place retains saved destinations and preferences.
@@ -35,6 +35,10 @@ For saved Projects, v0.1.4 also accepts a Project landing page opening a convers
 v0.1.5 recognizes the current Project-page message box using its specific ChatGPT form, editor-container and model-control markers. Its Pro model label and empty-editor voice button are supported; a visible Send button is not required before inserting into this verified composer.
 
 In all three modes, v0.1.6 asks ChatGPT to name new chats `YT · <original YouTube title>` when starting from General ChatGPT or a recognized Project landing page. Saved conversation links get no naming instruction. ChatGPT controls whether the suggested title appears in its sidebar. See [TESTING.md](TESTING.md) for the browser check.
+
+v0.1.8 puts the original source metadata first and strengthens the new-chat title preference. Patrik reports the earlier request still produced odd names. The extension only requests a title in the prompt; it never sets or verifies the sidebar name. An exact automatic title fix is **not confirmed**. For an exact name, use **Copy title** in the YouTube popup, then paste into the destination's Rename control yourself. This copies the preferred `YT · <full video title>` without opening a tab or renaming an existing chat.
+
+All three modes now ask **ChatGPT and Claude to begin every reply about the video, including follow-ups**, with its full original title, a Featuring line only for speakers/guests explicitly identified in the supplied title or transcript, then the video link. Unknown people are omitted; an uploading channel is not evidence that a person is featured. The TL;DR/analysis follows this header. These are model instructions; actual reply formatting needs your test.
 
 Tab creation uses the captured source tab's current `windowId`, `index + 1` and `openerTabId`, following the [Chrome tabs API](https://developer.chrome.com/docs/extensions/reference/api/tabs). A new result is unpinned; browsers can place it after the pinned area rather than directly after a pinned source. Tab-group behavior needs a browser check; no group-management permission is added. A closed source or creation failure leaves the copied prompt available rather than using an unrelated tab.
 
@@ -182,7 +186,7 @@ Run `npm run verify` and `npm test`. Tests execute the extension's source using 
 After committing with a clean tracked tree, build the ZIP using Python's standard library:
 
 ```sh
-python3 scripts/package.py /path/outside/repository/youtube-chatgpt-project-intake-0.1.7.zip
+python3 scripts/package.py /path/outside/repository/youtube-chatgpt-project-intake-0.1.8.zip
 ```
 
 The archive contains the committed runtime files and product documentation, with version and exact commit in `BUILD.txt`. No dependencies or developer tests are needed to load it unpacked.

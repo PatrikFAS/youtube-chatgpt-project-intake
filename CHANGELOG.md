@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.8
+
+- Puts the real source title, video URL and uploader metadata first in every outgoing prompt, then requests that every video-related reply (including follow-ups) start with the full title, source-identified featured speakers/guests when available, and the video link. Unknown participants must be omitted; the channel is not treated as a featured person.
+- Strengthens the new-ChatGPT-chat title preference against paraphrasing and mode/instruction labels. The extension still does not set or verify sidebar names: automatic titles remain provider-controlled, and Patrik reports the earlier request produced odd names. An exact-title fix is not claimed.
+- Adds **Copy title** for an exact manual Rename fallback without opening a tab or editing any conversation. Existing conversation naming, Claude copy/open/paste, draft protections and permissions remain unchanged.
+- Adds prompt/header and title-copy regression checks and updates the beta acceptance steps and project plan. Actual model reply formatting and the revised sidebar-title request still need user testing.
+
 ## 0.1.7
 
 - Adds a built-in Claude destination and saved Claude conversations/Projects alongside existing ChatGPT destinations, preserving names, URLs, selected mode/destination and caption preferences.
