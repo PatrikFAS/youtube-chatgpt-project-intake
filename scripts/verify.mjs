@@ -11,6 +11,7 @@ const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
 const errors = [];
 const requiredPermissions = new Set(['activeTab', 'storage', 'clipboardWrite']);
 const forbidden = new Set(['<all_urls>', 'history', 'downloads', 'cookies', 'debugger']);
+const allowedHosts = new Set(['https://www.youtube.com/*', 'https://youtube.com/*', 'https://m.youtube.com/*', 'https://chatgpt.com/*', 'https://claude.ai/*']);
 
 if (manifest.manifest_version !== 3) errors.push('manifest_version must be 3.');
 const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
@@ -24,7 +25,7 @@ for (const required of requiredPermissions) {
 }
 for (const host of manifest.host_permissions || []) {
   if (host.includes('<all_urls>')) errors.push('Broad host permission detected.');
-  if (!host.includes('youtube.com') && !host.includes('chatgpt.com')) errors.push(`Unexpected host permission: ${host}`);
+  if (!allowedHosts.has(host)) errors.push(`Unexpected host permission: ${host}`);
 }
 
 const referenced = new Set();

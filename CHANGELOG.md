@@ -1,5 +1,41 @@
 # Changelog
 
+## 0.1.10
+
+- Adds guarded Claude composer insertion at Patrik's explicit request after he accepted the v0.1.9 UI/workflow. Adds only the exact `https://claude.ai/*` host and a local content script; no API, backend, analytics or automatic Send.
+- Claude handoffs use the existing session-only one-time claim. Insertion requires the exact saved route/query/fragment, a unique source-reported input marker and nearby Claude Send marker, and an empty, editable, nonbusy composer without a dialog or attachments. Unproven Project-to-chat redirects remain clipboard-only.
+- Uses native editing and verifies the full text plus editor readiness. Drafts restored during claim/focus, partial or rejected edits, duplicate scripts and uncertain surfaces receive safe fallback without retries, DOM replacement, Enter or Send clicks.
+- Adds 28 real-DOM fixture cases using the actual Claude injector, plus worker routing/claim coverage. The accepted popup still passes its 18 native mode/destination/reload cases. These are synthetic fixtures. Patrik subsequently confirmed automatic insertion in his signed-in Claude browser and approved this version for push/merge; this is user-reported acceptance of that tested case.
+- Retains all three modes, saved links/preferences, source-adjacent tabs, title/link reply instructions and Copy title. Updates permission explanations, acceptance steps and the project plan.
+
+## 0.1.9
+
+- Redesigns the popup with a top-level ChatGPT/Claude switch, provider-specific destinations, clear Project/chat labels, compact task cards, expandable caption/question controls, light/dark styling, keyboard focus states and a visible build number. Saved links, names, caption preferences and the selected task are preserved; each provider remembers its last destination.
+- Groups Manage destinations by provider and makes saving a Claude Project explicit. All three existing modes reuse the same saved Project URL; no internal Claude API or upload into Project knowledge is used.
+- Captures the visible mode, destination and question at the action click, locks choices while preparing the prompt, explicitly restores one mode, and shows the selected task both above the action button and in the copied prompt. This hardens against selection changes during asynchronous extraction. Patrik's report that Summarize copied Analyze was not reproduced on the committed v0.1.8 native popup fixture; no exact cause is claimed.
+- Adds an optional dependency-free real-browser fixture: native mouse clicks and copied-prompt checks for all 18 mode/provider/destination combinations, reload retention and provider switching. The old and updated popup fixtures both passed their mode matrices. Mocked browser APIs do not establish an authenticated end-to-end result.
+- Patrik confirmed the earlier Claude handoff and Apply to Project work. Isolated live Claude inspection stopped at security verification without an editor, so automatic pasting remains unverified and disabled. No personal session, unrelated tabs, permissions or automatic Send behavior are added.
+- Preserves v0.1.6 naming preferences, v0.1.8 source-grounded reply headers and Copy title. Sidebar title generation remains provider-controlled.
+
+## 0.1.8
+
+- Puts the real source title, video URL and uploader metadata first in every outgoing prompt, then requests that every video-related reply (including follow-ups) start with the full title, source-identified featured speakers/guests when available, and the video link. Unknown participants must be omitted; the channel is not treated as a featured person.
+- Strengthens the new-ChatGPT-chat title preference against paraphrasing and mode/instruction labels. The extension still does not set or verify sidebar names: automatic titles remain provider-controlled, and Patrik reports the earlier request produced odd names. An exact-title fix is not claimed.
+- Adds **Copy title** for an exact manual Rename fallback without opening a tab or editing any conversation. Existing conversation naming, Claude copy/open/paste, draft protections and permissions remain unchanged.
+- Adds prompt/header and title-copy regression checks and updates the beta acceptance steps and project plan. Actual model reply formatting and the revised sidebar-title request still need user testing.
+
+## 0.1.7
+
+- Adds a built-in Claude destination and saved Claude conversations/Projects alongside existing ChatGPT destinations, preserving names, URLs, selected mode/destination and caption preferences.
+- Claude uses clipboard-first copy/open/paste with clear popup guidance, source-adjacent tab placement and manual Send. Its live composer is unverified, so no auto-insertion, Claude host permission, API or prompt-in-URL contract is introduced.
+- Reuses caption extraction and all three modes; Claude prompts refer to Claude context without ChatGPT naming or personal Hermes handoff assumptions. Retains v0.1.6 ChatGPT title requests and the existing guarded ChatGPT injector.
+- Adds focused regression coverage for Claude routing, migration, prompt copying, failure recovery and provider isolation, plus a durable project plan and Sarah's acceptance checklist. Existing Chrome/Edge behavior is user-confirmed; Sarah's Claude acceptance is not yet performed.
+
+## 0.1.6
+
+- All three modes ask ChatGPT to title a new chat `YT · <original YouTube title>` when opening General ChatGPT or a recognized Project landing page. Saved conversations and ambiguous destinations receive no naming instruction.
+- This is a prompt instruction. ChatGPT controls the actual sidebar title; the extension does not rename chats directly.
+
 ## 0.1.5
 
 - Recognizes the verified current ChatGPT Project composer: a marked ChatGPT form, its markdown textbox inside the composer input/body, and its accessible ChatGPT model control. A Pro model label and the empty editor's voice controls no longer prevent insertion.

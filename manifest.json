@@ -2,8 +2,8 @@
   "manifest_version": 3,
   "name": "YouTube → ChatGPT Project Intake",
   "short_name": "YT → GPT",
-  "version": "0.1.5",
-  "description": "Send clean YouTube transcripts to ChatGPT or saved ChatGPT Projects for summary, analysis, or project application.",
+  "version": "0.1.10",
+  "description": "Route YouTube transcripts to ChatGPT or Claude for summary, analysis, or project application. Review and send yourself.",
   "permissions": [
     "activeTab",
     "storage",
@@ -13,7 +13,8 @@
     "https://www.youtube.com/*",
     "https://youtube.com/*",
     "https://m.youtube.com/*",
-    "https://chatgpt.com/*"
+    "https://chatgpt.com/*",
+    "https://claude.ai/*"
   ],
   "background": {
     "service_worker": "background.js"
@@ -53,6 +54,16 @@
       "js": [
         "shared/destination.js",
         "chatgpt/content.js"
+      ],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "https://claude.ai/*"
+      ],
+      "js": [
+        "shared/destination.js",
+        "claude/content.js"
       ],
       "run_at": "document_idle"
     }

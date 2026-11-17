@@ -3,15 +3,16 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>YouTube → ChatGPT</title>
+  <title>YouTube → ChatGPT / Claude</title>
   <link rel="stylesheet" href="popup.css">
 </head>
 <body>
   <main class="shell">
     <header class="header">
+      <span class="brand-mark" aria-hidden="true">▶</span>
       <div>
-        <div class="eyebrow">PROJECT INTAKE</div>
-        <h1>YouTube → ChatGPT</h1>
+        <div class="eyebrow">VIDEO → YOUR WORK</div>
+        <h1>YouTube intake</h1>
       </div>
       <button id="openOptionsTop" class="icon-button" title="Manage destinations" aria-label="Manage destinations">⚙</button>
     </header>
@@ -23,32 +24,51 @@
 
     <section id="youtubeView" class="hidden">
       <div class="video-card">
+        <div class="source-label">CURRENT VIDEO</div>
         <div id="videoTitle" class="video-title">YouTube video</div>
         <div id="videoMeta" class="video-meta"></div>
         <div id="transcriptStatus" class="status-line"></div>
       </div>
 
-      <div class="field">
-        <label for="trackSelect">Transcript</label>
+      <details class="source-details">
+        <summary>Caption language</summary>
+        <div class="field">
+        <label for="trackSelect">Transcript track</label>
         <select id="trackSelect"></select>
-      </div>
+        </div>
+      </details>
+
+      <fieldset class="provider-group">
+        <legend>Assistant</legend>
+        <div class="provider-switch">
+          <label class="provider-choice">
+            <input id="providerChatGPT" type="radio" name="provider" value="chatgpt" checked>
+            <span><i class="provider-dot chatgpt-dot" aria-hidden="true"></i>ChatGPT</span>
+          </label>
+          <label class="provider-choice">
+            <input id="providerClaude" type="radio" name="provider" value="claude">
+            <span><i class="provider-dot claude-dot" aria-hidden="true"></i>Claude</span>
+          </label>
+        </div>
+      </fieldset>
 
       <div class="field">
-        <label for="destinationSelect">Send to</label>
+        <label for="destinationSelect">Destination</label>
         <div class="inline-row">
           <select id="destinationSelect" class="grow"></select>
           <button id="manageDestinations" class="secondary small">Manage</button>
         </div>
+        <p id="destinationHelp" class="field-help"></p>
       </div>
 
       <fieldset class="mode-group">
-        <legend>What do you want?</legend>
+        <legend>Make it useful</legend>
 
         <label class="mode-card">
           <input type="radio" name="mode" value="apply">
           <span>
             <strong>Apply to Project</strong>
-            <small>Find what matters for our current work</small>
+            <small>Use project context</small>
           </span>
         </label>
 
@@ -56,7 +76,7 @@
           <input type="radio" name="mode" value="analyze">
           <span>
             <strong>Analyze</strong>
-            <small>Critically evaluate the content</small>
+            <small>Question the ideas</small>
           </span>
         </label>
 
@@ -64,25 +84,32 @@
           <input type="radio" name="mode" value="summarize">
           <span>
             <strong>Summarize</strong>
-            <small>Tell me what is in the video</small>
+            <small>Get the essentials</small>
           </span>
         </label>
       </fieldset>
 
-      <div class="field">
-        <label for="optionalQuestion">Optional question</label>
-        <textarea id="optionalQuestion" rows="3" placeholder="e.g. Could this improve our YMC enquiry workflow?"></textarea>
-      </div>
+      <details class="question-details">
+        <summary>Add a question <span class="optional-label">Optional</span></summary>
+        <div class="field">
+        <label for="optionalQuestion">Your question <span class="optional-label">Optional</span></label>
+        <textarea id="optionalQuestion" rows="2" placeholder="What should I look for in this video?"></textarea>
+        </div>
+      </details>
 
       <div id="warning" class="warning hidden"></div>
       <div id="error" class="error hidden"></div>
 
-      <button id="sendButton" class="primary wide">Send to ChatGPT</button>
+      <p id="actionSummary" class="action-summary" aria-live="polite"></p>
+      <button id="sendButton" class="primary wide">Open in ChatGPT</button>
+      <p id="handoffHelp" class="muted" aria-live="polite"></p>
 
       <div class="utility-row">
         <button id="viewTranscript" class="link-button">View transcript</button>
         <span>·</span>
         <button id="copyTranscript" class="link-button">Copy transcript</button>
+        <span>·</span>
+        <button id="copyChatTitle" class="link-button">Copy title</button>
         <span>·</span>
         <button id="retryButton" class="link-button">Retry</button>
       </div>
@@ -99,12 +126,12 @@
     <section id="chatgptView" class="hidden">
       <div class="card">
         <div class="eyebrow">SAVE DESTINATION</div>
-        <h2>Save this ChatGPT destination</h2>
-        <p class="muted">Navigate to the Project or ChatGPT page you want the extension to reopen, then save it here.</p>
+        <h2 id="saveHeading">Save this destination</h2>
+        <p id="saveHelp" class="muted">Save the Project or conversation you want to reopen from YouTube.</p>
 
         <div class="field">
           <label for="destinationName">Name</label>
-          <input id="destinationName" type="text" placeholder="e.g. Yacht Master Class">
+          <input id="destinationName" type="text" placeholder="e.g. Research notebook">
         </div>
 
         <div id="currentUrl" class="url-preview"></div>
@@ -117,13 +144,13 @@
 
     <section id="otherView" class="hidden">
       <div class="card centered">
-        <h2>Open YouTube or ChatGPT</h2>
-        <p class="muted">On YouTube, this extension extracts the transcript. On ChatGPT, it can save the current page as a reusable destination.</p>
+        <h2>Open YouTube, ChatGPT or Claude</h2>
+        <p class="muted">On YouTube, this extension extracts the transcript. On ChatGPT or Claude, it can save the current page as a reusable destination.</p>
         <button id="openOptionsOther" class="secondary">Manage destinations</button>
       </div>
     </section>
 
-    <footer class="footer">Local only · no backend · no API key</footer>
+    <footer class="footer">Local extraction <span>·</span> No API keys <span>·</span> You send <span id="buildVersion"></span></footer>
   </main>
 
   <script src="../shared/destination.js"></script>

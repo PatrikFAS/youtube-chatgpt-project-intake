@@ -3,7 +3,7 @@
 // Used by the worker, popup, options page and injector. Unknown destinations
 // require an explicit repair; never replace a saved Project with general chat.
 globalThis.YT2GPTDestination = (() => {
-  const REPAIR = 'Open the intended ChatGPT conversation or Project, select ChatGPT rather than Codex, then edit/resave this destination in Manage destinations. Your saved destinations have been kept.';
+  const REPAIR = 'Open the intended ChatGPT or Claude conversation or Project, then edit/resave this destination in Manage destinations. For ChatGPT, select ChatGPT rather than Codex. Your saved destinations have been kept; paste the copied prompt only after checking the destination.';
 
   function parse(value) {
     try {
@@ -23,11 +23,75 @@ globalThis.YT2GPTDestination = (() => {
     } catch { return null; }
   }
 
+  function parseClaude(value) {
+    try {
+      const url = new URL(String(value || '').trim());
+      if (url.origin !== 'https://claude.ai' || url.username || url.password) return null;
+      // Open user-saved web destinations only. Never construct Project IDs,
+      // append prompt parameters, or infer a Project-to-chat relationship.
+      const path = url.pathname.replace(/\/$/, '') || '/';
+      if (!/^(?:\/|\/new|\/(?:chat|project)\/[^/]+)$/.test(path)) return null;
+      return { url, path };
+    } catch { return null; }
+  }
+
   function normalize(value) {
-    return parse(value)?.url.toString() || null;
+    return (parse(value) || parseClaude(value))?.url.toString() || null;
+  }
+
+  function provider(value) {
+    if (parse(value)) return 'chatgpt';
+    if (parseClaude(value)) return 'claude';
+    return null;
+  }
+
+  // Display grouping only, including saved routes that now need repair.
+  // This must never authorize opening or automatic composer insertion.
+  function displayProvider(value) {
+    try {
+      const origin = new URL(String(value || '').trim()).origin;
+      if (origin === 'https://claude.ai') return 'claude';
+      if (origin === 'https://chatgpt.com') return 'chatgpt';
+    } catch {}
+    return null;
+  }
+
+  function kind(value) {
+    if (!normalize(value)) return 'unknown';
+    const path = new URL(value).pathname.replace(/\/$/, '') || '/';
+    if (path === '/' || (provider(value) === 'claude' && path === '/new')) return 'new';
+    if (/^\/project\/[^/]+$/.test(path) || /^\/g\/[^/]+\/project$/.test(path)) return 'project';
+    if (/^\/chat\/[^/]+$/.test(path) || /\/c\/[^/]+$/.test(path)) return 'conversation';
+    return 'other';
+  }
+
+  function withBuiltIns(value) {
+    const destinations = Array.isArray(value) ? [...value] : [];
+    if (!destinations.some((d) => d.id === 'general')) {
+      destinations.unshift({ id: 'general', name: 'General ChatGPT', url: 'https://chatgpt.com/', builtIn: true });
+    }
+    if (!destinations.some((d) => d.id === 'claude-general')) {
+      destinations.push({ id: 'claude-general', name: 'General Claude', url: 'https://claude.ai/new', builtIn: true });
+    }
+    return destinations;
+  }
+
+  function isNewChatEntry(value) {
+    const entry = parse(value);
+    // Only recognized landing pages without extra URL state qualify for naming.
+    return Boolean(entry && !entry.url.search && !entry.url.hash &&
+      (entry.path === '/' || /^\/g\/g-p-[^/]+\/project$/.test(entry.path)));
   }
 
   function matches(expected, actual) {
+    const savedClaude = parseClaude(expected);
+    const currentClaude = parseClaude(actual);
+    if (savedClaude || currentClaude) {
+      // A Claude Project-to-chat redirect does not prove Project membership.
+      // Only the exact saved route and URL state may claim its handoff.
+      return Boolean(savedClaude && currentClaude && savedClaude.path === currentClaude.path &&
+        savedClaude.url.search === currentClaude.url.search && savedClaude.url.hash === currentClaude.url.hash);
+    }
     const saved = parse(expected);
     const current = parse(actual);
     if (!saved || !current) return false;
@@ -43,5 +107,6 @@ globalThis.YT2GPTDestination = (() => {
     return Boolean(project && conversation && project[1] === conversation[1]);
   }
 
-  return Object.freeze({ normalize, matches, REPAIR });
+  // New-chat naming remains ChatGPT-only. Claude insertion uses exact routes.
+  return Object.freeze({ normalize, provider, displayProvider, kind, withBuiltIns, matches, isNewChatEntry, REPAIR });
 })();

@@ -2,7 +2,216 @@
 
 ## Current status
 
-**READY TO TEST v0.1.5 / LIVE UPDATE TEST STILL NEEDED.** Private Edge feedback identified the earlier destination warning and a later composer-recognition failure. The saved Project landing-to-conversation transition is covered by v0.1.4; v0.1.5 recognizes the actual current Project composer using privately supplied form markup. The user confirmed adjacent-tab placement for their ordinary source-tab case. Automatic insertion in the affected Edge installation and pinned/grouped cases remain unverified. Keep issue #1 open after merge until the user confirms destination routing with the update.
+**v0.1.10 guarded Claude insertion: user-confirmed working.** On 2026-11-17,
+Patrik explicitly confirmed Claude inserted automatically without manual paste
+and requested pushing/merging this version. His exact browser version and
+destination were not reported; no new private browser data was collected.
+
+Initial implementation evidence:  Patrik accepted the v0.1.9 UI/workflow and explicitly requested adding
+automatic pasting despite the isolated browser's lack of signed-in access.
+This replaces the previous decision to leave Claude insertion disabled; it
+was initially fixture-only evidence. The later confirmation above records user acceptance of his tested signed-in case, not independent live inspection.
+
+The new injector uses source-reported input/control markers and refuses
+unrecognized surfaces. Its real-DOM fixture passes all 28 cases: native complete
+insertion, marked wrappers, named textarea, exact chat/Project URLs, replacement
+Send controls, duplicate scripts, ordinary/whitespace/rich drafts, hidden
+attachments, busy/read-only/ambiguous editors, missing markers, dialogs, route
+and draft changes during claim/focus, rejected claims, partial edits, framework
+rejection and readiness failures. Every case asserts zero Send clicks, form
+submits and Enter keys; unrelated draft content remains untouched. Polling
+timers are accelerated in the fixture; DOM editing/input events are native.
+
+### v0.1.10 focused acceptance
+
+1. Update files in the same unpacked folder, Reload that extension entry, and
+   refresh YouTube and Claude/ChatGPT tabs. Confirm **v0.1.10** in the footer.
+   Allow the newly requested **claude.ai** site access if the browser asks.
+   Do not uninstall or load a duplicate entry.
+2. From a captioned video, choose Claude, New chat and Summarize. Click
+   **Open in Claude** and wait for the notice. Verify the full prompt appears
+   without Ctrl+V, the task is Summarize, and nothing is sent. Review and send
+   yourself only when ready. A success notice requires the native edit's full
+   text plus recognized composer/Send readiness; no control is activated.
+3. Repeat using the saved Claude chat or Project you actually use. The script
+   requires its exact saved path/query/fragment. A Project redirect into a chat
+   cannot prove Project membership, so it must show clipboard fallback rather
+   than guess. Record the exact notice if the editor or route is unrecognized.
+4. If Claude restores an existing draft/attachment in a saved destination,
+   verify it remains untouched and the fallback appears. If no draft restores
+   in the new tab, record this live guard check as not run. Fixture guards are
+   already covered. With any fallback, inspect the composer for existing or
+   partial text before pasting, to avoid duplication.
+
+**Accepted:** Patrik confirmed automatic insertion and approved push/merge.
+**Not independently observed:** live composer markup/framework internals, every
+Project/route, or live draft/attachment safety cases. Sarah's separate acceptance
+is unrecorded. The isolated tool browser reached security verification, not the
+composer; this does not contradict the user-confirmed working case. Fixture
+passes remain distinct from authenticated user feedback.
+
+### Candidate evidence and reproducible checks
+
+The bounded input markers are supported by the integration author's
+[Claude entry](https://github.com/hanzili/hanzi-browse/blob/main/server/src/agent/domain-skills.json)
+and its reported chat-input editor. The exact Send marker is present in the
+integration author's
+[configuration](https://github.com/dliedke/ChatGPTExtension/blob/master/ai-config.json).
+These are primary reports of their integrations, not inspected current Claude
+markup. No third-party implementation is copied; the new script uses the
+extension's own handoff design and standard DOM editing. No generic editor,
+placeholder-only or broadly selected Send-button fallback is used.
+
+`npm run verify`, all four `npm test` suites, the 28-case Claude native editing
+fixture and the existing 18-case native popup fixture pass. ChatGPT's injector
+is unchanged; its existing destination/draft/attachment guards still pass.
+
+Optional browser checks use Node 22+ and an existing Chromium/Chrome/Edge binary,
+with a fresh isolated profile and synthetic intercepted pages, not personal
+accounts:
+
+```sh
+npm run test:claude-browser -- /absolute/path/to/chromium
+npm run test:browser -- /absolute/path/to/chromium
+```
+
+## Previous UI beta status (v0.1.9, subsequently user-accepted)
+
+**v0.1.9 redesigned popup: ready for Patrik to test.** Patrik confirmed the earlier Claude handoff and Apply to Project work, then reported Summarize producing an Analyze prompt. The cause is not established. The committed v0.1.8 popup was replayed with native mouse clicks from saved Analyze: all three modes across both providers' new chats, saved chats and Projects copied the expected distinct instruction and retained it after reload (18 combinations). This did not reproduce the report. It is a real DOM fixture with mocked extension APIs, not Patrik's authenticated installation.
+
+The new popup captures the visible mode, destination and question at the click, locks changes while preparing the handoff, explicitly restores one mode, and shows a task summary above the action and SELECTED MODE in the copied prompt. Fixtures verify these protections; they do not prove the original failure's cause or an affected-browser fix.
+
+### v0.1.9 focused acceptance
+
+1. Update the existing unpacked folder and Reload the same extension entry. Refresh YouTube/ChatGPT. Confirm **v0.1.9** in the popup footer. Do not uninstall or load a duplicate entry.
+2. Starting with Analyze saved, choose **Claude**, a destination, then **Summarize**. The task summary above **Copy & open Claude** must say Summarize. Paste into the intended empty Claude message box: SELECTED MODE: Summarize must be followed by the faithful-summary request, with no Critically analyze the following YouTube video instruction.
+3. Reopen the popup: Claude, destination and Summarize should remain selected. Switch providers and back: each remembers its own destination, while task/question remain. Check Analyze and Apply to Project produce their distinct instructions. Send manually.
+4. To use a Claude Project, open its actual page and save it through the extension. Back on YouTube, choose Claude and that Project. All three tasks use the saved link. Check the destination before pasting and provide goals/context in Claude if not already available there.
+5. Check the full-title/featured-people/link header in a real reply and follow-up. Sidebar naming stays separate and unverified; Copy title plus manual Rename remains available.
+
+### v0.1.9 verification evidence
+
+- npm test passes all four fixture suites, including mode-at-click capture, locked controls, per-provider retention, legacy selected links, uncertain-route repair, caption fallbacks and existing guarded ChatGPT insertion. npm run verify checks unchanged narrow permissions, version consistency and source syntax.
+- The optional tests/popup-browser.mjs uses an existing Chromium binary in a new isolated profile, native mouse clicks and the actual popup assets. It checks all 18 combinations, absence of other modes' instructions in each copied prompt, real reload retention, provider switching, horizontal overflow and primary-action visibility for the standard 600px fixture. Light/dark synthetic screenshots were inspected locally.
+- Both the v0.1.8 baseline and new popup passed their 18-case mode matrices on Chrome 149.0.7827.55. Handoff APIs are mocked: these are not authenticated end-to-end tests. No browser is downloaded or dependency added to the extension.
+- Isolated read-only inspection of https://claude.ai/new reached security verification with zero editors. No signed-in composer or Project editor was exposed. No personal profile, Sarah session or unrelated tabs were accessed. **Claude automatic pasting remains disabled, blocked on inspected authenticated composer evidence.**
+- Claude Project semantics were checked against its [official Project guide](https://support.claude.com/en/articles/9519177-how-can-i-create-and-manage-projects). The extension reopens user-saved URLs; it does not upload Project knowledge or assume other-chat context exists.
+
+Optional native-DOM check, with Node 22+ and an already installed Chromium/Chrome/Edge binary: npm run test:browser -- /absolute/path/to/chromium.
+
+## Previous reply-header beta status (v0.1.8)
+
+**v0.1.8 reply headers implemented; sidebar naming remains unverified.** Patrik
+reports odd automatic names with the inherited v0.1.6 prompt. Inspection shows
+the extension only inserts a naming request into the outgoing prompt; there is
+no sidebar rename call, Rename UI action, title reader or title confirmation.
+No authenticated browser or internal ChatGPT title mechanism was inspected.
+The precise cause of those generated names is not established.
+
+The revised prompt leads with source metadata and strengthens the exact-title
+preference for recognized new ChatGPT chats. Every mode, for both providers and
+existing conversations, requests a reply header of full original video title,
+featured speakers/guests only if explicitly identified by the title/transcript,
+then the video URL. The uploader is not assumed to be a featured person. These
+are model instructions; fixture coverage does not prove actual model compliance.
+**Copy title** copies the exact preferred `YT · <full video title>` for manual
+Rename when the provider's generated sidebar name differs. Existing chats are
+never renamed by the extension, and Claude auto-insertion remains disabled.
+
+### v0.1.8 focused acceptance
+
+1. Update the existing unpacked folder to v0.1.8, Reload the same extension
+   entry, then refresh YouTube and ChatGPT tabs. Do not uninstall or load a
+   duplicate entry. Keep your existing destinations and preferences.
+2. Use a video with a distinctive title in each mode and provider. After sending
+   manually, check that the reply begins with its full original title, any
+   genuinely source-identified featured people, and the video link, before the
+   TL;DR or analysis. Ask a brief follow-up and check that the header repeats.
+3. Use a source with no clearly identified participants: the Featuring line
+   should be absent. A channel alone is not a person's identity.
+4. From General ChatGPT or a saved Project landing page, record the actual new
+   sidebar title separately from the reply heading. Do not count the heading or
+   a model claim as proof of a renamed chat. If the automatic name differs,
+   click **Copy title** on the source video's extension popup and paste into
+   the destination's Rename control yourself. Saved conversations receive no
+   automatic naming request.
+
+`npm run verify`, `npm test` and `git diff --check` pass for v0.1.8. New fixtures
+cover exact source identity (including quotes/Unicode), header requests in both
+providers and all modes, existing-chat behavior, anti-invention instructions,
+exact title-copy and missing-title errors. They do not test generated replies
+or confirm an exact sidebar-title correction. **Both remain ready to test.**
+
+## Previous Claude beta status (v0.1.7)
+
+**v0.1.7 Claude beta: implemented; Sarah's acceptance not run.** The existing
+Chrome and Edge workflow is user-confirmed working. This update preserves the
+v0.1.6 title experiment below; its actual sidebar title remains unverified.
+Ordinary Chrome/Edge acceptance does not need repeating without a new regression.
+
+Claude uses copy/open/paste only. No live browser inspection tool is available
+in this session, so no Claude editor selectors or automatic insertion are
+claimed verified. There is no Claude injector or Claude host permission; the
+extension cannot edit its composer, draft or Send control. Actual Claude
+routing, paste behavior, account access,
+framework synchronization and Sarah's acceptance are **not run**.
+
+The bounded web routes use the new/chat/project URL shapes described in
+[Claude's official link documentation](https://support.claude.com/en/articles/14729294-open-claude-desktop-with-a-link).
+This reference identifies chat/project IDs as those in the web URL; its Desktop
+prefill parameters are not assumed to be a web API. Project IDs are never
+invented, and a saved Project URL is opened exactly as saved without inferring
+which chat it might create. Queries and fragments are preserved.
+
+### Sarah's short Claude acceptance check
+
+1. Extract the current v0.1.8 ZIP to a permanent folder, then use **Load unpacked** from
+   `chrome://extensions/` or `edge://extensions/` with Developer mode on. For an
+   existing installation, update files in its existing folder and **Reload** the
+   same extension entry; do not uninstall. Refresh the YouTube tab.
+2. Sign into Claude normally. For a Project/conversation, open its actual page,
+   click the extension, name it and **Save current destination**. General Claude
+   is already available; no Project URL needs to be typed or guessed.
+3. Open a captioned YouTube video, choose **General Claude**, **Summarize**, and
+   an optional question. Click **Copy & open Claude**. Confirm the new Claude
+   tab opens beside YouTube in the same window. Check the context, paste with
+   `Ctrl+V`, and confirm the title, URL, transcript, mode and question are present.
+   Review and send yourself.
+4. Repeat **Analyze** and **Apply to Project** with a saved Claude conversation
+   or Project. Confirm the saved context is the intended one before pasting.
+   If Claude redirects or needs login, navigate to that context yourself and
+   paste there; the extension makes no claim about editor identity.
+5. Leave a draft in an existing Claude tab and repeat a handoff: confirm the
+   extension leaves it untouched. Do not paste over a draft you want to keep.
+   Reopen the popup to confirm the last mode/destination and caption preference
+   remain selected. Report browser/version and pass, fail or not run.
+
+### v0.1.7 regression evidence
+
+- `npm run verify` passes Manifest V3, version synchronization, existing narrow
+  permissions and all JavaScript syntax checks. `npm test` passes all four
+  suites, including the unchanged extraction fallbacks and ChatGPT injector
+  draft/attachment/route protections.
+- Added fixtures execute the actual worker, popup, options and destination
+  helper for all three Claude modes, source-tab anchoring, exact URL state,
+  clipboard-before-open, blocked clipboard/open failure, no missing-selection
+  redirect, built-in migration, saved destinations/preferences and cross-provider
+  handoff rejection. No Claude prompt is stored for automatic insertion.
+- These checks are automated fixture passes, not authenticated Claude or Sarah
+  acceptance. Existing title instructions remain covered by the original
+  v0.1.6 tests.
+
+## Previous title experiment status (v0.1.6)
+
+**v0.1.6 naming / Edge sidebar check pending.** The user confirmed v0.1.5 worked in Edge after earlier confirmation of ordinary source-adjacent tab placement. Pinned and grouped source tabs remain untested. For v0.1.6, tests verify the outgoing prompt, while checking the actual sidebar title requires a signed-in ChatGPT session.
+
+Popup fixtures verify the exact title and clipboard payload for all three modes, and omission on existing or ambiguous routes. The browser tool's request to ChatGPT received HTTP 403, and the local browser connection did not expose the signed-in Edge session. No actual sidebar title was observed.
+
+## Naming experiment in Edge (v0.1.6)
+
+- [ ] Open a captioned video with a distinctive title and use **Summarize** with **General ChatGPT**. After pressing **Send** yourself, let ChatGPT set the title. Verify the title shown in the ChatGPT sidebar is exactly `YT · <original YouTube title>`, including punctuation. Text in ChatGPT's reply does not count.
+- [ ] Repeat with **Analyze** and **Apply to Project** from fresh chats, including at least one saved Project landing page. Record the actual sidebar titles even if they differ from the request.
+- [ ] Send to a saved conversation. Confirm the prompt has no `CHAT TITLE` block and the sidebar still shows the previous chat title.
 
 ## Automated checks
 

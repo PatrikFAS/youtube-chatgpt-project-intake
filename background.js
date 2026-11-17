@@ -2,23 +2,13 @@
 
 importScripts('shared/destination.js');
 
-const CHATGPT_ORIGIN = 'https://chatgpt.com';
 const PENDING_PREFIX = 'pending_';
 const PENDING_TTL_MS = 10 * 60 * 1000;
 const claimingTabs = new Set();
 
 chrome.runtime.onInstalled.addListener(async () => {
   const current = await chrome.storage.local.get(['destinations', 'lastMode', 'lastDestinationId']);
-  const destinations = Array.isArray(current.destinations) ? current.destinations : [];
-
-  if (!destinations.some((d) => d.id === 'general')) {
-    destinations.unshift({
-      id: 'general',
-      name: 'General ChatGPT',
-      url: `${CHATGPT_ORIGIN}/`,
-      builtIn: true
-    });
-  }
+  const destinations = YT2GPTDestination.withBuiltIns(current.destinations);
 
   await chrome.storage.local.set({
     destinations,
@@ -30,8 +20,8 @@ chrome.runtime.onInstalled.addListener(async () => {
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (!message || typeof message !== 'object') return;
 
-  if (message.type === 'OPEN_CHATGPT_WITH_PAYLOAD') {
-    handleOpenChatGPT(message)
+  if (message.type === 'OPEN_DESTINATION_WITH_PAYLOAD' || message.type === 'OPEN_CHATGPT_WITH_PAYLOAD') {
+    handleOpenDestination(message)
       .then(sendResponse)
       .catch((error) => sendResponse({ ok: false, error: String(error?.message || error) }));
     return true;
@@ -59,9 +49,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 });
 
-async function handleOpenChatGPT(message) {
+async function handleOpenDestination(message) {
   const payload = typeof message.payload === 'string' ? message.payload : '';
-  const destinationUrl = normalizeChatGPTUrl(message.destinationUrl);
+  const destinationUrl = YT2GPTDestination.normalize(message.destinationUrl);
 
   if (!payload) throw new Error('Prompt payload is empty.');
   if (!destinationUrl) throw new Error(YT2GPTDestination.REPAIR);
@@ -74,10 +64,10 @@ async function handleOpenChatGPT(message) {
   try {
     source = await chrome.tabs.get(message.sourceTabId);
   } catch {
-    throw new Error('The originating YouTube tab was closed. Open the intended ChatGPT destination and paste the copied prompt.');
+    throw new Error('The originating YouTube tab was closed. Open the intended destination and paste the copied prompt.');
   }
   if (source?.id !== message.sourceTabId || !Number.isInteger(source.windowId) || !Number.isInteger(source.index)) {
-    throw new Error('Could not locate the originating YouTube tab. The prompt can be pasted into the intended ChatGPT destination.');
+    throw new Error('Could not locate the originating YouTube tab. The prompt can be pasted into the intended destination.');
   }
 
   let tab;
@@ -93,9 +83,9 @@ async function handleOpenChatGPT(message) {
       pinned: false
     });
   } catch {
-    throw new Error('Could not open ChatGPT beside the YouTube tab. Open the intended destination and paste the copied prompt.');
+    throw new Error('Could not open the destination beside the YouTube tab. Open the intended destination and paste the copied prompt.');
   }
-  if (!Number.isInteger(tab?.id) || tab.id < 0) throw new Error('Could not open ChatGPT tab. Paste the copied prompt into the intended destination.');
+  if (!Number.isInteger(tab?.id) || tab.id < 0) throw new Error('Could not open the destination tab. Paste the copied prompt into the intended destination.');
 
   const key = `${PENDING_PREFIX}${tab.id}`;
   try {
@@ -103,14 +93,10 @@ async function handleOpenChatGPT(message) {
       [key]: { payload, createdAt: Date.now(), destinationUrl }
     });
   } catch {
-    throw new Error('ChatGPT opened, but automatic insertion could not be prepared. Paste the copied prompt into the intended destination.');
+    throw new Error('The destination opened, but automatic insertion could not be prepared. Paste the copied prompt into the intended destination.');
   }
 
   return { ok: true, tabId: tab.id };
-}
-
-function normalizeChatGPTUrl(value) {
-  return YT2GPTDestination.normalize(value);
 }
 
 async function getPendingForSender(sender) {
