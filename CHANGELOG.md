@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.9
+
+- Redesigns the popup with a top-level ChatGPT/Claude switch, provider-specific destinations, clear Project/chat labels, compact task cards, expandable caption/question controls, light/dark styling, keyboard focus states and a visible build number. Saved links, names, caption preferences and the selected task are preserved; each provider remembers its last destination.
+- Groups Manage destinations by provider and makes saving a Claude Project explicit. All three existing modes reuse the same saved Project URL; no internal Claude API or upload into Project knowledge is used.
+- Captures the visible mode, destination and question at the action click, locks choices while preparing the prompt, explicitly restores one mode, and shows the selected task both above the action button and in the copied prompt. This hardens against selection changes during asynchronous extraction. Patrik's report that Summarize copied Analyze was not reproduced on the committed v0.1.8 native popup fixture; no exact cause is claimed.
+- Adds an optional dependency-free real-browser fixture: native mouse clicks and copied-prompt checks for all 18 mode/provider/destination combinations, reload retention and provider switching. The old and updated popup fixtures both passed their mode matrices. Mocked browser APIs do not establish an authenticated end-to-end result.
+- Patrik confirmed the earlier Claude handoff and Apply to Project work. Isolated live Claude inspection stopped at security verification without an editor, so automatic pasting remains unverified and disabled. No personal session, unrelated tabs, permissions or automatic Send behavior are added.
+- Preserves v0.1.6 naming preferences, v0.1.8 source-grounded reply headers and Copy title. Sidebar title generation remains provider-controlled.
+
 ## 0.1.8
 
 - Puts the real source title, video URL and uploader metadata first in every outgoing prompt, then requests that every video-related reply (including follow-ups) start with the full title, source-identified featured speakers/guests when available, and the video link. Unknown participants must be omitted; the channel is not treated as a featured person.

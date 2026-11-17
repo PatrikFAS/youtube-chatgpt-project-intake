@@ -2,9 +2,9 @@
 
 A lightweight Chrome/Edge browser extension that extracts YouTube transcripts and routes them to ChatGPT or Claude for summarization, critical analysis, or project-specific application.
 
-**Current beta: v0.1.8 - reply headers and Claude ready to test**
+**Current beta: v0.1.9 - clearer provider and task selection**
 
-The existing Chrome and Edge workflow is user-confirmed working. Sarah's Claude acceptance is not run. See [PROJECT_PLAN.md](PROJECT_PLAN.md) for milestones, owners and the next action.
+The existing Chrome and Edge workflow is user-confirmed working. Patrik confirmed Claude handoff and Apply to Project; his reported Summarize/Analyze mix-up needs a v0.1.9 retest. Sarah's own acceptance is not recorded. See [PROJECT_PLAN.md](PROJECT_PLAN.md) for milestones, owners and the next action.
 
 The extension does **not** run its own AI. It extracts YouTube captions locally, packages them with a focused instruction and copies the complete prompt before opening your selected destination. ChatGPT uses the existing guarded composer insertion. Claude uses **copy/open/paste**: check the context, paste with `Ctrl+V`, review and send yourself. Claude automatic insertion is unverified and disabled; no extra host permission is needed.
 
@@ -19,14 +19,14 @@ Starts with the same brief orientation **Video TL;DR**, then critically evaluate
 ### Summarize
 Faithfully compress the video into a TL;DR, key ideas, examples, conclusions, and useful timestamps.
 
-The raw transcript is a separate utility rather than a fourth reasoning mode.
+The raw transcript is a separate utility rather than a fourth reasoning mode. The selected task appears above the action button and as SELECTED MODE in the copied prompt, so Summarize and Analyze are easy to distinguish.
 
-## Update an existing installation to v0.1.8
+## Update an existing installation to v0.1.9
 
 1. Extract the versioned ZIP and overwrite its files in the **same unpacked extension folder** you originally loaded. Keep that folder's location. You can back it up first.
 2. Open `edge://extensions/` or `chrome://extensions/` and click **Reload** on the existing extension entry. Do not uninstall it; updating in place retains saved destinations and preferences.
-3. Refresh your open YouTube and ChatGPT tabs. Your saved destinations, mode and caption preference remain available; General Claude is added.
-4. For Claude, choose it on a YouTube video and click **Copy & open Claude**. Check the opened context, paste with `Ctrl+V`, review and send yourself. Follow [Sarah's short check](TESTING.md#sarahs-short-claude-acceptance-check). Existing Chrome/Edge behavior is already confirmed.
+3. Refresh your open YouTube and ChatGPT tabs. Confirm **v0.1.9** in the popup footer. Saved links, task and caption preferences remain; the last saved destination selects its provider automatically.
+4. On YouTube, choose **Claude** in the Assistant switch, **New chat** or a saved destination, then your task. Confirm the summary above **Copy & open Claude**. Check the opened context, paste with Ctrl+V, review and send yourself. Follow [the focused v0.1.9 check](TESTING.md#v019-focused-acceptance). Existing Chrome/Edge behavior is already confirmed.
 
 The update keeps supported destination URLs intact and rejects Codex or unfamiliar routes with repair guidance. It checks the actual URL, selected product controls and specific ChatGPT composer markers before insertion, preserves existing drafts, and consumes a handoff before editing to avoid duplicates. Unrecognized interfaces get a visible clipboard fallback; choose the intended ChatGPT surface before pasting. No product-mode override is invented.
 
@@ -84,20 +84,20 @@ You can edit or delete saved destinations from **Manage destinations**.
 2. Open the actual Project or conversation you want.
 3. Click the extension, give it a name, and click **Save current destination**.
 
-**General Claude (paste manually)** is built in. Saved Claude URLs keep their path, query and fragment. The extension never guesses a Project URL, adds prompt parameters or edits Claude's composer. If Claude redirects or needs login, check/navigate to the right context before pasting. The Claude live UI has not been verified in this session; Sarah's browser acceptance is pending.
+**Claude** is a top-level assistant choice. Under it, **New chat** is built in; saved Projects and conversations are labelled separately. Saved Claude URLs keep their path, query and fragment. The extension never guesses a Project URL, adds prompt parameters or edits Claude's composer. If Claude redirects or needs login, check/navigate to the right context before pasting. The Claude live UI has not been verified in this session; Sarah's browser acceptance is pending.
 
 ## Daily use
 
 1. Open a YouTube video.
 2. Click the extension.
-3. Pick the transcript track if more than one is available.
-4. Pick a ChatGPT or Claude destination.
+3. Keep the preferred transcript track, or expand **Caption language** to choose another.
+4. Choose **ChatGPT** or **Claude**, then a new chat or saved Project/conversation. Each assistant remembers its last destination.
 5. Pick one mode:
    - **Apply to Project**
    - **Analyze**
    - **Summarize**
-6. Optionally type a specific question.
-7. Click **Send to ChatGPT** or **Copy & open Claude**.
+6. Expand **Add a question** for a specific question. Expand **Caption language** to change tracks.
+7. Check the task summary, then click **Open in ChatGPT** or **Copy & open Claude**. Task, destination and question are captured at this click; controls lock while preparing the prompt.
 8. The destination opens beside the captured YouTube tab. ChatGPT insertion is attempted in a recognized empty composer; for Claude, check the destination and paste with `Ctrl+V`. Keep any existing draft until you decide what to do with it.
 9. Review the prompt and press **Send** yourself.
 
@@ -181,12 +181,14 @@ v0.1 intentionally does not include APIs, a backend, built-in AI summaries, Herm
 
 ## Development and release packaging
 
-Run `npm run verify` and `npm test`. Tests execute the extension's source using simulated browser objects; they are not authenticated end-to-end proof.
+Run `npm run verify` and `npm test`. Tests use simulated browser objects, not authenticated end-to-end sessions. Optional native-popup checks: `npm run test:browser -- /absolute/path/to/chromium` with Node 22+ and an existing browser binary. This uses an isolated synthetic profile and adds no dependency.
 
 After committing with a clean tracked tree, build the ZIP using Python's standard library:
 
 ```sh
-python3 scripts/package.py /path/outside/repository/youtube-chatgpt-project-intake-0.1.8.zip
+python3 scripts/package.py /path/outside/repository/youtube-chatgpt-project-intake-0.1.9.zip
 ```
 
 The archive contains the committed runtime files and product documentation, with version and exact commit in `BUILD.txt`. No dependencies or developer tests are needed to load it unpacked.
+
+Claude automation status: isolated public-page inspection reached security verification, with no editor. Automatic pasting stays disabled until a signed-in composer can be inspected and tested. Manual paste stays available in Sarah's own session.

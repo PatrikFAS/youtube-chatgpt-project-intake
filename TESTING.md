@@ -2,6 +2,30 @@
 
 ## Current status
 
+**v0.1.9 redesigned popup: ready for Patrik to test.** Patrik confirmed the earlier Claude handoff and Apply to Project work, then reported Summarize producing an Analyze prompt. The cause is not established. The committed v0.1.8 popup was replayed with native mouse clicks from saved Analyze: all three modes across both providers' new chats, saved chats and Projects copied the expected distinct instruction and retained it after reload (18 combinations). This did not reproduce the report. It is a real DOM fixture with mocked extension APIs, not Patrik's authenticated installation.
+
+The new popup captures the visible mode, destination and question at the click, locks changes while preparing the handoff, explicitly restores one mode, and shows a task summary above the action and SELECTED MODE in the copied prompt. Fixtures verify these protections; they do not prove the original failure's cause or an affected-browser fix.
+
+### v0.1.9 focused acceptance
+
+1. Update the existing unpacked folder and Reload the same extension entry. Refresh YouTube/ChatGPT. Confirm **v0.1.9** in the popup footer. Do not uninstall or load a duplicate entry.
+2. Starting with Analyze saved, choose **Claude**, a destination, then **Summarize**. The task summary above **Copy & open Claude** must say Summarize. Paste into the intended empty Claude message box: SELECTED MODE: Summarize must be followed by the faithful-summary request, with no Critically analyze the following YouTube video instruction.
+3. Reopen the popup: Claude, destination and Summarize should remain selected. Switch providers and back: each remembers its own destination, while task/question remain. Check Analyze and Apply to Project produce their distinct instructions. Send manually.
+4. To use a Claude Project, open its actual page and save it through the extension. Back on YouTube, choose Claude and that Project. All three tasks use the saved link. Check the destination before pasting and provide goals/context in Claude if not already available there.
+5. Check the full-title/featured-people/link header in a real reply and follow-up. Sidebar naming stays separate and unverified; Copy title plus manual Rename remains available.
+
+### v0.1.9 verification evidence
+
+- npm test passes all four fixture suites, including mode-at-click capture, locked controls, per-provider retention, legacy selected links, uncertain-route repair, caption fallbacks and existing guarded ChatGPT insertion. npm run verify checks unchanged narrow permissions, version consistency and source syntax.
+- The optional tests/popup-browser.mjs uses an existing Chromium binary in a new isolated profile, native mouse clicks and the actual popup assets. It checks all 18 combinations, absence of other modes' instructions in each copied prompt, real reload retention, provider switching, horizontal overflow and primary-action visibility for the standard 600px fixture. Light/dark synthetic screenshots were inspected locally.
+- Both the v0.1.8 baseline and new popup passed their 18-case mode matrices on Chrome 149.0.7827.55. Handoff APIs are mocked: these are not authenticated end-to-end tests. No browser is downloaded or dependency added to the extension.
+- Isolated read-only inspection of https://claude.ai/new reached security verification with zero editors. No signed-in composer or Project editor was exposed. No personal profile, Sarah session or unrelated tabs were accessed. **Claude automatic pasting remains disabled, blocked on inspected authenticated composer evidence.**
+- Claude Project semantics were checked against its [official Project guide](https://support.claude.com/en/articles/9519177-how-can-i-create-and-manage-projects). The extension reopens user-saved URLs; it does not upload Project knowledge or assume other-chat context exists.
+
+Optional native-DOM check, with Node 22+ and an already installed Chromium/Chrome/Edge binary: npm run test:browser -- /absolute/path/to/chromium.
+
+## Previous reply-header beta status (v0.1.8)
+
 **v0.1.8 reply headers implemented; sidebar naming remains unverified.** Patrik
 reports odd automatic names with the inherited v0.1.6 prompt. Inspection shows
 the extension only inserts a naming request into the outgoing prompt; there is

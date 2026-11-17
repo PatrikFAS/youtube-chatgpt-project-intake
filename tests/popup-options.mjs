@@ -30,7 +30,7 @@ function makeElement(id) {
     addEventListener(type, fn) { listeners[type] = fn; },
     appendChild(child) { this.children.push(child); this.options = this.children; },
     append(...children) { this.children.push(...children); },
-    replaceChildren(...children) { this.children = children; },
+    replaceChildren(...children) { this.children = children; this.options = children; },
     focus() {}, select() {}, remove() {}
   };
 }
@@ -42,21 +42,25 @@ async function makePopup({
   mode = 'analyze',
   activeUrl = 'https://www.youtube.com/watch?v=abc',
   clipboardFails = false,
-  fallbackCopyOk = true
+  fallbackCopyOk = true,
+  storedSettings = {},
+  transcriptGate = null
 } = {}) {
   const ids = [
     'loadingView','youtubeView','chatgptView','otherView','videoTitle','videoMeta','transcriptStatus',
     'trackSelect','destinationSelect','optionalQuestion','warning','error','sendButton','viewTranscript',
     'copyTranscript','retryButton','transcriptPanel','transcriptPreview','transcriptCount','destinationName',
     'currentUrl','chatgptSaveStatus','saveDestination','manageDestinations','manageDestinationsChatgpt',
-    'openOptionsTop','openOptionsOther','handoffHelp','copyChatTitle'
+    'openOptionsTop','openOptionsOther','handoffHelp','copyChatTitle',
+    'providerChatGPT','providerClaude','destinationHelp','saveHeading','saveHelp','actionSummary','buildVersion'
   ];
   const els = Object.fromEntries(ids.map((id) => [id, makeElement(id)]));
   const radios = ['apply','analyze','summarize'].map((value) => Object.assign(makeElement(`mode-${value}`), { value, checked: value === mode }));
   const events = [];
   const storageData = {
     destinations: [{ id: 'general', name: 'General ChatGPT', url: destinationUrl, builtIn: true }],
-    lastMode: mode, lastDestinationId: 'general', preferredTranscriptLanguage: 'en'
+    lastMode: mode, lastDestinationId: 'general', preferredTranscriptLanguage: 'en',
+    ...storedSettings
   };
   let activeId = 41;
   let queriedTabs = 0;
@@ -73,7 +77,7 @@ async function makePopup({
     },
     createElement(tag) { return makeElement(tag); },
     addEventListener(type, fn) { docListeners[type] = fn; },
-    body: { appendChild(el) { events.push('fallback-copy'); events.fallbackText = el.value; el.select(); }, removeChild() {} },
+    body: { dataset: {}, appendChild(el) { events.push('fallback-copy'); events.fallbackText = el.value; el.select(); }, removeChild() {} },
     execCommand() { return fallbackCopyOk; }
   };
   Object.defineProperty(els.destinationSelect, 'selectedOptions', {
@@ -92,6 +96,7 @@ async function makePopup({
           tracks: [{ languageCode: 'en', name: 'English' }]
         } };
         activeId = 99; // The active browser tab changes while transcript retrieval is in flight.
+        if (transcriptGate) await transcriptGate;
         return { ok: true, data: { text: 'Transcript contents.', characterCount: 22, track: { name: 'English' } } };
       }
     },
@@ -103,6 +108,7 @@ async function makePopup({
       async set(value) { Object.assign(storageData, value); }
     } },
     runtime: {
+      getManifest() { return JSON.parse(fs.readFileSync(path.join(root, 'manifest.json'), 'utf8')); },
       async sendMessage(message) { events.push('open'); events.message = message; return { ok: runtimeOk, error: 'Simulated opening failure.' }; },
       openOptionsPage() {}
     }
@@ -290,13 +296,11 @@ assert.equal(legacy.storageData.lastDestinationId, 'general');
 assert.equal(legacy.storageData.lastMode, 'summarize');
 assert.equal(legacy.storageData.destinations[0].url, 'https://chatgpt.com/g/g-p-existing/project');
 assert.equal(legacy.storageData.destinations.filter((d) => d.id === 'claude-general').length, 1);
-legacy.els.destinationSelect.value = 'claude-general';
-await vm.runInContext('rememberDestination()', legacy.context);
+await legacy.els.providerClaude.listeners.change();
 assert.equal(legacy.els.sendButton.textContent, 'Copy & open Claude');
 assert.equal(legacy.storageData.lastDestinationId, 'claude-general');
-legacy.els.destinationSelect.value = 'general';
-await vm.runInContext('rememberDestination()', legacy.context);
-assert.equal(legacy.els.sendButton.textContent, 'Send to ChatGPT');
+await legacy.els.providerChatGPT.listeners.change();
+assert.equal(legacy.els.sendButton.textContent, 'Open in ChatGPT');
 
 const claudeSave = await makePopup({ activeUrl: 'https://claude.ai/project/fixture-project?view=saved#notes' });
 assert.equal(claudeSave.els.chatgptView.classList.contains('hidden'), false, 'popup recognizes Claude without a content script or host access');
@@ -315,6 +319,9 @@ assert.equal(claudeOptions.storedPreferences.destinations.filter((d) => d.id ===
 assert.equal(claudeOptions.storedPreferences.lastMode, 'summarize');
 assert.equal(claudeOptions.storedPreferences.lastDestinationId, 'saved');
 assert.equal(claudeOptions.storedPreferences.preferredTranscriptLanguage, 'fr');
+assert.equal(claudeOptions.els.destinationList.children.length, 2, 'options groups destinations by provider');
+assert.equal(claudeOptions.els.destinationList.children[0].children[0].textContent, 'ChatGPT');
+assert.equal(claudeOptions.els.destinationList.children[1].children[0].textContent, 'Claude');
 
 const titleCopy = await makePopup({ videoTitle: titleWithQuotes });
 await titleCopy.els.copyChatTitle.listeners.click();
@@ -332,4 +339,54 @@ await vm.runInContext('sendToChatGPT()', namedSource.context);
 assertReplyHeader(namedSource.events.clipboard, 'Interview with Dr. Rowan Vale: "Evidence" & caf\u00e9');
 assert.doesNotMatch(namedSource.events.clipboard, /Featuring: Example channel/, 'uploader metadata is never fabricated into a participant line');
 
-console.log('PASS: popup/options preserve settings; both providers receive source-grounded reply headers, guarded ChatGPT title requests and an exact manual title-copy fallback.');
+const groupedDestinations = [
+  { id:'general', name:'General ChatGPT', url:'https://chatgpt.com/', builtIn:true },
+  { id:'claude-general', name:'General Claude', url:'https://claude.ai/new', builtIn:true },
+  { id:'gpt-project', name:'GPT project', url:'https://chatgpt.com/g/g-p-fixture/project' },
+  { id:'claude-project', name:'Claude project', url:'https://claude.ai/project/fixture-project?view=saved#notes' },
+  { id:'claude-repair', name:'Old Claude link', url:'https://claude.ai/unfamiliar-route' }
+];
+const grouped = await makePopup({ storedSettings: { destinations: groupedDestinations, lastDestinationId: 'claude-project', lastMode:'summarize' } });
+assert.equal(grouped.els.providerClaude.checked, true, 'legacy selected URL chooses its provider without migration');
+assert.equal(grouped.els.destinationSelect.value, 'claude-project');
+assert.deepEqual(grouped.els.destinationSelect.options.map((option) => option.value), ['claude-general','claude-project','claude-repair']);
+assert.match(grouped.els.destinationHelp.textContent, /Saved Claude Project/);
+assert.match(grouped.els.actionSummary.textContent, /^Summarize/);
+grouped.els.optionalQuestion.value = 'Keep this question';
+await grouped.els.providerChatGPT.listeners.change();
+grouped.els.destinationSelect.value = 'gpt-project';
+await grouped.els.destinationSelect.listeners.change();
+await grouped.els.providerClaude.listeners.change();
+assert.equal(grouped.els.destinationSelect.value, 'claude-project', 'each provider remembers its own last destination');
+assert.equal(grouped.els.optionalQuestion.value, 'Keep this question');
+assert.equal(grouped.radios.find((radio) => radio.checked).value, 'summarize');
+assert.equal(grouped.storageData.preferredTranscriptLanguage, 'en');
+const restored = await makePopup({ mode:'summarize', storedSettings:grouped.storageData });
+assert.equal(restored.els.providerClaude.checked, true);
+await restored.els.providerChatGPT.listeners.change();
+assert.equal(restored.els.destinationSelect.value, 'gpt-project', 'per-provider destination choice survives another popup instance');
+
+const needsRepair = await makePopup({ storedSettings: { destinations:groupedDestinations, lastDestinationId:'claude-repair' } });
+assert.equal(needsRepair.els.destinationSelect.value, 'claude-repair', 'an unfamiliar legacy route is kept, never silently replaced by new chat');
+assert.match(needsRepair.els.destinationHelp.textContent, /needs repair/);
+await vm.runInContext('sendToChatGPT()', needsRepair.context);
+assert.equal(needsRepair.events.includes('open'), false);
+assert.match(needsRepair.els.error.textContent, /complete prompt is already on your clipboard/);
+
+let releaseTranscript;
+const transcriptGate = new Promise((resolve) => { releaseTranscript = resolve; });
+const capturedMode = await makePopup({ mode:'analyze', transcriptGate, runtimeOk:true });
+capturedMode.radios.forEach((radio) => { radio.checked = radio.value === 'summarize'; });
+await capturedMode.radios.find((radio) => radio.value === 'summarize').listeners.change();
+const pendingSend = vm.runInContext('sendToChatGPT()', capturedMode.context);
+assert.equal(capturedMode.els.providerClaude.disabled, true, 'provider is locked during extraction');
+assert.equal(capturedMode.radios.every((radio) => radio.disabled), true, 'task controls are locked while preparing the handoff');
+// A programmatic change during an await cannot alter the click's task.
+capturedMode.radios.forEach((radio) => { radio.checked = radio.value === 'analyze'; });
+releaseTranscript();
+await pendingSend;
+assert.match(capturedMode.events.clipboard, /SELECTED MODE: Summarize\nGive me a concise but sufficiently complete summary/);
+assert.doesNotMatch(capturedMode.events.clipboard, /Critically analyze the following YouTube video/);
+assert.equal(capturedMode.storageData.lastMode, 'summarize');
+
+console.log('PASS: popup/options preserve per-provider selections, snapshot the chosen mode, and retain source-grounded headers, title-copy and safe fallback behavior.');

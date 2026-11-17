@@ -45,6 +45,26 @@ globalThis.YT2GPTDestination = (() => {
     return null;
   }
 
+  // Display grouping only, including saved routes that now need repair.
+  // This must never authorize opening or automatic composer insertion.
+  function displayProvider(value) {
+    try {
+      const origin = new URL(String(value || '').trim()).origin;
+      if (origin === 'https://claude.ai') return 'claude';
+      if (origin === 'https://chatgpt.com') return 'chatgpt';
+    } catch {}
+    return null;
+  }
+
+  function kind(value) {
+    if (!normalize(value)) return 'unknown';
+    const path = new URL(value).pathname.replace(/\/$/, '') || '/';
+    if (path === '/' || (provider(value) === 'claude' && path === '/new')) return 'new';
+    if (/^\/project\/[^/]+$/.test(path) || /^\/g\/[^/]+\/project$/.test(path)) return 'project';
+    if (/^\/chat\/[^/]+$/.test(path) || /\/c\/[^/]+$/.test(path)) return 'conversation';
+    return 'other';
+  }
+
   function withBuiltIns(value) {
     const destinations = Array.isArray(value) ? [...value] : [];
     if (!destinations.some((d) => d.id === 'general')) {
@@ -81,5 +101,5 @@ globalThis.YT2GPTDestination = (() => {
 
   // matches/isNewChatEntry deliberately remain ChatGPT-only: Claude has no
   // verified injector or automatic naming behavior in this beta.
-  return Object.freeze({ normalize, provider, withBuiltIns, matches, isNewChatEntry, REPAIR });
+  return Object.freeze({ normalize, provider, displayProvider, kind, withBuiltIns, matches, isNewChatEntry, REPAIR });
 })();

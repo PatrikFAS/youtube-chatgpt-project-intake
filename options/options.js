@@ -23,43 +23,52 @@ async function render() {
   const destinations = await getDestinations();
   listEl.replaceChildren();
 
-  for (const dest of destinations) {
-    const row = document.createElement('div');
-    row.className = 'destination';
+  for (const provider of ['chatgpt', 'claude']) {
+    const section = document.createElement('section');
+    section.className = `provider-section ${provider}`;
+    const heading = document.createElement('h2');
+    heading.textContent = provider === 'claude' ? 'Claude' : 'ChatGPT';
+    section.appendChild(heading);
+    for (const dest of destinations.filter((d) => (YT2GPTDestination.displayProvider(d.url) || 'chatgpt') === provider)) {
+      const row = document.createElement('div');
+      row.className = 'destination';
 
-    const nameWrap = document.createElement('div');
-    const name = document.createElement('div');
-    name.className = 'name';
-    name.textContent = dest.name;
-    nameWrap.appendChild(name);
-    if (dest.builtIn) {
-      const badge = document.createElement('div');
-      badge.className = 'built-in';
-      badge.textContent = 'Built in';
-      nameWrap.appendChild(badge);
+      const nameWrap = document.createElement('div');
+      const name = document.createElement('div');
+      name.className = 'name';
+      name.textContent = dest.name;
+      nameWrap.appendChild(name);
+      const kind = YT2GPTDestination.kind(dest.url);
+      if (dest.builtIn || kind === 'project' || kind === 'conversation' || kind === 'unknown') {
+        const badge = document.createElement('div');
+        badge.className = 'built-in';
+        badge.textContent = dest.builtIn ? 'Built in · New chat' : kind === 'project' ? 'Project' : kind === 'conversation' ? 'Conversation' : 'Needs repair';
+        nameWrap.appendChild(badge);
+      }
+
+      const url = document.createElement('div');
+      url.className = 'url';
+      url.textContent = dest.url;
+
+      const actions = document.createElement('div');
+      if (!dest.builtIn) {
+        const edit = document.createElement('button');
+        edit.className = 'secondary';
+        edit.textContent = 'Edit';
+        edit.addEventListener('click', () => editDestination(dest));
+
+        const del = document.createElement('button');
+        del.className = 'danger';
+        del.textContent = 'Delete';
+        del.style.marginLeft = '6px';
+        del.addEventListener('click', () => deleteDestination(dest.id));
+        actions.append(edit, del);
+      }
+
+      row.append(nameWrap, url, actions);
+      section.appendChild(row);
     }
-
-    const url = document.createElement('div');
-    url.className = 'url';
-    url.textContent = dest.url;
-
-    const actions = document.createElement('div');
-    if (!dest.builtIn) {
-      const edit = document.createElement('button');
-      edit.className = 'secondary';
-      edit.textContent = 'Edit';
-      edit.addEventListener('click', () => editDestination(dest));
-
-      const del = document.createElement('button');
-      del.className = 'danger';
-      del.textContent = 'Delete';
-      del.style.marginLeft = '6px';
-      del.addEventListener('click', () => deleteDestination(dest.id));
-      actions.append(edit, del);
-    }
-
-    row.append(nameWrap, url, actions);
-    listEl.appendChild(row);
+    listEl.appendChild(section);
   }
 
   emptyEl.classList.toggle('hidden', destinations.some((d) => !d.builtIn));

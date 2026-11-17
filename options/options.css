@@ -35,3 +35,8 @@ input { border:1px solid var(--line); background:var(--panel); color:var(--text)
 .message.error { background:var(--dangerBg); color:var(--danger); }
 .note { margin-top:18px; color:var(--muted); font-size:12px; line-height:1.5; }
 @media (max-width:650px) { .grid,.destination { grid-template-columns:1fr; } }
+.provider-section { display: grid; gap: 10px; }
+.provider-section + .provider-section { margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--line); }
+.provider-section > h2 { margin: 0; font-size: 14px; color: var(--accent); }
+.provider-section.claude > h2 { color: #b06443; }
+button:focus-visible, input:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
