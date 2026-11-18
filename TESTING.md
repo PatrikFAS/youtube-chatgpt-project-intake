@@ -2,6 +2,41 @@
 
 ## Current status
 
+**v0.1.15 optional candidate: Custom's answer-structure conflict corrected.**
+The shared header used to require a TL;DR even for a Custom task requesting
+questions or another format. The source title/known-people/link header is kept;
+after it, Custom follows USER INSTRUCTIONS without an imposed summary/verdict/
+template/next step unless requested. The three presets are unchanged. Current
+v0.1.14 testing continues in the original checkout; this candidate is in an
+isolated worktree of the same repository. No visible browser or live AI prompt
+was used in this pass. Claude's recognition/Send identity remains unresolved.
+
+### v0.1.15 focused acceptance
+
+1. Finish any in-progress v0.1.14 test first. When ready, overwrite the same
+   unpacked installation folder and Reload its existing extension entry; do
+   not uninstall or load a duplicate. Refresh tabs and confirm v0.1.15.
+2. Choose Custom and enter "After the required source header, give exactly two
+   discussion questions. Do not add a summary." Preview/Copy must retain the
+   task, real source metadata/link, transcript and safety instructions without
+   the old unconditional "its TL;DR follows the header" instruction.
+3. If you explicitly ask for a TL;DR or a 60-word skip/skim/watch/apply opening,
+   that text must remain in the prepared prompt. Save/forget and one-off behavior
+   are unchanged. Preview, Copy and Open must carry the same complete payload.
+4. Optional actual-answer review is Patrik's manual choice in the working
+   ChatGPT path. Confirm the source header then requested structure; do not
+   treat payload tests as proof of model compliance. No agent sends a live test
+   message. The smallest existing Claude check remains separate and needs no
+   new candidate installation simply to obtain the structural report.
+
+Required verify/test suites and all 24 native popup combinations pass. A local
+comparison against delivered v0.1.14 proves 18 preset payloads byte-identical
+and removes the conflicting directive in all six Custom destination cases.
+Both injectors, destination/routing code and permissions are unchanged; the
+previous 42 Claude safety cases remain evidence, not a new live verification.
+
+## Active user test v0.1.14
+
 The engineering plan now follows the shared Product and Launch strategy:
 reliability first, a compact-response experiment through existing Custom, then
 independent-user evidence before expansion. This documentation pass changes no

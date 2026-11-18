@@ -44,12 +44,15 @@ separate checks. Do not reopen scope/terms research for this beta.
 | --- | --- |
 | Accepted baseline | v0.1.10 is merged in [PR #3](https://github.com/PatrikFAS/youtube-chatgpt-project-intake/pull/3). Patrik confirmed the Chrome/Edge workflow, provider UI and automatic Claude insertion in his tested case. The precise Claude route/browser version was not recorded. |
 | Current testable candidate | v0.1.14, runtime commit `b5e5e16ca6fb4905288ed3c15848b3de8df056bf`, is delivered through Library and [draft PR #4](https://github.com/PatrikFAS/youtube-chatgpt-project-intake/pull/4). It adds Custom with one-off text, explicit Save locally / Forget and unchanged presets. Required checks, 24 native task/provider/destination combinations and 42 Claude native-DOM guard/diagnostic cases pass. Fixtures do not establish authenticated insertion or good AI judgment. |
+| Optional next implementation | v0.1.15 is prepared on `codex/custom-output-contract` in an isolated worktree of this same repository. It removes the confirmed compulsory TL;DR contradiction from Custom's shared header while preserving source identity and the requested task. All 18 preset payloads are byte-identical to delivered v0.1.14; required checks and 24 native popup cases pass. Current user testing is not replaced or marked complete. This is not a Claude selector fix or a new compact-response preset/default. |
 | Current Claude blocker | Patrik's later case times out with an unrecognized message box. Signed-in Edge accessibility observed the exact editor label and tiptap/ProseMirror classes, but actual aria-label/Send marker and successful insertion remain unverified. The v0.1.13 bounded candidate is retained. The timeout can reflect editor/readiness, Send/scope or ambiguity guards; no actual cause is established. This is missing diagnosis as well as live acceptance, not a confirmed fix waiting only for a final check. |
 | Browser and safety | The authorized free window reached DevTools but produced no usable DOM report. No Claude draft/message text, cookies or profile files were read/changed and no AI message was sent. Visible control stopped when Patrik returned. Do not repeat OS input workarounds or take over the browser; use supplied structural evidence or supported inspection. Unknown controls keep fallback. |
 | Mode report and demand | Earlier Summarize/Analyze mismatch was not reproduced; later click snapshots/visible mode and retention fixtures pass. No original cause is claimed. Patrik accepted the later ChatGPT/UI path. Custom acceptance, Sarah's own journey, independent reuse and willingness to pay remain unrecorded. |
 
-The existing v0.1.14 ZIP remains the testable artifact; documentation-only
-reconciliation does not change its runtime, version or install instructions.
+The delivered v0.1.14 ZIP remains the active user-test artifact. The optional
+v0.1.15 candidate is isolated so its implementation does not alter that
+checkout. Choose an in-place update only when ready; no automatic installation,
+merge, store publication or acceptance is performed.
 
 ## NOW NEXT LATER
 
@@ -103,8 +106,9 @@ No new diagnostic version or broad whole-product retest is requested.
 ## Draft Custom response experiment
 
 Use the existing Custom field; do not replace a preset or its shared header.
-The shared header currently requests a TL;DR, so put the recommendation inside
-that opening. Save locally only if useful. This is a draft to test, not shipped
+v0.1.14's shared header requests a TL;DR; v0.1.15 lets Custom define its answer
+structure. The draft explicitly requests a short TL;DR so it works in both.
+Save locally only if useful. This is a draft to test, not shipped
 default wording or evidence that the model will comply.
 
 ```text

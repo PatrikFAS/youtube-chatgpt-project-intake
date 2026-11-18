@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.15
+
+- Removes a confirmed prompt contradiction for Custom: the shared source header no longer unconditionally demands a TL;DR. After the required full-title/known-featured-people/link header, Custom follows the user's requested task and answer structure, adding a summary/verdict/template/next step only when requested.
+- Preserves the full source/safety envelope, naming preference, optional-question behavior, local save/forget semantics, destination routing and manual-send guards. All three preset payloads remain unchanged; a comparison with delivered v0.1.14 is byte-identical across 18 preset/provider/destination cases.
+- Required checks and all 24 native popup handoff cases pass, including both providers, Custom's non-conflicting structure and Preview = Copy = Open. These verify outgoing instructions, not model compliance or live Claude insertion. Claude's reported failure remains open, with no selector/Send change.
+- Prepared in an isolated worktree of the existing repository while Patrik tests v0.1.14. This is an optional next candidate, not a replacement of his running test or a store/public release. Strategy, user feedback, batch/playlist gates and parked auto-send/payment ideas are preserved.
+
 ## 0.1.14
 
 - Adds Custom instructions below the three unchanged presets. Preview, Copy and Open capture the same nonempty custom task and retain source title/link/featured-people instructions, transcript, source-safety boundaries and guarded manual-send handoff. The preset question is kept when switching back and is not silently appended to Custom.

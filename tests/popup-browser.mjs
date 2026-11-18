@@ -136,6 +136,10 @@ try {
       for (const unwanted of modeChecks[mode].slice(1)) assert.ok(!result.copied.includes(unwanted), `${destination.id}: ${mode} must not contain another mode's instruction`);
       if (hasProviderSwitch) assert.ok(result.copied.includes(`SELECTED MODE: ${labels[mode]}`));
       assert.equal(result.messages[0].payload, result.copied);
+      if (mode === 'custom') {
+        assert.ok(result.copied.includes('After the source header, follow USER INSTRUCTIONS for the task and answer structure'));
+        assert.ok(!result.copied.includes('its TL;DR follows the header'), 'Custom must not impose a conflicting summary');
+      } else assert.ok(result.copied.includes('After the header, perform the selected mode below; its TL;DR follows the header'), 'preset structure is preserved');
       if (hasPromptReview) assert.equal(result.messages[0].payload, reviewedPrompt, 'Open matches the exact preview/copy payload');
       assert.equal(result.messages[0].destinationUrl, destination.url);
       const persistedMode = mode === 'custom' ? 'analyze' : mode;
