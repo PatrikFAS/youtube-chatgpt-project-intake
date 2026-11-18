@@ -11,12 +11,28 @@ injector from v0.1.10; that does not establish why this live case differs.
 
 Read-only isolated navigation to https://claude.ai/new reached security
 verification ("Just a moment...") with zero editors. No browser/computer
-connector is available, no running Edge inspection endpoint was exposed and
-the current Edge window was not a Claude window. No personal browser profile,
-unrelated tabs or drafts were accessed or copied. Therefore the actual failing
-composer markup is not available; do not broaden recognition based on guesses.
+connector or running Edge debugging endpoint is exposed. A later native Windows
+accessibility check found a tab label mentioning Claude, but did not confirm a
+Claude document from that tab; no page content was inspected there. Opening a
+fresh https://claude.ai/new tab in the existing visible Edge session did reach
+a signed-in composer: one enabled, onscreen editor labelled "Write your prompt
+to Claude", with tiptap and ProseMirror classes, and no allowlisted named Send
+button exposed while empty. This is limited live accessibility evidence, not
+raw DOM/data-testid inspection, proof of the reported layout's cause, or a live
+insertion test. AutomationId is not data-testid and must not be conflated with it.
+
+No editor values, message text, draft content, cookies or profile files were
+read/copied. No typing, paste or Send occurred. An attempt to open DevTools
+stopped because the foreground-window check failed; no F12 key was sent.
+Browser control is now paused so Patrik can use Edge normally. Direct DOM
+inspection can continue during a coordinated window; the diagnostic beta is
+an alternative, not a prerequisite. The earlier blanket signed-in-access
+blocker was incomplete: normal signed-in Edge navigation/accessibility works.
 
 ### v0.1.12 focused acceptance
+
+First prefer direct, coordinated inspection of the existing signed-in Claude
+tab. If Patrik prefers the diagnostic path, these are the minimal steps:
 
 1. Update the same unpacked folder, Reload its existing extension entry, refresh
    YouTube and Claude tabs and confirm **v0.1.12** in the popup. Retain saved

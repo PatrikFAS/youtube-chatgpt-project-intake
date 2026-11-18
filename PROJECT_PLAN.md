@@ -4,6 +4,10 @@ Updated 2026-11-18. Delivery plan for the existing
 `PatrikFAS/youtube-chatgpt-project-intake` extension. See [README.md](README.md)
 for installation and [TESTING.md](TESTING.md) for evidence and acceptance steps.
 
+**Provisional working name: YouTube AI Bridge**, chosen by Patrik. Record this
+for product planning only. The manifest/display name and existing published
+identity are unchanged; no trademark/name clearance has been performed.
+
 ## Goal and proposed audience
 
 Help someone turn a captioned video into something useful in their existing
@@ -27,7 +31,7 @@ fallbacks and source-adjacent tabs; uncertain composers retain clipboard fallbac
 | Naming and reply headers | Preserve v0.1.6's new-ChatGPT-chat naming preference and the later source-grounded full-title/featured-people/link reply-header instruction in all modes/providers. Sidebar naming was reported unreliable and is provider-controlled. Copy title supports manual Rename. Actual sidebar names and model reply formatting remain separate user checks; unknown participants must be omitted. |
 | v0.1.11 user feedback | Adds Preview prompt and Copy prompt without opening a destination; 18 native task/provider/destination cases pass. Patrik confirmed the ChatGPT flow works and overall UI looks very good. His Claude test instead timed out with the unrecognized-message-box fallback. Current Claude reliability takes priority over further product work. |
 | Troubleshooting beta: v0.1.12 | Adds an explicit Copy troubleshooting details action on that failure notice. It copies only bounded, allowlisted control shape, never message/draft contents, prompts, URLs or account data; no automatic copy/upload. All 32 Claude safety/diagnostic native-DOM cases and the 18 popup cases pass. Recognition rules are unchanged; this is **not a confirmed fix**. Actual failing composer evidence is still needed. |
-| Composer safety | Existing guarded injectors and their fixture coverage are retained. Claude candidate markers are source-reported; 28 native-DOM cases passed for v0.1.10. No authenticated live composer was independently inspected. Do not loosen recognition without live evidence. |
+| Composer safety and live access | Existing guarded injectors/fixtures are retained. An additional read-only check opened https://claude.ai/new in the existing signed-in Edge session: accessibility exposes one enabled editor labelled Write your prompt to Claude with tiptap/ProseMirror classes, and no expected named Send control while empty. No raw DOM marker capture or insertion was performed. DevTools opening stopped at a foreground-window guard before any key was sent. Browser control is now paused so Patrik can use Edge; do not claim all signed-in routes are blocked or that this is a confirmed fix. |
 | Sarah and demand | Sarah's own installation/Claude acceptance is unrecorded. Repeat use, willingness to recommend/support and ease of unaided setup are unknown. Automated tests do not answer these questions. |
 
 ## Chosen improvement and scope
@@ -48,7 +52,7 @@ adding more controls, integrations or a transcript library.
 
 | Priority | Owner | Next action | Evidence needed to move on |
 | --- | --- | --- | --- |
-| 1. Fix the reported Claude recognition failure, then Sarah's first run | Codex investigates/fixes; Patrik supplies live details and tests; Sarah accepts her own case | Patrik tries the v0.1.12 troubleshooting ZIP and copies the failure notice's control-only report. Codex uses that live evidence to bound a fix and tests safety/provider/mode regressions. Isolated Claude inspection is blocked at security verification; no signed-in inspection endpoint is available. After reliability is restored, Sarah installs using her own account/destination. | A fix is grounded in the actual failing layout and Patrik confirms that case. Sarah separately confirms task/context, source-adjacent opening, insertion or clear fallback, drafts untouched and manual Send. No claim that fixtures establish a live fix; no repeat of accepted ChatGPT normal-case checks without regression. |
+| 1. Fix the reported Claude recognition failure, then Sarah's first run | Codex investigates/fixes; Patrik coordinates browser availability or supplies structural details and tests; Sarah accepts her own case | Existing signed-in Edge accessibility works; full DOM inspection is paused to avoid driving Patrik's browser while he uses it. Continue in a coordinated short window, or use the v0.1.12 opt-in structural report if Patrik prefers. The isolated browser remains security-blocked. Bound a fix to actual controls, then test safety/provider/mode regressions. After reliability is restored, Sarah installs with her own account/destination. | A fix is grounded in the actual failing layout and Patrik confirms that case. Sarah separately confirms task/context, source-adjacent opening, insertion or clear fallback, drafts untouched and manual Send. No claim that fixtures establish a live fix; no repeat of accepted ChatGPT normal-case checks without regression. |
 | 2. Small beta and onboarding | Patrik invites 3-5 people after Sarah succeeds; Codex fixes concrete problems | Ask testers to complete a useful task without live coaching using the README; collect browser/version, confusing step, outcome and whether they return within a week. Record feedback manually, without analytics. | Most can complete unaided and explain one useful result; identify repeat use and support effort. This is a proposed decision gate, not proven demand or a statistical claim. If they struggle, improve that step before widening distribution. |
 | 3. Chrome Web Store preparation | Codex prepares; Patrik owns publisher account and submission | After reliable beta use, prepare listing copy around the demonstrated result, synthetic screenshots/icons, support contact, privacy URL/disclosures, narrow permission justifications and a reproducible ZIP. Recheck current requirements at preparation time. | Patrik reviews complete materials and separately authorizes account costs/submission/publication. No store submission or deployment is authorized by this plan. |
 | 4. One small promotion experiment | Patrik chooses/approves/posts; Codex can draft | Optionally demonstrate video -> existing Project -> Apply -> one useful ADOPT/ADAPT/TEST decision. Verify that exact run first and hide private project/account data. Let the same beta cohort reproduce it unaided; then consider one relevant community post where allowed. | Manually compare completion, help needed, repeat use and support effort. Keep the demonstration if people understand/reproduce its value; otherwise fix the confusing step. No outreach is sent by this plan. |
@@ -82,9 +86,11 @@ or revenue promise. The link can be removed if users find it distracting.
 
 ## Remaining decisions
 
-- **Patrik now:** reproduce the affected Claude handoff using v0.1.12, then
-  explicitly copy/share the notice's troubleshooting report and destination
-  category. This is the missing live evidence, not a claim the fix is delivered.
+- **Patrik now:** coordinate a short window for existing-session DOM inspection,
+  or use v0.1.12 to reproduce the affected handoff and explicitly copy/share its
+  structural troubleshooting report and destination category if preferred.
+  No diagnostic installation is necessary if direct inspection supplies the
+  missing DOM evidence. This is not a claim the fix is delivered.
   After a verified fix, send Sarah the actual downloaded ZIP for her separate
   acceptance. Her account/destinations are never bundled.
 - **After beta feedback:** choose the clearest first audience/use case and
