@@ -2,6 +2,49 @@
 
 ## Current status
 
+**v0.1.12 troubleshooting beta: Claude recognition failure remains unresolved.**
+Patrik confirmed v0.1.11's ChatGPT flow and UI, but Claude waited and reported
+"This Claude message box was not recognized. Your saved destination was kept."
+This identifies the pre-insertion recognition timeout, not a rejected edit or
+wrong-destination notice. Git comparison confirms v0.1.11 changed neither
+injector from v0.1.10; that does not establish why this live case differs.
+
+Read-only isolated navigation to https://claude.ai/new reached security
+verification ("Just a moment...") with zero editors. No browser/computer
+connector is available, no running Edge inspection endpoint was exposed and
+the current Edge window was not a Claude window. No personal browser profile,
+unrelated tabs or drafts were accessed or copied. Therefore the actual failing
+composer markup is not available; do not broaden recognition based on guesses.
+
+### v0.1.12 focused acceptance
+
+1. Update the same unpacked folder, Reload its existing extension entry, refresh
+   YouTube and Claude tabs and confirm **v0.1.12** in the popup. Retain saved
+   settings; do not uninstall or load a duplicate entry.
+2. Repeat the affected Claude handoff. Do not send anything. If the same
+   recognition notice appears, click its **Copy troubleshooting details** button.
+   Paste that JSON report into the support conversation, together with whether
+   the destination was New chat, a saved Project or a saved conversation.
+3. This explicit copy replaces the clipboard prompt. **Copy prompt** in the
+   YouTube popup restores the full prompt if needed. Check context and existing
+   draft/partial text before any manual paste. The diagnostic does not edit or
+   focus the Claude composer, invoke Send, or upload anything.
+4. The report contains bounded editor/control counts, fixed marker booleans,
+   allowlisted labels, readiness flags and extension version. Draft/message
+   contents, transcript/prompt, URLs, titles, raw HTML, arbitrary labels and
+   account information are omitted. On clipboard denial, the notice reports
+   failure and leaves the message box untouched.
+
+Native-DOM coverage passes **32 cases**: the existing 28 safety/insertion cases
+plus unmarked-editor details, missing-Send details, private draft/attribute
+redaction and denied diagnostic copy. No failure copies automatically; explicit
+diagnostic clicks never invoke Claude Send or edit a draft. All 18 native popup
+task/provider/destination combinations and required verify/test checks also
+pass. These are synthetic fixtures, not reproduction of Patrik's live markup.
+The four new cases validate evidence collection, not a recognition fix.
+
+## Previous candidate: v0.1.11
+
 **v0.1.11 candidate: prompt preview and copy implemented, user acceptance pending.**
 The accepted v0.1.10 composer/routing behavior is retained. Prompt wording,
 permissions and both injectors are unchanged. Sarah's first-run acceptance

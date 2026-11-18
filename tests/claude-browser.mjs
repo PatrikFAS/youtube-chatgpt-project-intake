@@ -62,7 +62,8 @@ try {
       let editor=document.getElementById('editor');
       const scope=document.getElementById('composer');
       let send=document.getElementById('send');
-      globalThis.fixture={claims:0,clears:0,sendClicks:0,submits:0,enters:0,execCalls:0};
+      globalThis.fixture={claims:0,clears:0,sendClicks:0,sendControlClicks:0,submits:0,enters:0,execCalls:0,clipboardCopies:0};
+      Object.defineProperty(navigator,'clipboard',{value:{async writeText(text){if(options.copyFails)throw Error('Denied');fixture.clipboardCopies++;fixture.copiedDetails=text;}},configurable:true});
       let available=true;
       globalThis.chrome={runtime:{async sendMessage(message){
         if(message.type==='GET_PENDING_PAYLOAD')return {ok:true,payload:available?payload:null,destinationUrl:expected};
@@ -79,6 +80,7 @@ try {
       if(options.wrapper){editor.removeAttribute('data-testid');const wrapper=document.createElement('div');wrapper.dataset.testid='chat-input';editor.before(wrapper);wrapper.append(editor);}
       if(options.unmarked)editor.removeAttribute('data-testid');
       if(options.noSendMarker)send.removeAttribute('data-testid');
+      if(options.privateAttributes){editor.setAttribute('aria-label','PRIVATE ACCOUNT NAME');editor.setAttribute('placeholder','PRIVATE QUESTION');editor.dataset.testid='private-project-id';editor.classList.add('private-title','tiptap');send.setAttribute('aria-label','PRIVATE CONVERSATION TITLE');send.setAttribute('title','PRIVATE URL https://claude.ai/chat/private');const privateWrapper=document.createElement('private-account-name');editor.before(privateWrapper);privateWrapper.append(editor);}
       if(options.readonly)editor.setAttribute('aria-readonly','true');
       if(options.draft){if(options.textarea)editor.value=options.draft;else editor.textContent=options.draft;}
       if(options.attachment){const node=document.createElement('div');node.dataset.testid='attachment-preview';node.textContent='Private attachment';node.hidden=true;scope.append(node);}
@@ -95,7 +97,7 @@ try {
         if(options.replaceSend){const replacement=send.cloneNode(true);send.replaceWith(replacement);send=replacement;}
         if(!options.keepDisabled)send.disabled=false;
       });
-      document.addEventListener('click',event=>{if(event.target.closest('button'))fixture.sendClicks++;});
+      document.addEventListener('click',event=>{if(event.target.closest('button'))fixture.sendClicks++;if(event.target.closest('button')===send)fixture.sendControlClicks++;});
       document.addEventListener('submit',event=>{fixture.submits++;event.preventDefault();});
       document.addEventListener('keydown',event=>{if(event.key==='Enter')fixture.enters++;});
       const nativeExec=document.execCommand.bind(document);
@@ -127,6 +129,30 @@ try {
       assert.equal(result.claims,1,`${name}: consume once`);
     }
     if(options.maxEdits!==undefined)assert.equal(result.execCalls,options.maxEdits,`${name}: bounded edits`);
+    assert.equal(await evaluate('fixture.clipboardCopies'),0,`${name}: failure never replaces clipboard automatically`);
+    if(options.diagnostics){
+      assert.equal(await evaluate('Boolean(document.querySelector("#yt2gpt-claude-toast button"))'),true);
+      const point=await evaluate('(() => { const r=document.querySelector("#yt2gpt-claude-toast button").getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2};})()');
+      await call('Input.dispatchMouseEvent',{type:'mousePressed',button:'left',clickCount:1,...point},sessionId);
+      await call('Input.dispatchMouseEvent',{type:'mouseReleased',button:'left',clickCount:1,...point},sessionId);
+      await evaluate('new Promise(resolve=>setTimeout(resolve,20))');
+      const diagnostic=await evaluate('({...fixture,notice:document.getElementById("yt2gpt-claude-toast").textContent,text:document.getElementById("editor").value ?? document.getElementById("editor").innerText})');
+      assert.equal(diagnostic.sendControlClicks,0,'diagnostic never clicks Claude Send');
+      assert.equal(diagnostic.execCalls,0,'diagnostic never edits');
+      assert.equal(diagnostic.text,result.initialText,'diagnostic leaves draft unchanged');
+      assert.equal(diagnostic.claims,0,'unrecognized composer never claims');
+      if(options.copyFails){assert.equal(diagnostic.clipboardCopies,0);assert.match(diagnostic.notice,/Could not copy details/);}
+      else{
+        assert.equal(diagnostic.clipboardCopies,1,'copy only on explicit native click');
+        const details=JSON.parse(diagnostic.copiedDetails);
+        assert.equal(details.kind,'youtube-intake-claude-composer-v1');
+        assert.equal(details.editors[0].proseMirror,true);
+        assert.equal(details.editors[0].chatInput,!options.unmarked&&!options.privateAttributes);
+        assert.ok(details.editors[0].ancestors.length>0);
+        assert.doesNotMatch(diagnostic.copiedDetails,/PRIVATE|private-|https:|Fixture prompt|Full source transcript|Keep this unrelated draft/,'no content, URLs, names, unknown labels/attributes or prompt');
+        assert.match(diagnostic.notice,/Details copied/);
+      }
+    }
     await call('Target.closeTarget',{targetId});
     cases++;
   }
@@ -158,8 +184,12 @@ try {
   await run('route changes after edit',{routeOnInput:'/chat/other',error:'could not be confirmed',expectedText:payload,claims:1,maxEdits:1});
   await run('framework rejects edit',{rejectEdit:true,error:'could not be confirmed',expectedText:'',claims:1,maxEdits:1});
   await run('framework readiness unconfirmed',{keepDisabled:true,error:'could not be confirmed',expectedText:payload,claims:1,maxEdits:1});
+  await run('unrecognized editor diagnostics',{unmarked:true,error:'not recognized',maxEdits:0,diagnostics:true});
+  await run('missing Send diagnostics',{noSendMarker:true,error:'not recognized',maxEdits:0,diagnostics:true});
+  await run('private draft and attributes redacted',{privateAttributes:true,draft:'PRIVATE DRAFT CONTENT',error:'not recognized',maxEdits:0,diagnostics:true});
+  await run('diagnostic copy denied',{unmarked:true,error:'not recognized',maxEdits:0,diagnostics:true,copyFails:true});
   assert.equal(errors.length,0,JSON.stringify(errors));
-  console.log(`PASS: ${cases} Claude native-DOM cases: complete insertion, exact routes, draft/attachment guards, framework readiness, no retries and zero automatic sends. Synthetic fixture; authenticated Claude acceptance remains pending.`);
+  console.log(`PASS: ${cases} Claude native-DOM cases: complete insertion, exact routes, draft/attachment guards, framework readiness, opt-in redacted diagnostics, no retries and zero automatic sends. Synthetic fixture; the reported live recognition failure remains unresolved.`);
 } finally {
   if(ws?.readyState===WebSocket.OPEN){ws.send(JSON.stringify({id:++sequence,method:'Browser.close'}));await new Promise(resolve=>{const timer=setTimeout(resolve,2000);browser.once('exit',()=>{clearTimeout(timer);resolve();});});}
   ws?.close();browser.kill();browser.stderr.destroy();browser.unref();

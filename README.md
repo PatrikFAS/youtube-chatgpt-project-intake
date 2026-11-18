@@ -2,9 +2,9 @@
 
 A lightweight Chrome/Edge browser extension that extracts YouTube transcripts and routes them to ChatGPT or Claude for summarization, critical analysis, or project-specific application.
 
-**Candidate beta: v0.1.11 - preview or copy the full prompt before opening an assistant**
+**Troubleshooting beta: v0.1.12 - collect safe Claude composer details on request**
 
-Patrik accepted the v0.1.10 workflow, including automatic Claude insertion in his tested case; it is merged. v0.1.11 adds **Preview prompt** and **Copy prompt** without opening a tab. The new actions have automated and native-popup fixture coverage; user acceptance of this addition and Sarah's own Claude acceptance remain pending. See [PROJECT_PLAN.md](PROJECT_PLAN.md) for prioritized product/release milestones, owners and next actions.
+Patrik accepted v0.1.10's automatic Claude insertion in his tested case, then confirmed v0.1.11's ChatGPT flow and UI. His latest Claude test reports an unrecognized message box. v0.1.12 adds an opt-in troubleshooting copy action on that failure notice; recognition rules are unchanged and the failure is **not fixed yet**. Preview prompt and Copy prompt remain available. Sarah's own acceptance is unrecorded. See [PROJECT_PLAN.md](PROJECT_PLAN.md) for priorities, evidence and next actions.
 
 The extension does **not** run its own AI. It extracts YouTube captions locally, packages them with a focused instruction and copies the complete prompt before opening your selected destination. ChatGPT uses the existing guarded composer insertion. Claude now attempts **guarded automatic insertion** in a recognized empty message box on the exact saved route. Patrik confirmed automatic insertion in his signed-in browser; his exact browser version and destination were not recorded. Drafts/attachments are preserved, the complete prompt stays copied, and you review and send yourself.
 
@@ -21,12 +21,12 @@ Faithfully compress the video into a TL;DR, key ideas, examples, conclusions, an
 
 The raw transcript is a separate utility rather than a fourth reasoning mode. The selected task appears above the action button and as SELECTED MODE in the copied prompt, so Summarize and Analyze are easy to distinguish.
 
-## Update an existing installation to v0.1.11
+## Update an existing installation to v0.1.12
 
 1. Extract the versioned ZIP and overwrite its files in the **same unpacked extension folder** you originally loaded. Keep that folder's location. You can back it up first.
 2. Open `edge://extensions/` or `chrome://extensions/` and click **Reload** on the existing extension entry. Do not uninstall it; updating in place retains saved destinations and preferences.
-3. Refresh your open YouTube, ChatGPT and Claude tabs. Allow claude.ai site access if upgrading from a version before v0.1.10 and your browser asks. Confirm **v0.1.11** in the popup footer. Saved links, task and caption preferences remain; the last saved destination selects its provider automatically. This update adds no permissions.
-4. Follow [the focused v0.1.11 check](TESTING.md#v0111-focused-acceptance): choose a provider, destination and task, then try **Preview prompt** or **Copy prompt**. Open still uses the same prepared text and guarded insertion. Review the context and prompt before sending yourself. With any fallback, inspect existing draft text before pasting with Ctrl+V. Existing Chrome/Edge and Patrik's tested Claude behavior are already confirmed.
+3. Refresh your open YouTube, ChatGPT and Claude tabs. Allow claude.ai site access if upgrading from a version before v0.1.10 and your browser asks. Confirm **v0.1.12** in the popup footer. Saved links, task and caption preferences remain; the last saved destination selects its provider automatically. This update adds no permissions.
+4. For the reported Claude failure, follow [the focused v0.1.12 check](TESTING.md#v0112-focused-acceptance). After the unrecognized-message-box notice appears, choose **Copy troubleshooting details** and paste that report into your support conversation. It contains control markers only, with no drafts/messages, prompt, URLs or account details. This explicit action replaces the clipboard prompt; **Copy prompt** in the YouTube popup restores it. Nothing is automatically shared or sent. The existing [Preview/Copy check](TESTING.md#v0111-focused-acceptance) remains available.
 
 The update keeps supported destination URLs intact and rejects Codex or unfamiliar routes with repair guidance. It checks the actual URL, selected product controls and specific ChatGPT composer markers before insertion, preserves existing drafts, and consumes a handoff before editing to avoid duplicates. Unrecognized interfaces get a visible clipboard fallback; choose the intended ChatGPT surface before pasting. No product-mode override is invented.
 

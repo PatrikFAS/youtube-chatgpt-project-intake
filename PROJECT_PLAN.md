@@ -25,7 +25,8 @@ fallbacks and source-adjacent tabs; uncertain composers retain clipboard fallbac
 | Accepted baseline: v0.1.10, merged in [PR #3](https://github.com/PatrikFAS/youtube-chatgpt-project-intake/pull/3) | Patrik confirmed the Chrome/Edge workflow, redesigned provider/task UI, Claude handoff/Apply and automatic Claude insertion in his signed-in browser. His exact Claude route/browser version was not recorded. This is user acceptance of his tested case, not live inspection of every layout. The v0.1.10 ZIP remains the accepted baseline. |
 | Mode selection | Patrik previously reported Summarize producing Analyze. The v0.1.8 native popup fixture did not reproduce it. Later versions snapshot the click's task and show it in the UI/payload; selection and reload fixtures pass and Patrik accepted the later workflow. No original cause is claimed. |
 | Naming and reply headers | Preserve v0.1.6's new-ChatGPT-chat naming preference and the later source-grounded full-title/featured-people/link reply-header instruction in all modes/providers. Sidebar naming was reported unreliable and is provider-controlled. Copy title supports manual Rename. Actual sidebar names and model reply formatting remain separate user checks; unknown participants must be omitted. |
-| Candidate beta: v0.1.11 | Adds Preview prompt and Copy prompt without opening a destination. Actual popup/native-click tests verify the same complete payload as Open across 18 task/provider/destination combinations, retained choices, plain-text rendering and stale-preview clearing. Required verify/test checks pass. Patrik has not yet accepted this new interaction. |
+| v0.1.11 user feedback | Adds Preview prompt and Copy prompt without opening a destination; 18 native task/provider/destination cases pass. Patrik confirmed the ChatGPT flow works and overall UI looks very good. His Claude test instead timed out with the unrecognized-message-box fallback. Current Claude reliability takes priority over further product work. |
+| Troubleshooting beta: v0.1.12 | Adds an explicit Copy troubleshooting details action on that failure notice. It copies only bounded, allowlisted control shape, never message/draft contents, prompts, URLs or account data; no automatic copy/upload. All 32 Claude safety/diagnostic native-DOM cases and the 18 popup cases pass. Recognition rules are unchanged; this is **not a confirmed fix**. Actual failing composer evidence is still needed. |
 | Composer safety | Existing guarded injectors and their fixture coverage are retained. Claude candidate markers are source-reported; 28 native-DOM cases passed for v0.1.10. No authenticated live composer was independently inspected. Do not loosen recognition without live evidence. |
 | Sarah and demand | Sarah's own installation/Claude acceptance is unrecorded. Repeat use, willingness to recommend/support and ease of unaided setup are unknown. Automated tests do not answer these questions. |
 
@@ -47,7 +48,7 @@ adding more controls, integrations or a transcript library.
 
 | Priority | Owner | Next action | Evidence needed to move on |
 | --- | --- | --- | --- |
-| 1. Review v0.1.11 and Sarah's first run | Codex supplies candidate ZIP; Patrik tries/forwards it; Sarah accepts her own case | Patrik tries Preview/Copy with a question and a chosen task. Sarah installs in her own account using the normal instructions, saves her own destination and completes one useful video task. Fix observed friction first. | Patrik accepts the new actions. Sarah confirms correct task/context, source-adjacent opening, guarded insertion or understandable fallback, drafts untouched, and manual Send. Do not repeat already accepted normal-case browser tests without a relevant regression. |
+| 1. Fix the reported Claude recognition failure, then Sarah's first run | Codex investigates/fixes; Patrik supplies live details and tests; Sarah accepts her own case | Patrik tries the v0.1.12 troubleshooting ZIP and copies the failure notice's control-only report. Codex uses that live evidence to bound a fix and tests safety/provider/mode regressions. Isolated Claude inspection is blocked at security verification; no signed-in inspection endpoint is available. After reliability is restored, Sarah installs using her own account/destination. | A fix is grounded in the actual failing layout and Patrik confirms that case. Sarah separately confirms task/context, source-adjacent opening, insertion or clear fallback, drafts untouched and manual Send. No claim that fixtures establish a live fix; no repeat of accepted ChatGPT normal-case checks without regression. |
 | 2. Small beta and onboarding | Patrik invites 3-5 people after Sarah succeeds; Codex fixes concrete problems | Ask testers to complete a useful task without live coaching using the README; collect browser/version, confusing step, outcome and whether they return within a week. Record feedback manually, without analytics. | Most can complete unaided and explain one useful result; identify repeat use and support effort. This is a proposed decision gate, not proven demand or a statistical claim. If they struggle, improve that step before widening distribution. |
 | 3. Chrome Web Store preparation | Codex prepares; Patrik owns publisher account and submission | After reliable beta use, prepare listing copy around the demonstrated result, synthetic screenshots/icons, support contact, privacy URL/disclosures, narrow permission justifications and a reproducible ZIP. Recheck current requirements at preparation time. | Patrik reviews complete materials and separately authorizes account costs/submission/publication. No store submission or deployment is authorized by this plan. |
 | 4. One small promotion experiment | Patrik chooses/approves/posts; Codex can draft | Optionally demonstrate video -> existing Project -> Apply -> one useful ADOPT/ADAPT/TEST decision. Verify that exact run first and hide private project/account data. Let the same beta cohort reproduce it unaided; then consider one relevant community post where allowed. | Manually compare completion, help needed, repeat use and support effort. Keep the demonstration if people understand/reproduce its value; otherwise fix the confusing step. No outreach is sent by this plan. |
@@ -75,15 +76,17 @@ implied. Never gate a task, interrupt first use or automatically open the page.
 | Subscription | Recurring income would require continuing value and ongoing billing/support. A lightweight local handoff tool has not established that proposition; premature for this beta. |
 
 No payment destination is invented or connected, no account is created and no
-footer is added in v0.1.11. Patrik supplies/selects a real support destination
+footer is added in these betas. Patrik supplies/selects a real support destination
 before implementation. Count voluntary feedback/support manually; no tracking
 or revenue promise. The link can be removed if users find it distracting.
 
 ## Remaining decisions
 
-- **Patrik now:** try the v0.1.11 candidate and send Sarah the downloaded ZIP
-  itself. Her account/destinations are configured on her device, never bundled.
-  Record her result before expanding the beta.
+- **Patrik now:** reproduce the affected Claude handoff using v0.1.12, then
+  explicitly copy/share the notice's troubleshooting report and destination
+  category. This is the missing live evidence, not a claim the fix is delivered.
+  After a verified fix, send Sarah the actual downloaded ZIP for her separate
+  acceptance. Her account/destinations are never bundled.
 - **After beta feedback:** choose the clearest first audience/use case and
   whether the optional demonstration is worth preparing. Avoid broad promotion
   until people can finish unaided and find a reason to reuse it.
@@ -93,3 +96,49 @@ or revenue promise. The link can be removed if users find it distracting.
 - **Later:** choose coffee versus coffee/beer wording and supply a genuine support
   URL if pursuing the footer. Decide any larger monetization change using observed
   value and upkeep, with no payment infrastructure in this milestone.
+
+## Proposed optional auto-send: evaluate after Claude reliability
+
+Patrik proposed an optional auto-send toggle for people processing many videos.
+This is a later design candidate, not part of v0.1.12. Current product/code
+guidance still requires manual Send. Its possible benefit is one fewer action
+per video; its costs are unwanted messages/model usage, harder recovery from a
+wrong context, and additional provider-specific maintenance. First establish
+whether repeated beta users need it enough to justify that complexity.
+
+Minimum design if Patrik prioritizes implementation after the current bug:
+
+- **Off by default and explicitly chosen:** distinguish Open from Open & send.
+  Show provider, saved destination and task; require explicit destination
+  confirmation for each action and reset it when destination/task changes.
+  The user must know that the assistant will receive a message. Keep ordinary
+  Preview, Copy and manual Send available.
+- **Refuse uncertainty:** require the exact confirmed destination, a uniquely
+  recognized live composer and Send control, no dialog/busy state, no existing
+  draft (including whitespace/rich content) or attachment, and complete verified
+  insertion of this handoff's prompt. Recheck immediately before a bounded Send
+  action. If any condition fails, leave drafts untouched and use a clear manual
+  clipboard path; never guess another destination or press Enter generically.
+- **Avoid duplicate submissions:** claim each handoff once; track an explicit
+  prepared/submitting/confirmed-or-unknown state. Duplicate scripts, reloads or
+  uncertain acknowledgement must never trigger another Send attempt. On an
+  unknown outcome, tell the user to inspect the conversation; do not present
+  retry as safe. Verify the provider-specific submission acknowledgement before
+  describing any send as successful.
+- **Provider-specific gates:** ChatGPT insertion is user-confirmed, but this is
+  not evidence of reliable automatic submission or acknowledgement. It needs
+  inspected live Send behavior and separate acceptance. Claude additionally has
+  the current recognition failure; resolve it and inspect its actual composer,
+  Send and acknowledgement before claiming auto-send support. A toggle must be
+  unavailable for an unverified provider/layout, not silently less safe.
+- **Tests and authorization:** start with synthetic no-send fixtures for every
+  refusal/race/duplicate path. Real submission tests require Patrik's explicit
+  authorization of the target account/conversation and test message; none is
+  authorized or performed by this plan. No batching, background queue, backend
+  or AI API is assumed.
+
+**Owner/next action:** Codex first uses Patrik's control-only report to fix
+Claude recognition. Patrik then decides whether repeat-use feedback justifies
+an auto-send milestone and which provider/account can be tested. The coffee
+footer remains a separate voluntary-support option, with no payment destination
+invented or connected.

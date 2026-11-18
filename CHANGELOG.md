@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.12
+
+- Adds an opt-in Copy troubleshooting details action only to Claude's unrecognized-composer failure notice. It copies a bounded, allowlisted control-shape report after an explicit click; it does not collect message/draft text, prompts, raw HTML, URLs, arbitrary labels/attributes or account information. No automatic clipboard replacement or remote upload.
+- Reports visible editor counts, supported marker presence and nearby button shape so the actual failing browser can supply live evidence before recognition rules change. Explains that this explicit copy replaces the clipboard prompt and that Copy prompt in the YouTube popup restores it.
+- Adds four native-DOM diagnostic cases, including private draft/attribute redaction and clipboard denial; all 32 Claude fixture cases pass with no automatic sending or changed drafts. Keeps the same composer recognition and exact-route guards as v0.1.10/v0.1.11.
+- Patrik confirmed v0.1.11's ChatGPT flow and UI, but reported Claude's unrecognized-message-box fallback. This version helps investigate that actual failure; it does **not** claim a recognition fix. Live inspection remains blocked by security verification in the isolated browser and lack of access to the signed-in tab. Await a user-copied report or inspected composer evidence.
+- Records Patrik's optional auto-send proposal as a later, off-by-default design with destination confirmation, draft protection, provider-specific live-evidence gates and duplicate-submission safeguards. No auto-send implementation or live message test; Claude reliability remains first. Retains the optional coffee/beer footer evaluation without a payment destination.
+
 ## 0.1.11
 
 - Adds Preview prompt and Copy prompt to review or copy the full selected instructions, question and transcript without opening an assistant tab. Open keeps its existing handoff behavior; all three actions share the same prompt builder and capture choices at the click.
