@@ -1,86 +1,95 @@
-# YouTube transcript intake: project plan
+# YouTube intake: product and release plan
 
-Updated 2026-11-17. This is the durable delivery plan for the existing
-`PatrikFAS/youtube-chatgpt-project-intake` extension. Technical test evidence and
-acceptance steps live in [TESTING.md](TESTING.md); installation is in
-[README.md](README.md).
+Updated 2026-11-18. Delivery plan for the existing
+`PatrikFAS/youtube-chatgpt-project-intake` extension. See [README.md](README.md)
+for installation and [TESTING.md](TESTING.md) for evidence and acceptance steps.
 
-## Goal and boundaries
+## Goal and proposed audience
 
-Make it easy to move a captioned YouTube video into the user's chosen ChatGPT
-or Claude context, with Apply to Project, Analyze or Summarize and an optional
-question. Keep the extension local, small and understandable. Users review and
-send themselves. No backend, AI API, analytics, automatic sending or payment
-infrastructure is part of this beta. Revenue is uncertain.
+Help someone turn a captioned video into something useful in their existing
+ChatGPT or Claude work: a faithful summary, an assessment of the ideas, or a
+decision about what to apply to a Project. Keep the three tasks clear and let
+the user review and send. The candidate first audience is people already using
+AI Projects for ongoing work or study. This positioning is a hypothesis to test
+with a few users, not evidence of demand or a claim of market uniqueness.
 
-## Current state
+Keep the extension local, dependency-light and understandable. No backend, AI
+API, analytics, automatic Send or payment infrastructure. Use the person's own
+assistant account. Preserve saved URLs, preferences, existing drafts, caption
+fallbacks and source-adjacent tabs; uncertain composers retain clipboard fallback.
 
-- The existing Chrome and Edge workflow is **user-confirmed working**, including
-  the tested ordinary source-adjacent tab behavior. Pinned/grouped tabs remain
-  browser-dependent; no group-management permission is requested.
-- Patrik confirmed Claude handoff and Apply to Project work, then reported Summarize copying an Analyze prompt. The v0.1.8 native popup fixture did not reproduce it; the cause is unresolved. v0.1.9 captures the click's visible task, locks changes during preparation, and shows the task in the UI and prompt. Native selection/reload fixtures pass; Patrik subsequently confirmed v0.1.9 looks good and works great. The original mix-up's precise cause was not established.
-- v0.1.9 implements the top-level ChatGPT/Claude switch, provider-specific Project/chat destinations, per-provider remembered links, compact light/dark styling and a visible build number. Patrik confirmed this UI looks good and works great.
-- Patrik reports odd names from v0.1.6's ChatGPT sidebar-title request. v0.1.8
-  strengthens that prompt preference and adds **Copy title** for manual Rename.
-  Inspection confirms there is no automatic rename/verification mechanism in
-  the extension. Exact automatic sidebar naming is **not fixed or verified**.
-- v0.1.8 asks both providers to start every video-related reply, including
-  follow-ups, with the full source title, featured people only when explicitly
-  identified by the source title/transcript, then the video link. No participant
-  is invented or inferred from a channel name. Outgoing prompts are tested;
-  actual model response formatting remains **ready for user acceptance**.
-- v0.1.10 implements guarded Claude auto-insertion at Patrik's explicit request. Only the exact Claude HTTPS host is added. The new script requires a unique specifically marked input and Send control, exact saved route, no dialog/draft/attachment/busy state, and a one-time claim. It uses native editing, verifies text/readiness, and never sends. Clipboard fallback remains.
-- Candidate editor/control markers are supported by primary open-source integration reports, not an inspected signed-in session. The tool browser still reached security verification. All 28 native-DOM scenarios pass; **Patrik confirmed automatic insertion in his signed-in Claude browser on 2026-11-17**. His exact browser version and destination were not recorded. This is user-reported acceptance of the tested case, not tool inspection of every live guard or route. Unknown markup must refuse editing rather than try a generic editor.
-- Automated verification and regression checks pass for the beta source. They
-  do not prove an authenticated session. **Sarah's Claude acceptance is not run**.
-- The accepted v0.1.10 version is merged in
-  [PR #3](https://github.com/PatrikFAS/youtube-chatgpt-project-intake/pull/3).
-  The user-testable `youtube-chatgpt-project-intake-0.1.10.zip`, available through
-  the original Library delivery, remains the package. This plan changes no runtime or
-  version and requires no reinstall. Send Sarah the downloaded ZIP itself for
-  her own installation/account. Her acceptance is still unrecorded. Store
-  submission and public deployment remain separate decisions.
+## Evidence and current delivery
 
-## Milestones and next actions
+| State | Evidence and practical limit |
+| --- | --- |
+| Accepted baseline: v0.1.10, merged in [PR #3](https://github.com/PatrikFAS/youtube-chatgpt-project-intake/pull/3) | Patrik confirmed the Chrome/Edge workflow, redesigned provider/task UI, Claude handoff/Apply and automatic Claude insertion in his signed-in browser. His exact Claude route/browser version was not recorded. This is user acceptance of his tested case, not live inspection of every layout. The v0.1.10 ZIP remains the accepted baseline. |
+| Mode selection | Patrik previously reported Summarize producing Analyze. The v0.1.8 native popup fixture did not reproduce it. Later versions snapshot the click's task and show it in the UI/payload; selection and reload fixtures pass and Patrik accepted the later workflow. No original cause is claimed. |
+| Naming and reply headers | Preserve v0.1.6's new-ChatGPT-chat naming preference and the later source-grounded full-title/featured-people/link reply-header instruction in all modes/providers. Sidebar naming was reported unreliable and is provider-controlled. Copy title supports manual Rename. Actual sidebar names and model reply formatting remain separate user checks; unknown participants must be omitted. |
+| Candidate beta: v0.1.11 | Adds Preview prompt and Copy prompt without opening a destination. Actual popup/native-click tests verify the same complete payload as Open across 18 task/provider/destination combinations, retained choices, plain-text rendering and stale-preview clearing. Required verify/test checks pass. Patrik has not yet accepted this new interaction. |
+| Composer safety | Existing guarded injectors and their fixture coverage are retained. Claude candidate markers are source-reported; 28 native-DOM cases passed for v0.1.10. No authenticated live composer was independently inspected. Do not loosen recognition without live evidence. |
+| Sarah and demand | Sarah's own installation/Claude acceptance is unrecorded. Repeat use, willingness to recommend/support and ease of unaided setup are unknown. Automated tests do not answer these questions. |
 
-| Milestone | Owner | Status and next action | Done when |
+## Chosen improvement and scope
+
+The popup previously exposed the raw transcript, but the full instructions and
+optional question were available only by opening the assistant. v0.1.11 adds a
+compact **Copy prompt** action beside Open and an expandable **Preview prompt**.
+Both use the same prompt builder and choice snapshot as Open; Preview does not
+change the clipboard, Copy opens no tab, and changed inputs clear the preview.
+No prompt wording, permissions, destination routing or composer rules change.
+
+This is a small way to make task selection visible and support someone who
+prefers to paste into an already-open conversation. The hypothesis is that this
+improves confidence and reduces handoff friction. Test that with people before
+adding more controls, integrations or a transcript library.
+
+## Priorities, owners and gates
+
+| Priority | Owner | Next action | Evidence needed to move on |
 | --- | --- | --- | --- |
-| Claude beta for Sarah | Codex implements; Sarah accepts; Patrik supplies beta | v0.1.10 is delivered and merged; Patrik confirmed UI/workflow and automatic Claude insertion in his tested case. Next give Sarah the ZIP and gather her own feedback, without repeating Patrik's accepted normal-case test. | Sarah confirms all three modes prepare the correct prompt, her chosen Claude context opens beside YouTube, guarded insertion or a clear clipboard fallback works, existing drafts remain untouched, and she reviews/sends manually. |
-| Simple onboarding and reliability | Codex; Patrik prioritizes feedback | Instructions and copy/paste guidance are included. Next fix only problems observed in Sarah's path. Retain Patrik's live acceptance record; inspect any new failing layout before broadening recognition. | A new tester completes a video unaided and understands captions, destination selection, clipboard fallback and manual Send. |
-| Chrome Web Store preparation | Patrik owns account/submission; Codex prepares assets | After Sarah's acceptance, prepare concise listing copy, screenshots with synthetic data, icons, privacy disclosure and permission explanations; check current submission requirements then. | Patrik reviews the complete package and separately authorizes submission. Existing scope/terms research is not reopened for this beta. |
-| Small beta | Patrik recruits; Sarah and a few invited testers give feedback | After Sarah's first successful run, invite 3-5 people using their own ChatGPT/Claude accounts. Ask for browser/version, task completed, friction and whether they would reuse it; collect feedback manually without analytics. | Repeated use and main failure patterns are understood; priority bugs have fixes and clear owners. |
-| Promotion experiments | Patrik approves/posts; Codex prepares drafts | After reliable beta use, consider the optional demonstration experiment below, then one relevant community post where allowed. Compare manually reported completion, repeat use and support effort; no outreach is sent by this plan. | One or two small experiments show whether people understand and want this workflow. |
-| Free plus optional coffee | Patrik decides | Recommend a free useful extension first, with an optional coffee link only if Patrik wants one. No checkout, billing, account system or payment integration now. | Beta feedback shows enough value to justify offering voluntary support. |
-| Later monetization decision | Patrik | Revisit after the small beta and promotion experiments. Compare repeat use, willingness to support/pay, maintenance/support cost and store constraints. | Make an explicit keep-free / optional-support / paid-feature decision before building payment infrastructure. No revenue is promised. |
+| 1. Review v0.1.11 and Sarah's first run | Codex supplies candidate ZIP; Patrik tries/forwards it; Sarah accepts her own case | Patrik tries Preview/Copy with a question and a chosen task. Sarah installs in her own account using the normal instructions, saves her own destination and completes one useful video task. Fix observed friction first. | Patrik accepts the new actions. Sarah confirms correct task/context, source-adjacent opening, guarded insertion or understandable fallback, drafts untouched, and manual Send. Do not repeat already accepted normal-case browser tests without a relevant regression. |
+| 2. Small beta and onboarding | Patrik invites 3-5 people after Sarah succeeds; Codex fixes concrete problems | Ask testers to complete a useful task without live coaching using the README; collect browser/version, confusing step, outcome and whether they return within a week. Record feedback manually, without analytics. | Most can complete unaided and explain one useful result; identify repeat use and support effort. This is a proposed decision gate, not proven demand or a statistical claim. If they struggle, improve that step before widening distribution. |
+| 3. Chrome Web Store preparation | Codex prepares; Patrik owns publisher account and submission | After reliable beta use, prepare listing copy around the demonstrated result, synthetic screenshots/icons, support contact, privacy URL/disclosures, narrow permission justifications and a reproducible ZIP. Recheck current requirements at preparation time. | Patrik reviews complete materials and separately authorizes account costs/submission/publication. No store submission or deployment is authorized by this plan. |
+| 4. One small promotion experiment | Patrik chooses/approves/posts; Codex can draft | Optionally demonstrate video -> existing Project -> Apply -> one useful ADOPT/ADAPT/TEST decision. Verify that exact run first and hide private project/account data. Let the same beta cohort reproduce it unaided; then consider one relevant community post where allowed. | Manually compare completion, help needed, repeat use and support effort. Keep the demonstration if people understand/reproduce its value; otherwise fix the confusing step. No outreach is sent by this plan. |
+| 5. Free plus optional coffee/beer | Patrik decides and supplies a real destination; Codex can add the reviewed footer | Patrik proposed a small voluntary-support footer. Recommend it as a later, quiet text link after the main workflow; no pop-up, paywall, recurring-payment language or billing system. No destination is configured in this beta. | Patrik chooses wording and an actual support URL, and the small beta still finds the workflow clear. Support is optional and revenue is uncertain. |
+| 6. Later monetization decision | Patrik | After the small beta/promotion evidence, compare repeat use, willingness to support/pay, maintenance cost and current store constraints. | Explicitly choose keep-free, optional support or a paid proposition before designing payment infrastructure. No guaranteed revenue or speculative paid feature build. |
 
-## Optional demonstration experiment
+Store preparation references: [publishing workflow](https://developer.chrome.com/docs/webstore/publish)
+and [privacy/disclosure requirements](https://developer.chrome.com/docs/webstore/cws-dashboard-privacy).
+These guide a later review; they do not establish that this beta is store-ready.
+Existing scope/terms research is not reopened.
 
-An option informed by Patrik's creator playbook: demonstrate one useful workflow,
-then see whether a few beta users can reproduce it unaided. This stays behind
-requested implementation, reliability fixes and Sarah's acceptance.
+## Voluntary support recommendation
 
-- **Owner and timing:** Patrik chooses/approves the demonstration and any sharing;
-  Codex can prepare a short script. Use the existing small beta cohort of 3-5
-  volunteers after the workflow is reliable. This is an optional experiment,
-  not the next delivery priority.
-- **Demonstrate a verified result:** use a captioned video and an existing saved
-  Project with a clear goal. Verify that particular end-to-end run before
-  recording: choose Apply to Project, review the prepared prompt, send manually,
-  then show one useful ADOPT/ADAPT/TEST decision tied to the Project's goal.
-  Show clipboard fallback if that is the verified path; do not imply automatic
-  insertion is verified for an untested provider, route or account. Use safe demo
-  content so private Project names, links and conversation details stay private.
-- **Test reproduction:** give volunteers the brief demonstration and normal
-  installation instructions. Ask each to use the same video in their own
-  existing Project, with their own account and goal. Initially provide no live
-  coaching. Success means reaching the intended Project, choosing Apply,
-  reviewing/sending themselves and explaining one useful project-specific
-  decision, without additional help.
-- **Record and decide:** tally completion unaided, approximate time, where help
-  was needed and whether they choose to reuse the workflow. Collect this
-  feedback manually, without analytics. If most can reproduce it and describe
-  the value, keep the demonstration as an onboarding/promotion candidate;
-  otherwise improve the confusing step before wider promotion. A small sample
-  informs usability, not guaranteed demand or revenue.
+Patrik's suggested **"Finding this helpful? Buy me a coffee or beer."** fits a
+free local utility. Recommend a single low-emphasis text link below the normal
+footer, visually separate from Open/Copy. **"Finding this helpful? Buy me a
+coffee."** is the shorter default; coffee/beer is an optional personal tone.
+Make voluntary support explicit on the destination, with no recurring commitment
+implied. Never gate a task, interrupt first use or automatically open the page.
 
-**Next action:** give Sarah the delivered v0.1.10 ZIP and record her individual acceptance, then gather the small beta's feedback. The optional demonstration experiment stays behind that acceptance and any reliability fixes. Prepare store assets and disclosures only for a separate submission decision. No repeat of Patrik's accepted normal-case test is required without new failure evidence. Exact sidebar titles remain provider-controlled, with Copy title available for manual Rename.
+| Approach | Fit and trade-off |
+| --- | --- |
+| Optional footer link | Small implementation and no account/payment logic in the extension; keeps all tasks available. Visibility is limited, support may be negligible/unpredictable, and even a small link adds popup clutter. Best first experiment once there is a real URL and a useful beta. |
+| One-time paid extension/features | Could tie income to value, but introduces purchase/support expectations and a separate entitlement/distribution decision. Revisit only if repeated use and willingness to pay justify it. |
+| Subscription | Recurring income would require continuing value and ongoing billing/support. A lightweight local handoff tool has not established that proposition; premature for this beta. |
+
+No payment destination is invented or connected, no account is created and no
+footer is added in v0.1.11. Patrik supplies/selects a real support destination
+before implementation. Count voluntary feedback/support manually; no tracking
+or revenue promise. The link can be removed if users find it distracting.
+
+## Remaining decisions
+
+- **Patrik now:** try the v0.1.11 candidate and send Sarah the downloaded ZIP
+  itself. Her account/destinations are configured on her device, never bundled.
+  Record her result before expanding the beta.
+- **After beta feedback:** choose the clearest first audience/use case and
+  whether the optional demonstration is worth preparing. Avoid broad promotion
+  until people can finish unaided and find a reason to reuse it.
+- **Before submission:** Patrik selects publisher identity, support contact and
+  privacy-page hosting, then authorizes any account expense and store submission.
+  Code delivery is separate from public release.
+- **Later:** choose coffee versus coffee/beer wording and supply a genuine support
+  URL if pursuing the footer. Decide any larger monetization change using observed
+  value and upkeep, with no payment infrastructure in this milestone.

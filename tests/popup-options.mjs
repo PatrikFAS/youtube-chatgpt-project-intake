@@ -20,7 +20,9 @@ function makeElement(id) {
   const classes = new Set(['hidden']);
   return {
     id, value: '', textContent: '', innerHTML: '', disabled: false, checked: false,
-    style: {}, dataset: {}, options: [], selectedOptions: [], children: [], listeners,
+    style: {}, dataset: {}, attributes: {}, options: [], selectedOptions: [], children: [], listeners,
+    setAttribute(name, value) { this.attributes[name] = String(value); },
+    getAttribute(name) { return this.attributes[name] ?? null; },
     classList: {
       add(name) { classes.add(name); },
       remove(name) { classes.delete(name); },
@@ -44,7 +46,8 @@ async function makePopup({
   clipboardFails = false,
   fallbackCopyOk = true,
   storedSettings = {},
-  transcriptGate = null
+  transcriptGate = null,
+  transcriptOk = true
 } = {}) {
   const ids = [
     'loadingView','youtubeView','chatgptView','otherView','videoTitle','videoMeta','transcriptStatus',
@@ -52,7 +55,8 @@ async function makePopup({
     'copyTranscript','retryButton','transcriptPanel','transcriptPreview','transcriptCount','destinationName',
     'currentUrl','chatgptSaveStatus','saveDestination','manageDestinations','manageDestinationsChatgpt',
     'openOptionsTop','openOptionsOther','handoffHelp','copyChatTitle',
-    'providerChatGPT','providerClaude','destinationHelp','saveHeading','saveHelp','actionSummary','buildVersion'
+    'providerChatGPT','providerClaude','destinationHelp','saveHeading','saveHelp','actionSummary','buildVersion',
+    'copyPrompt','previewPrompt','promptPanel','promptPreview','promptCount'
   ];
   const els = Object.fromEntries(ids.map((id) => [id, makeElement(id)]));
   const radios = ['apply','analyze','summarize'].map((value) => Object.assign(makeElement(`mode-${value}`), { value, checked: value === mode }));
@@ -97,6 +101,7 @@ async function makePopup({
         } };
         activeId = 99; // The active browser tab changes while transcript retrieval is in flight.
         if (transcriptGate) await transcriptGate;
+        if (!transcriptOk) return { ok:false, error:'Transcript unavailable for fixture.' };
         return { ok: true, data: { text: 'Transcript contents.', characterCount: 22, track: { name: 'English' } } };
       }
     },
@@ -389,4 +394,72 @@ assert.match(capturedMode.events.clipboard, /SELECTED MODE: Summarize\nGive me a
 assert.doesNotMatch(capturedMode.events.clipboard, /Critically analyze the following YouTube video/);
 assert.equal(capturedMode.storageData.lastMode, 'summarize');
 
-console.log('PASS: popup/options preserve per-provider selections, snapshot the chosen mode, and retain source-grounded headers, title-copy and safe fallback behavior.');
+for (const destinationUrl of ['https://chatgpt.com/', 'https://chatgpt.com/c/existing', 'https://chatgpt.com/g/g-p-fixture/project', 'https://claude.ai/new', 'https://claude.ai/chat/existing', 'https://claude.ai/project/fixture']) {
+  for (const mode of ['apply','analyze','summarize']) {
+    const review = await makePopup({ destinationUrl, mode, runtimeOk:true });
+    await review.els.previewPrompt.listeners.click();
+    assert.equal(review.els.promptPanel.classList.contains('hidden'), false);
+    assert.equal(review.els.previewPrompt.getAttribute('aria-expanded'), 'true');
+    const preview = review.els.promptPreview.textContent;
+    assert.ok(preview.includes(modeInstructions[mode]));
+    assert.match(preview, /Could this help our workflow\?/);
+    assert.match(preview, /Transcript contents\./);
+    assert.equal(review.events.includes('clipboard'), false, 'preview does not change the clipboard');
+    assert.equal(review.events.includes('open'), false, 'preview opens no assistant tab');
+    await review.els.copyPrompt.listeners.click();
+    assert.equal(review.events.clipboard, preview, 'copy includes the exact complete preview');
+    assert.match(review.els.warning.textContent, /Full prompt copied.*No tab was opened/);
+    assert.equal(review.events.includes('open'), false, 'copy does not open an assistant tab');
+    assert.equal(review.closed(), false, 'copy leaves the popup available');
+    await vm.runInContext('sendToChatGPT()', review.context);
+    assert.equal(review.events.message.payload, preview, 'Open uses the identical prepared prompt');
+  }
+}
+
+const changingReview = await makePopup();
+for (const change of [
+  async () => { changingReview.els.optionalQuestion.value='A new question'; changingReview.els.optionalQuestion.listeners.input(); },
+  async () => { changingReview.radios.forEach((radio) => { radio.checked=radio.value==='summarize'; }); await changingReview.radios[2].listeners.change(); },
+  async () => changingReview.els.providerClaude.listeners.change(),
+  async () => changingReview.els.destinationSelect.listeners.change(),
+  async () => changingReview.els.trackSelect.listeners.change()
+]) {
+  await changingReview.els.previewPrompt.listeners.click();
+  assert.equal(changingReview.els.promptPanel.classList.contains('hidden'), false);
+  await change();
+  assert.equal(changingReview.els.promptPanel.classList.contains('hidden'), true, 'choice changes hide stale preview');
+  assert.equal(changingReview.els.promptPreview.textContent, '', 'stale preview text is cleared');
+  assert.equal(changingReview.els.previewPrompt.getAttribute('aria-expanded'), 'false');
+}
+await changingReview.els.previewPrompt.listeners.click();
+await changingReview.els.previewPrompt.listeners.click();
+assert.equal(changingReview.els.promptPanel.classList.contains('hidden'), true, 'preview toggles closed');
+
+const blockedPromptCopy = await makePopup({ clipboardFails:true, fallbackCopyOk:false });
+await blockedPromptCopy.els.copyPrompt.listeners.click();
+assert.match(blockedPromptCopy.els.error.textContent, /Could not copy to clipboard/);
+assert.equal(blockedPromptCopy.events.includes('open'), false);
+
+const fallbackPromptCopy = await makePopup({ clipboardFails:true });
+await fallbackPromptCopy.els.copyPrompt.listeners.click();
+assert.match(fallbackPromptCopy.events.fallbackText, /SELECTED MODE: Analyze/);
+assert.equal(fallbackPromptCopy.events.includes('open'), false);
+
+const noTranscriptReview = await makePopup({ transcriptOk:false });
+await noTranscriptReview.els.previewPrompt.listeners.click();
+assert.match(noTranscriptReview.els.error.textContent, /Transcript unavailable/);
+assert.equal(noTranscriptReview.els.promptPreview.textContent, '');
+assert.equal(noTranscriptReview.events.includes('open'), false);
+
+let releaseReview;
+const reviewGate=new Promise((resolve)=>{releaseReview=resolve;});
+const reviewSnapshot=await makePopup({ mode:'summarize', transcriptGate:reviewGate });
+const preparingReview=reviewSnapshot.els.copyPrompt.listeners.click();
+assert.equal(reviewSnapshot.els.copyPrompt.disabled, true);
+assert.equal(reviewSnapshot.els.previewPrompt.disabled, true);
+reviewSnapshot.radios.forEach((radio)=>{radio.checked=radio.value==='analyze';});
+releaseReview();await preparingReview;
+assert.match(reviewSnapshot.events.clipboard, /SELECTED MODE: Summarize/);
+assert.doesNotMatch(reviewSnapshot.events.clipboard, /Critically analyze the following YouTube video/);
+
+console.log('PASS: popup/options preserve workflow and preferences; preview/copy matches Open in all 18 task/destination combinations with no extra tabs and stale-preview protection.');

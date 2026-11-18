@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.11
+
+- Adds Preview prompt and Copy prompt to review or copy the full selected instructions, question and transcript without opening an assistant tab. Open keeps its existing handoff behavior; all three actions share the same prompt builder and capture choices at the click.
+- Clears previews when task, destination, provider, question or caption track changes. Preview renders plain text, leaves the clipboard unchanged and locks controls during extraction. Copy retains the clipboard fallback and never opens a destination or sends a message.
+- Extends popup regression coverage across all 18 task/provider/destination combinations, including native clicks proving Preview = Copy = Open, reload retention, safe text rendering, failed extraction/copy and stale-preview handling. Existing prompt wording, permissions, injectors and saved preferences are preserved.
+- Reconciles the product plan around Sarah's first run, a small beta, later store preparation and an optional verified workflow demonstration. v0.1.10 remains the user-accepted baseline; v0.1.11's new interaction and Sarah's acceptance are pending. No public release or payment infrastructure.
+
 ## 0.1.10
 
 - Adds guarded Claude composer insertion at Patrik's explicit request after he accepted the v0.1.9 UI/workflow. Adds only the exact `https://claude.ai/*` host and a local content script; no API, backend, analytics or automatic Send.

@@ -79,6 +79,10 @@ textarea::placeholder { color: var(--muted); opacity: .8; }
 .small { padding: 7px 10px; font-size: 11px; }
 .wide { width: 100%; margin-top: 8px; }
 #sendButton { padding: 12px; font-size: 13px; margin-top: 3px; }
+.handoff-actions { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: stretch; gap: 7px; }
+.handoff-actions #sendButton { margin-top: 0; }
+#copyPrompt { font-size: 12px; font-weight: 650; padding: 10px; }
+.prompt-help { margin: 9px 10px 0; font-size: 11px; line-height: 1.45; color: var(--muted); }
 .utility-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 5px; margin-top: 9px; color: var(--muted); font-size: 10px; }
 .link-button { border: 0; background: transparent; color: inherit; padding: 3px; text-decoration: underline; text-underline-offset: 3px; }
 .link-button:hover { color: var(--accent); }

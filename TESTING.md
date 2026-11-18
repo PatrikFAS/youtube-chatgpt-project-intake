@@ -2,6 +2,45 @@
 
 ## Current status
 
+**v0.1.11 candidate: prompt preview and copy implemented, user acceptance pending.**
+The accepted v0.1.10 composer/routing behavior is retained. Prompt wording,
+permissions and both injectors are unchanged. Sarah's first-run acceptance
+remains unrecorded; the new actions' usefulness is a hypothesis for beta feedback.
+
+### v0.1.11 focused acceptance
+
+1. Overwrite files in the same unpacked extension folder, Reload its existing
+   entry and refresh open YouTube/assistant tabs. Do not uninstall or load a
+   duplicate. Confirm **v0.1.11** in the footer and retained task/destinations.
+2. On a captioned video, choose a provider, destination and **Summarize**; add a
+   question. Choose **Preview prompt**: check SELECTED MODE, your question,
+   full source title/link and transcript. No assistant tab should open and the
+   clipboard should stay unchanged. Preview is scrollable and read-only.
+3. Choose **Copy prompt** and paste into an empty temporary text document. It
+   should match the full preview, including the question. No new assistant tab
+   should open. Change to Analyze (or change provider/destination/question/track):
+   the old preview must clear; preview again for the current selection.
+4. Choose **Open** when ready. Check the same selected task in the prepared
+   prompt, correct context and existing guarded insertion/fallback. Review and
+   Send yourself. Existing drafts must remain untouched. No need to repeat all
+   of Patrik's accepted normal-case browser checks without a new failure.
+5. Sarah installs using the README with her own account and saves her own
+   destination. Record whether she completes one useful task unaided, any
+   fallback/confusing step and whether she would reuse the tool.
+
+**Automated evidence:** npm run verify and all four npm test suites pass.
+Native clicks on the actual popup assets in an isolated synthetic profile pass
+18 combinations (three tasks, both providers, new chat/saved chat/Project):
+Preview = Copy = Open, no tab opened or popup closed by Preview/Copy, preview
+does not copy, reload retention, safe plain-text rendering and stale previews.
+Failure/snapshot fixtures cover extraction and clipboard failures and choice
+changes during asynchronous preparation. Light/dark and preview screenshots
+were reviewed. These mocked handoffs do not establish authenticated behavior
+or user demand. The v0.1.10 Claude native-DOM results below are retained evidence,
+not a claim of newly inspected live markup.
+
+## Accepted baseline: v0.1.10
+
 **v0.1.10 guarded Claude insertion: user-confirmed working.** On 2026-11-17,
 Patrik explicitly confirmed Claude inserted automatically without manual paste
 and requested pushing/merging this version. His exact browser version and

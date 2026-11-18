@@ -49,18 +49,23 @@ function cacheElements() {
     'copyTranscript','retryButton','transcriptPanel','transcriptPreview','transcriptCount','destinationName',
     'currentUrl','chatgptSaveStatus','saveDestination','manageDestinations','manageDestinationsChatgpt',
     'openOptionsTop','openOptionsOther','handoffHelp','copyChatTitle',
-    'providerChatGPT','providerClaude','destinationHelp','saveHeading','saveHelp','actionSummary','buildVersion'
+    'providerChatGPT','providerClaude','destinationHelp','saveHeading','saveHelp','actionSummary','buildVersion',
+    'copyPrompt','previewPrompt','promptPanel','promptPreview','promptCount'
   ]) els[id] = document.getElementById(id);
 }
 
 function wireEvents() {
   els.sendButton.addEventListener('click', sendToChatGPT);
   els.copyTranscript.addEventListener('click', copyTranscript);
+  els.copyPrompt.addEventListener('click', () => preparePromptAction(true));
+  els.previewPrompt.addEventListener('click', () => preparePromptAction(false));
+  els.optionalQuestion.addEventListener('input', invalidatePromptPreview);
   els.copyChatTitle.addEventListener('click', copyChatTitle);
   els.viewTranscript.addEventListener('click', toggleTranscriptPreview);
   els.retryButton.addEventListener('click', () => initYouTube(true));
   els.trackSelect.addEventListener('change', async () => {
     currentTranscript = null;
+    invalidatePromptPreview();
     hide(els.transcriptPanel);
     clearMessages();
     await rememberPreferredTrackLanguage();
@@ -77,6 +82,7 @@ function wireEvents() {
 }
 
 async function initYouTube(force = false) {
+  invalidatePromptPreview();
   showView('loadingView');
   clearMessages();
   transcriptCache.clear();
@@ -243,18 +249,67 @@ async function getSelectedTranscript() {
   }
 }
 
+function capturePromptChoice() {
+  // Snapshot the visible choice at the click, before caption/clipboard awaits.
+  // An async preference write must never select the task for this handoff.
+  return {
+    mode: getSelectedMode(),
+    question: els.optionalQuestion.value.trim(),
+    selectedUrl: els.destinationSelect.selectedOptions[0]?.dataset?.url,
+    destinationId: els.destinationSelect.value,
+    provider: currentProvider
+  };
+}
+
+function buildSelectedPrompt(choice, transcript) {
+  return buildPrompt({ mode: choice.mode, question: choice.question, transcript,
+    provider: YT2GPTDestination.provider(choice.selectedUrl) || choice.provider,
+    newChat: YT2GPTDestination.isNewChatEntry(choice.selectedUrl) });
+}
+
+async function preparePromptAction(copy) {
+  if (busy || sending) return;
+  if (!copy && !els.promptPanel.classList.contains('hidden')) return invalidatePromptPreview();
+  sending = true;
+  clearMessages();
+  const choice = capturePromptChoice();
+  try {
+    const transcript = await getSelectedTranscript();
+    setBusy(true, copy ? 'Copying prompt…' : 'Preparing preview…');
+    const prompt = buildSelectedPrompt(choice, transcript);
+    els.promptPreview.textContent = prompt;
+    els.promptCount.textContent = `${prompt.length.toLocaleString()} characters`;
+    if (!copy || !els.promptPanel.classList.contains('hidden')) {
+      show(els.promptPanel);
+      els.previewPrompt.textContent = 'Hide prompt';
+      els.previewPrompt.setAttribute('aria-expanded', 'true');
+    }
+    if (copy) {
+      await copyText(prompt);
+      showWarning('Full prompt copied. Paste into your chosen assistant, review and send yourself. No tab was opened.');
+    }
+  } catch (error) {
+    showError(friendlyError(error));
+  } finally {
+    sending = false;
+    setBusy(false);
+  }
+}
+
+function invalidatePromptPreview() {
+  hide(els.promptPanel);
+  els.promptPreview.textContent = '';
+  els.promptCount.textContent = '';
+  els.previewPrompt.textContent = 'Preview prompt';
+  els.previewPrompt.setAttribute('aria-expanded', 'false');
+}
+
 async function sendToChatGPT() {
   if (busy || sending) return;
   sending = true;
   clearMessages();
-  // Snapshot the visible choice at the click, before caption/clipboard awaits.
-  // An async preference write must never select the task for this handoff.
-  const mode = getSelectedMode();
-  const destinationOption = els.destinationSelect.selectedOptions[0];
-  const selectedUrl = destinationOption?.dataset?.url;
-  const destinationId = els.destinationSelect.value;
-  const provider = currentProvider;
-  const question = els.optionalQuestion.value.trim();
+  const choice = capturePromptChoice();
+  const { mode, selectedUrl, destinationId, provider } = choice;
   let promptCopied = false;
   try {
     const transcript = await getSelectedTranscript();
@@ -269,7 +324,7 @@ async function sendToChatGPT() {
     }
 
     const destinationUrl = selectedUrl;
-    const prompt = buildPrompt({ mode, question, transcript, provider: YT2GPTDestination.provider(selectedUrl) || provider, newChat: YT2GPTDestination.isNewChatEntry(selectedUrl) });
+    const prompt = buildSelectedPrompt(choice, transcript);
 
     // Copy the complete prompt before opening either destination.
     await copyText(prompt);
@@ -396,6 +451,7 @@ function formatTranscriptForCopy(transcript) {
 }
 
 async function rememberDestination() {
+  invalidatePromptPreview();
   providerSelections[currentProvider] = els.destinationSelect.value;
   updateHandoffHelp();
   await chrome.storage.local.set({ lastDestinationId: els.destinationSelect.value, lastProvider: currentProvider, lastDestinationByProvider: { ...providerSelections } });
@@ -418,6 +474,7 @@ function updateHandoffHelp() {
 }
 
 async function rememberMode() {
+  invalidatePromptPreview();
   updateHandoffHelp();
   await chrome.storage.local.set({ lastMode: getSelectedMode() });
 }
@@ -508,7 +565,7 @@ function setBusy(busy, label = 'Loading transcript.') {
 
 function setInteractionBusy(value) {
   busy = value;
-  for (const el of [els.providerChatGPT, els.providerClaude, els.destinationSelect, els.trackSelect, els.optionalQuestion, els.copyTranscript, els.copyChatTitle, els.viewTranscript, els.retryButton]) el.disabled = value;
+  for (const el of [els.providerChatGPT, els.providerClaude, els.destinationSelect, els.trackSelect, els.optionalQuestion, els.copyTranscript, els.copyChatTitle, els.viewTranscript, els.retryButton, els.copyPrompt, els.previewPrompt]) el.disabled = value;
   document.querySelectorAll('input[name="mode"]').forEach((radio) => { radio.disabled = value; });
 }
 

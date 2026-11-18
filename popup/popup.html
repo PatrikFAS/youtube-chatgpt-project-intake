@@ -101,10 +101,15 @@
       <div id="error" class="error hidden"></div>
 
       <p id="actionSummary" class="action-summary" aria-live="polite"></p>
-      <button id="sendButton" class="primary wide">Open in ChatGPT</button>
+      <div class="handoff-actions">
+        <button id="sendButton" class="primary wide">Open in ChatGPT</button>
+        <button id="copyPrompt" class="secondary" title="Copy the full prepared prompt without opening a tab">Copy prompt</button>
+      </div>
       <p id="handoffHelp" class="muted" aria-live="polite"></p>
 
       <div class="utility-row">
+        <button id="previewPrompt" class="link-button" aria-controls="promptPanel" aria-expanded="false">Preview prompt</button>
+        <span>·</span>
         <button id="viewTranscript" class="link-button">View transcript</button>
         <span>·</span>
         <button id="copyTranscript" class="link-button">Copy transcript</button>
@@ -113,6 +118,15 @@
         <span>·</span>
         <button id="retryButton" class="link-button">Retry</button>
       </div>
+
+      <section id="promptPanel" class="transcript-panel hidden" aria-label="Prepared prompt preview">
+        <div class="transcript-panel-header">
+          <strong>Prompt preview</strong>
+          <span id="promptCount"></span>
+        </div>
+        <p class="prompt-help">This is the full prompt for your selected task, including your question and transcript. You review and send it yourself.</p>
+        <pre id="promptPreview" tabindex="0"></pre>
+      </section>
 
       <div id="transcriptPanel" class="transcript-panel hidden">
         <div class="transcript-panel-header">

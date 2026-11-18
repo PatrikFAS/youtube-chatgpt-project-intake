@@ -5,6 +5,7 @@
 - Open the result beside the captured source tab in its current window when available. Browser behavior can constrain pinned tabs and tab groups; do not add group-management permission.
 - Keep `manifest.json` and `package.json` versions synchronized and document releases in `CHANGELOG.md`.
 - Run `npm run verify` and `npm test` from the repository root. Tests use fixtures and do not establish authenticated live-browser behavior.
+- Preserve Preview prompt / Copy prompt / Open payload equivalence for the same choices. Preview must render plain text without copying; Copy must not open a tab. Clear stale previews when inputs change and keep the main Open workflow intact.
 - Build a release ZIP only after committing: `python3 scripts/package.py /path/outside/repository/extension-VERSION.zip`. The script requires a clean tracked tree and packages committed files.
 - Keep issue #1 open through merge until the user confirms destination routing and source-adjacent tab placement in the affected browser. Do not use an auto-closing issue reference in the PR.
 - Read and update `PROJECT_PLAN.md` for product milestones and owners. Chrome/Edge's existing workflow is user-confirmed working; do not repeat those acceptance checks without a relevant regression. Sarah's Claude acceptance and ChatGPT's actual sidebar naming remain separate, unperformed checks. Do not reopen terms research or add payment infrastructure for this beta.

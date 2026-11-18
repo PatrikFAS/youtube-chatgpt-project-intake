@@ -10,6 +10,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const root = process.env.POPUP_FIXTURE_ROOT || path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const hasProviderSwitch = fs.readFileSync(path.join(root, 'popup/popup.html'), 'utf8').includes('providerChatGPT');
+const hasPromptReview = fs.readFileSync(path.join(root, 'popup/popup.html'), 'utf8').includes('copyPrompt');
 const executable = process.argv[2] || process.env.CHROMIUM_EXECUTABLE;
 assert.ok(executable && fs.existsSync(executable), 'Pass an existing Chromium/Chrome/Edge executable. No browser is downloaded.');
 const profile = fs.mkdtempSync(path.join(os.tmpdir(), 'yt-intake-popup-browser-'));
@@ -109,6 +110,19 @@ try {
       await ui.click(`label.mode-card:has(input[value="${mode}"]) strong`);
       assert.equal(await ui.evaluate('document.querySelector("input[name=mode]:checked").value'), mode);
       if (hasProviderSwitch) assert.ok((await ui.evaluate('document.getElementById("actionSummary").textContent')).startsWith(labels[mode]));
+      let reviewedPrompt;
+      if (hasPromptReview) {
+        await ui.click('#previewPrompt');
+        await ui.waitFor(`!document.getElementById('promptPanel').classList.contains('hidden')`);
+        reviewedPrompt = await ui.evaluate('document.getElementById("promptPreview").textContent');
+        assert.equal(await ui.evaluate('fixture.copied'), '', 'preview leaves clipboard unchanged');
+        assert.equal(await ui.evaluate('fixture.messages.length'), 0, 'preview opens no tab');
+        await ui.click('#copyPrompt');
+        await ui.waitFor(`!document.getElementById('copyPrompt').disabled`);
+        assert.equal(await ui.evaluate('fixture.copied'), reviewedPrompt, 'native copy matches the full preview');
+        assert.equal(await ui.evaluate('fixture.messages.length'), 0, 'copy opens no tab');
+        assert.equal(await ui.evaluate('fixture.closed'), false, 'copy leaves popup usable');
+      }
       await ui.click('#sendButton');
       await ui.waitFor('fixture.closed');
       const result = await ui.evaluate('fixture');
@@ -116,6 +130,7 @@ try {
       for (const unwanted of modeChecks[mode].slice(1)) assert.ok(!result.copied.includes(unwanted), `${destination.id}: ${mode} must not contain another mode's instruction`);
       if (hasProviderSwitch) assert.ok(result.copied.includes(`SELECTED MODE: ${labels[mode]}`));
       assert.equal(result.messages[0].payload, result.copied);
+      if (hasPromptReview) assert.equal(result.messages[0].payload, reviewedPrompt, 'Open matches the exact preview/copy payload');
       assert.equal(result.messages[0].destinationUrl, destination.url);
       assert.equal(result.data.lastMode, mode);
       assert.equal(result.data.lastDestinationId, destination.id);
@@ -141,11 +156,33 @@ try {
   assert.equal(await ui.evaluate('document.documentElement.scrollWidth <= 400'), true, 'popup has no horizontal overflow');
   assert.equal(await ui.evaluate('document.getElementById("sendButton").getBoundingClientRect().bottom <= 600'), true, 'primary action stays visible in a 600px popup for the standard fixture');
   await call('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-color-scheme', value: 'light' }] }, ui.sessionId);
+  // Let theme/selection transitions paint before capturing the synthetic UI.
+  await ui.evaluate('new Promise(resolve => setTimeout(resolve, 150))');
   const screenshot = await call('Page.captureScreenshot', { format: 'png', captureBeyondViewport: true }, ui.sessionId);
   fs.writeFileSync(path.join(profile, 'popup-claude.png'), Buffer.from(screenshot.data, 'base64'));
   await call('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-color-scheme', value: 'dark' }] }, ui.sessionId);
+  await ui.evaluate('new Promise(resolve => setTimeout(resolve, 150))');
   const dark = await call('Page.captureScreenshot', { format: 'png', captureBeyondViewport: true }, ui.sessionId);
   fs.writeFileSync(path.join(profile, 'popup-claude-dark.png'), Buffer.from(dark.data, 'base64'));
+  if (hasPromptReview) {
+    await ui.click('#previewPrompt');
+    await ui.waitFor(`!document.getElementById('promptPanel').classList.contains('hidden')`);
+    await ui.evaluate(`(() => { const question = document.getElementById('optionalQuestion'); question.value = '<img src=x onerror="window.fixtureUnsafe=true">'; question.dispatchEvent(new Event('input', {bubbles:true})); })()`);
+    assert.equal(await ui.evaluate('document.getElementById("promptPanel").classList.contains("hidden")'), true, 'editing the question invalidates the preview');
+    await ui.click('#previewPrompt');
+    await ui.waitFor(`!document.getElementById('promptPanel').classList.contains('hidden')`);
+    assert.ok((await ui.evaluate('document.getElementById("promptPreview").textContent')).includes('<img src=x'));
+    assert.equal(await ui.evaluate('document.getElementById("promptPreview").querySelectorAll("img").length'), 0, 'source/question markup renders as plain text');
+    assert.equal(await ui.evaluate('Boolean(window.fixtureUnsafe)'), false);
+    const previewImage = await call('Page.captureScreenshot', { format:'png', captureBeyondViewport:true }, ui.sessionId);
+    fs.writeFileSync(path.join(profile, 'popup-prompt-preview.png'), Buffer.from(previewImage.data,'base64'));
+    await ui.click('label.mode-card:has(input[value="analyze"]) strong');
+    assert.equal(await ui.evaluate('document.getElementById("promptPreview").textContent'), '', 'changing mode clears stale content');
+    await ui.click('#previewPrompt');
+    await ui.waitFor(`!document.getElementById('promptPanel').classList.contains('hidden')`);
+    await ui.click('label.provider-choice:has(#providerChatGPT) span');
+    assert.equal(await ui.evaluate('document.getElementById("promptPanel").classList.contains("hidden")'), true, 'switching provider hides stale preview');
+  }
   await ui.close();
   }
   if (process.argv.includes('--inspect-claude')) {
@@ -158,7 +195,7 @@ try {
     await call('Target.closeTarget', { targetId });
   }
   assert.equal(errors.length, 0, `No runtime exceptions: ${JSON.stringify(errors)}`);
-  console.log(`PASS: ${cases} native popup clicks/copies and reload retention${hasProviderSwitch ? ', plus provider switching' : ' (baseline popup)'} on ${version.product}.`);
+  console.log(`PASS: ${cases} native popup task/destination cases${hasPromptReview ? ' with preview = copy = Open, no extra tabs, safe text and stale-preview checks' : ''}, reload retention${hasProviderSwitch ? ' and provider switching' : ' (baseline popup)'} on ${version.product}.`);
   if (hasProviderSwitch) console.log(`Synthetic UI screenshots: ${profile}`);
 } finally {
   if (ws?.readyState === WebSocket.OPEN) {

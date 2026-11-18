@@ -2,9 +2,9 @@
 
 A lightweight Chrome/Edge browser extension that extracts YouTube transcripts and routes them to ChatGPT or Claude for summarization, critical analysis, or project-specific application.
 
-**Current beta: v0.1.10 - user-confirmed Claude automatic insertion**
+**Candidate beta: v0.1.11 - preview or copy the full prompt before opening an assistant**
 
-Patrik confirmed the v0.1.9 UI and workflow look good and work well. Patrik also confirmed Claude inserted the prompt automatically and approved pushing/merging this version. Sarah's own acceptance is not recorded. See [PROJECT_PLAN.md](PROJECT_PLAN.md) for milestones, owners and the next action.
+Patrik accepted the v0.1.10 workflow, including automatic Claude insertion in his tested case; it is merged. v0.1.11 adds **Preview prompt** and **Copy prompt** without opening a tab. The new actions have automated and native-popup fixture coverage; user acceptance of this addition and Sarah's own Claude acceptance remain pending. See [PROJECT_PLAN.md](PROJECT_PLAN.md) for prioritized product/release milestones, owners and next actions.
 
 The extension does **not** run its own AI. It extracts YouTube captions locally, packages them with a focused instruction and copies the complete prompt before opening your selected destination. ChatGPT uses the existing guarded composer insertion. Claude now attempts **guarded automatic insertion** in a recognized empty message box on the exact saved route. Patrik confirmed automatic insertion in his signed-in browser; his exact browser version and destination were not recorded. Drafts/attachments are preserved, the complete prompt stays copied, and you review and send yourself.
 
@@ -21,12 +21,12 @@ Faithfully compress the video into a TL;DR, key ideas, examples, conclusions, an
 
 The raw transcript is a separate utility rather than a fourth reasoning mode. The selected task appears above the action button and as SELECTED MODE in the copied prompt, so Summarize and Analyze are easy to distinguish.
 
-## Update an existing installation to v0.1.10
+## Update an existing installation to v0.1.11
 
 1. Extract the versioned ZIP and overwrite its files in the **same unpacked extension folder** you originally loaded. Keep that folder's location. You can back it up first.
 2. Open `edge://extensions/` or `chrome://extensions/` and click **Reload** on the existing extension entry. Do not uninstall it; updating in place retains saved destinations and preferences.
-3. Refresh your open YouTube, ChatGPT and Claude tabs. Allow the new claude.ai site access if your browser asks. Confirm **v0.1.10** in the popup footer. Saved links, task and caption preferences remain; the last saved destination selects its provider automatically.
-4. On YouTube, choose **Claude** in the Assistant switch, **New chat** or a saved destination, then your task. Confirm the summary above **Open in Claude**. Wait for the insertion notice, check the full prompt and context, then send yourself. If a fallback appears, inspect existing draft text before pasting with Ctrl+V. Follow [the focused v0.1.10 check](TESTING.md#v0110-focused-acceptance). Existing Chrome/Edge behavior is already confirmed.
+3. Refresh your open YouTube, ChatGPT and Claude tabs. Allow claude.ai site access if upgrading from a version before v0.1.10 and your browser asks. Confirm **v0.1.11** in the popup footer. Saved links, task and caption preferences remain; the last saved destination selects its provider automatically. This update adds no permissions.
+4. Follow [the focused v0.1.11 check](TESTING.md#v0111-focused-acceptance): choose a provider, destination and task, then try **Preview prompt** or **Copy prompt**. Open still uses the same prepared text and guarded insertion. Review the context and prompt before sending yourself. With any fallback, inspect existing draft text before pasting with Ctrl+V. Existing Chrome/Edge and Patrik's tested Claude behavior are already confirmed.
 
 The update keeps supported destination URLs intact and rejects Codex or unfamiliar routes with repair guidance. It checks the actual URL, selected product controls and specific ChatGPT composer markers before insertion, preserves existing drafts, and consumes a handoff before editing to avoid duplicates. Unrecognized interfaces get a visible clipboard fallback; choose the intended ChatGPT surface before pasting. No product-mode override is invented.
 
@@ -97,9 +97,10 @@ You can edit or delete saved destinations from **Manage destinations**.
    - **Analyze**
    - **Summarize**
 6. Expand **Add a question** for a specific question. Expand **Caption language** to change tracks.
-7. Check the task summary, then click **Open in ChatGPT** or **Open in Claude**. Task, destination and question are captured at this click; controls lock while preparing the prompt.
-8. The destination opens beside the captured YouTube tab. ChatGPT insertion is attempted in a recognized empty composer; for Claude, the beta checks the exact destination and a marked empty message box before attempting insertion. Keep any existing draft until you decide what to do with it.
-9. Review the prompt and press **Send** yourself.
+7. Check the task summary. Optionally choose **Preview prompt** to read the full instructions, question and transcript. **Copy prompt** copies that complete text without opening a tab; use it to paste into an existing assistant conversation yourself. A changed task, destination, question or caption track clears the old preview.
+8. Click **Open in ChatGPT** or **Open in Claude** when you want the normal handoff. Task, destination and question are captured at this click; controls lock while preparing the prompt.
+9. The destination opens beside the captured YouTube tab. ChatGPT insertion is attempted in a recognized empty composer; for Claude, the beta checks the exact destination and a marked empty message box before attempting insertion. Keep any existing draft until you decide what to do with it.
+10. Review the prompt and press **Send** yourself.
 
 The full prompt is copied to your clipboard **before** either destination opens. Both providers keep clipboard fallback. If insertion is refused or unconfirmed, inspect the destination and any draft/partial insertion before pasting. If opening fails, the popup confirms that the complete prompt remains copied. If copying fails, no destination is opened.
 
