@@ -88,6 +88,11 @@ implements a persistent transcript Collection/library in the current beta:
 each existing handoff handles one video. The Collection concept is not
 implemented or promoted into NOW work.
 
+The [Collection engineering outline](COLLECTION_PLAN.md) records the proposed
+capture/review flow, source attribution, missing-caption and prompt-size rules,
+retention decision, integrity tests and owner/approval gates. It is planning
+only and does not alter the active beta, optional candidate or their ZIPs.
+
 ## Smallest Claude user check
 
 **Owner: Patrik.** With v0.1.14 already loaded, repeat just the affected saved
