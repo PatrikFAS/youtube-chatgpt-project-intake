@@ -84,8 +84,9 @@ The latest Space update calls this manual basket **Collection**. It can accept
 videos originally found in tabs or a saved playlist one at a time without
 claiming playlist import. Validate three related sources manually for both
 triage and project-specific synthesis before proposing development. Nothing
-collects or persistently stores transcripts in the current beta, and the
-Collection concept is not implemented or promoted into NOW work.
+implements a persistent transcript Collection/library in the current beta:
+each existing handoff handles one video. The Collection concept is not
+implemented or promoted into NOW work.
 
 ## Smallest Claude user check
 
