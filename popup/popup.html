@@ -87,9 +87,23 @@
             <small>Get the essentials</small>
           </span>
         </label>
+        <label class="mode-card custom-choice">
+          <input type="radio" name="mode" value="custom">
+          <span><strong>Custom instructions</strong><small>Choose your own task</small></span>
+        </label>
       </fieldset>
 
-      <details class="question-details">
+      <section id="customPanel" class="field hidden" aria-label="Custom instructions">
+        <label for="customInstructions">Your instructions</label>
+        <textarea id="customInstructions" rows="3" placeholder="For example: turn this video into five discussion questions for my team."></textarea>
+        <p id="customHelp" class="field-help"></p>
+        <div class="custom-actions">
+          <button id="saveCustomInstructions" class="secondary small">Save locally</button>
+          <button id="forgetCustomInstructions" class="link-button hidden">Forget saved instructions</button>
+        </div>
+      </section>
+
+      <details id="questionDetails" class="question-details">
         <summary>Add a question <span class="optional-label">Optional</span></summary>
         <div class="field">
         <label for="optionalQuestion">Your question <span class="optional-label">Optional</span></label>
@@ -124,7 +138,7 @@
           <strong>Prompt preview</strong>
           <span id="promptCount"></span>
         </div>
-        <p class="prompt-help">This is the full prompt for your selected task, including your question and transcript. You review and send it yourself.</p>
+        <p class="prompt-help">This is the full prompt for your selected task, including your question or instructions and transcript. You review and send it yourself.</p>
         <pre id="promptPreview" tabindex="0"></pre>
       </section>
 

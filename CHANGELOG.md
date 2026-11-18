@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.14
+
+- Adds Custom instructions below the three unchanged presets. Preview, Copy and Open capture the same nonempty custom task and retain source title/link/featured-people instructions, transcript, source-safety boundaries and guarded manual-send handoff. The preset question is kept when switching back and is not silently appended to Custom.
+- Custom text is one-off by default and not persisted. Save locally explicitly remembers one instruction on this browser, shared by both providers; edits remain one-off until saved again. Forget saved instructions clears it. The last preset returns after an unsaved Custom session. Retry retains current custom text and selection, and storage failures keep text with a useful error.
+- Required checks, 24 native preset/custom task/destination combinations, local save/forget/reload tests and the existing 42 Claude native-DOM cases pass. These are synthetic fixtures; current Claude recognition and the new Custom interaction still need user acceptance.
+- Signed-in Edge accessibility and DevTools were reachable, but safe input/focus/hit-test guards did not yield a usable DOM report. No Claude editor values/drafts, messages, cookies or account files were read or changed; no AI message was sent. Browser control stopped when Patrik returned. Claude's v0.1.13 recognition rules are retained, not claimed fixed. No auto-send/payment/store publication.
+
 ## 0.1.13
 
 - Uses Patrik's chosen working name, YouTube AI Bridge, in the manifest/action title, popup, destination manager, both providers' notices and current documentation. Keeps the repository/package identifier, internal message/element IDs, storage keys and saved settings unchanged. Update the same unpacked installation; no new extension entry or permissions. The name remains provisional with no clearance/publication implied.

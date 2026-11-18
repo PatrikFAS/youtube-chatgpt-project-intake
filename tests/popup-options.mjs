@@ -59,7 +59,7 @@ async function makePopup({
     'copyPrompt','previewPrompt','promptPanel','promptPreview','promptCount'
   ];
   const els = Object.fromEntries(ids.map((id) => [id, makeElement(id)]));
-  const radios = ['apply','analyze','summarize'].map((value) => Object.assign(makeElement(`mode-${value}`), { value, checked: value === mode }));
+  const radios = ['apply','analyze','summarize','custom'].map((value) => Object.assign(makeElement(`mode-${value}`), { value, checked: value === mode }));
   const events = [];
   const storageData = {
     destinations: [{ id: 'general', name: 'General ChatGPT', url: destinationUrl, builtIn: true }],
@@ -462,4 +462,97 @@ releaseReview();await preparingReview;
 assert.match(reviewSnapshot.events.clipboard, /SELECTED MODE: Summarize/);
 assert.doesNotMatch(reviewSnapshot.events.clipboard, /Critically analyze the following YouTube video/);
 
-console.log('PASS: popup/options preserve workflow and preferences; preview/copy matches Open in all 18 task/destination combinations with no extra tabs and stale-preview protection.');
+async function chooseCustom(ui, text) {
+  ui.radios.forEach((radio) => { radio.checked = radio.value === 'custom'; });
+  await ui.radios.find((radio) => radio.value === 'custom').listeners.change();
+  ui.els.customInstructions.value = text;
+  ui.els.customInstructions.listeners.input();
+}
+
+for (const destinationUrl of ['https://chatgpt.com/', 'https://chatgpt.com/c/existing', 'https://chatgpt.com/g/g-p-fixture/project', 'https://claude.ai/new', 'https://claude.ai/chat/existing', 'https://claude.ai/project/fixture']) {
+  const custom = await makePopup({ destinationUrl, mode:'summarize', runtimeOk:true });
+  await chooseCustom(custom, 'Create five discussion questions.\nKeep source timestamps.');
+  assert.equal(custom.els.questionDetails.classList.contains('hidden'), true);
+  await custom.els.previewPrompt.listeners.click();
+  const preview = custom.els.promptPreview.textContent;
+  assert.match(preview, /SELECTED MODE: Custom instructions/);
+  assert.match(preview, /USER INSTRUCTIONS\nCreate five discussion questions\.\nKeep source timestamps\./);
+  assertReplyHeader(preview, 'Example video');
+  assert.match(preview, /Transcript contents\./);
+  assert.match(preview, /SOURCE SAFETY/);
+  assert.doesNotMatch(preview, /SPECIFIC QUESTION|Could this help our workflow/,'hidden preset question is not appended');
+  for (const instruction of Object.values(modeInstructions)) assert.ok(!preview.includes(instruction),'presets are not silently mixed into Custom');
+  await custom.els.copyPrompt.listeners.click();
+  assert.equal(custom.events.clipboard,preview);
+  assert.equal(custom.events.includes('open'),false);
+  assert.equal(custom.storageData.customInstructions,undefined,'one-off never stored');
+  await vm.runInContext('sendToChatGPT()',custom.context);
+  assert.equal(custom.events.message.payload,preview);
+  assert.equal(custom.storageData.lastMode,'summarize','one-off does not replace the last preset on reopening');
+  assert.equal(custom.storageData.customInstructions,undefined);
+  const reopened=await makePopup({storedSettings:custom.storageData});
+  assert.equal(reopened.els.customInstructions.value,'','one-off text is cleared in a new popup');
+}
+const emptyCustom=await makePopup();
+await chooseCustom(emptyCustom,'   ');
+for(const action of [()=>emptyCustom.els.previewPrompt.listeners.click(),()=>emptyCustom.els.copyPrompt.listeners.click(),()=>vm.runInContext('sendToChatGPT()',emptyCustom.context)]){
+  await action();assert.match(emptyCustom.els.error.textContent,/Enter your custom instructions/);
+}
+assert.equal(emptyCustom.events.includes('clipboard'),false);
+assert.equal(emptyCustom.events.includes('open'),false);
+assert.equal(emptyCustom.events.some((event)=>event.includes('GET_TRANSCRIPT')),false,'empty Custom does not fetch captions');
+
+const reusable=await makePopup({mode:'analyze'});
+await chooseCustom(reusable,'Saved instruction.');
+await reusable.els.saveCustomInstructions.listeners.click();
+assert.equal(reusable.storageData.customInstructions,'Saved instruction.');
+assert.equal(reusable.storageData.lastMode,'custom');
+assert.match(reusable.els.customHelp.textContent,/Saved only on this browser/);
+const restoredCustom=await makePopup({storedSettings:reusable.storageData});
+assert.equal(restoredCustom.radios.find((radio)=>radio.checked).value,'custom');
+assert.equal(restoredCustom.els.customInstructions.value,'Saved instruction.');
+await restoredCustom.els.previewPrompt.listeners.click();
+restoredCustom.els.customInstructions.value='One-off edit.';restoredCustom.els.customInstructions.listeners.input();
+assert.equal(restoredCustom.els.promptPreview.textContent,'','edits invalidate preview');
+assert.equal(restoredCustom.storageData.customInstructions,'Saved instruction.','editing is not automatic saving');
+await restoredCustom.els.forgetCustomInstructions.listeners.click();
+assert.equal(restoredCustom.els.customInstructions.value,'');
+assert.equal(restoredCustom.storageData.customInstructions,'');
+assert.equal(restoredCustom.storageData.lastMode,'analyze');
+const forgotten=await makePopup({storedSettings:restoredCustom.storageData});
+assert.equal(forgotten.els.customInstructions.value,'');
+assert.equal(forgotten.radios.find((radio)=>radio.checked).value,'analyze');
+
+let releaseCustom;
+const customGate=new Promise((resolve)=>{releaseCustom=resolve;});
+const customSnapshot=await makePopup({transcriptGate:customGate});
+await chooseCustom(customSnapshot,'Captured before caption load.');
+const customCopy=customSnapshot.els.copyPrompt.listeners.click();
+assert.equal(customSnapshot.els.customInstructions.disabled,true);
+customSnapshot.els.customInstructions.value='Changed while waiting.';
+releaseCustom();await customCopy;
+assert.match(customSnapshot.events.clipboard,/Captured before caption load/);
+assert.doesNotMatch(customSnapshot.events.clipboard,/Changed while waiting/);
+const retryCustom=await makePopup({mode:'summarize'});
+await chooseCustom(retryCustom,'Keep my one-off instruction through Retry.');
+await retryCustom.els.retryButton.listeners.click();
+assert.equal(retryCustom.radios.find((radio)=>radio.checked).value,'custom');
+assert.equal(retryCustom.els.customInstructions.value,'Keep my one-off instruction through Retry.');
+assert.equal(retryCustom.storageData.customInstructions,undefined);
+const failedCustomSave=await makePopup();
+await chooseCustom(failedCustomSave,'Keep this unsaved text after failure.');
+await vm.runInContext("chrome.storage.local.set = async () => { throw new Error('Storage unavailable'); }",failedCustomSave.context);
+await failedCustomSave.els.saveCustomInstructions.listeners.click();
+assert.match(failedCustomSave.els.error.textContent,/Could not update saved instructions/);
+assert.equal(failedCustomSave.els.customInstructions.value,'Keep this unsaved text after failure.');
+assert.equal(failedCustomSave.storageData.customInstructions,undefined);
+const failedCustomForget=await makePopup({storedSettings:{lastMode:'custom',customInstructions:'Keep this saved text.'}});
+await vm.runInContext("chrome.storage.local.set = async () => { throw new Error('Storage unavailable'); }",failedCustomForget.context);
+await failedCustomForget.els.forgetCustomInstructions.listeners.click();
+assert.equal(failedCustomForget.els.customInstructions.value,'Keep this saved text.');
+assert.equal(failedCustomForget.storageData.customInstructions,'Keep this saved text.');
+const legacyPresetPreference=await makePopup({runtimeOk:true,storedSettings:{lastMode:'summarize',lastPresetMode:'analyze'}});
+await chooseCustom(legacyPresetPreference,'One-off task.');
+await vm.runInContext('sendToChatGPT()',legacyPresetPreference.context);
+assert.equal(legacyPresetPreference.storageData.lastMode,'summarize','the selected legacy preset wins over a stale auxiliary preference');
+console.log('PASS: popup/options preserve workflow and preferences; Preview/Copy/Open match in 24 preset/custom destination combinations, with explicit local reuse, one-off clearing and snapshot/stale-preview protection.');

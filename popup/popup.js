@@ -1,7 +1,8 @@
 'use strict';
 
 const LONG_TRANSCRIPT_WARNING = 100000;
-const MODE_LABELS = Object.freeze({ apply: 'Apply to Project', analyze: 'Analyze', summarize: 'Summarize' });
+const PRESET_MODES = Object.freeze(['apply', 'analyze', 'summarize']);
+const MODE_LABELS = Object.freeze({ apply: 'Apply to Project', analyze: 'Analyze', summarize: 'Summarize', custom: 'Custom instructions' });
 
 const els = {};
 let activeTab = null;
@@ -14,6 +15,8 @@ let currentProvider = 'chatgpt';
 let providerSelections = {};
 let busy = false;
 let sending = false;
+let savedCustomInstructions = '';
+let lastPresetMode = 'apply';
 
 window.addEventListener('DOMContentLoaded', init);
 
@@ -50,7 +53,8 @@ function cacheElements() {
     'currentUrl','chatgptSaveStatus','saveDestination','manageDestinations','manageDestinationsChatgpt',
     'openOptionsTop','openOptionsOther','handoffHelp','copyChatTitle',
     'providerChatGPT','providerClaude','destinationHelp','saveHeading','saveHelp','actionSummary','buildVersion',
-    'copyPrompt','previewPrompt','promptPanel','promptPreview','promptCount'
+    'copyPrompt','previewPrompt','promptPanel','promptPreview','promptCount',
+    'customPanel','customInstructions','customHelp','saveCustomInstructions','forgetCustomInstructions','questionDetails'
   ]) els[id] = document.getElementById(id);
 }
 
@@ -60,6 +64,9 @@ function wireEvents() {
   els.copyPrompt.addEventListener('click', () => preparePromptAction(true));
   els.previewPrompt.addEventListener('click', () => preparePromptAction(false));
   els.optionalQuestion.addEventListener('input', invalidatePromptPreview);
+  els.customInstructions.addEventListener('input', () => { invalidatePromptPreview(); updateCustomUI(); });
+  els.saveCustomInstructions.addEventListener('click', () => saveCustomInstructions(false));
+  els.forgetCustomInstructions.addEventListener('click', () => saveCustomInstructions(true));
   els.copyChatTitle.addEventListener('click', copyChatTitle);
   els.viewTranscript.addEventListener('click', toggleTranscriptPreview);
   els.retryButton.addEventListener('click', () => initYouTube(true));
@@ -96,7 +103,7 @@ async function initYouTube(force = false) {
     videoContext = response.data;
     renderVideoContext();
     await loadDestinations();
-    await loadPreferences();
+    await loadPreferences(force);
     showView('youtubeView');
   } catch (error) {
     showView('youtubeView');
@@ -108,7 +115,7 @@ async function initYouTube(force = false) {
     els.sendButton.disabled = true;
     showError(friendlyError(error) + ' If you installed or reloaded the extension while this tab was already open, reload the YouTube page once.');
     await loadDestinations();
-    await loadPreferences();
+    await loadPreferences(force);
   }
 }
 
@@ -144,10 +151,15 @@ function renderVideoContext() {
   els.sendButton.disabled = false;
 }
 
-async function loadPreferences() {
-  const stored = await chrome.storage.local.get(['lastMode', 'lastDestinationId', 'preferredTranscriptLanguage', 'lastProvider', 'lastDestinationByProvider']);
-  const mode = ['apply','analyze','summarize'].includes(stored.lastMode) ? stored.lastMode : 'apply';
+async function loadPreferences(preserveCustom = false) {
+  const customDraft = preserveCustom ? { value: els.customInstructions.value, selected: getSelectedMode() === 'custom' } : null;
+  const stored = await chrome.storage.local.get(['lastMode', 'lastDestinationId', 'preferredTranscriptLanguage', 'lastProvider', 'lastDestinationByProvider', 'customInstructions', 'lastPresetMode']);
+  savedCustomInstructions = typeof stored.customInstructions === 'string' ? stored.customInstructions : '';
+  els.customInstructions.value = customDraft ? customDraft.value : savedCustomInstructions;
+  lastPresetMode = PRESET_MODES.includes(stored.lastMode) ? stored.lastMode : PRESET_MODES.includes(stored.lastPresetMode) ? stored.lastPresetMode : 'apply';
+  const mode = customDraft?.selected ? 'custom' : PRESET_MODES.includes(stored.lastMode) ? stored.lastMode : stored.lastMode === 'custom' && savedCustomInstructions.trim() ? 'custom' : lastPresetMode;
   document.querySelectorAll('input[name="mode"]').forEach((radio) => { radio.checked = radio.value === mode; });
+  updateCustomUI();
 
   const saved = destinations.find((destination) => destination.id === stored.lastDestinationId);
   providerSelections = { chatgpt: stored.lastDestinationByProvider?.chatgpt, claude: stored.lastDestinationByProvider?.claude };
@@ -254,7 +266,8 @@ function capturePromptChoice() {
   // An async preference write must never select the task for this handoff.
   return {
     mode: getSelectedMode(),
-    question: els.optionalQuestion.value.trim(),
+    question: getSelectedMode() === 'custom' ? '' : els.optionalQuestion.value.trim(),
+    instructions: els.customInstructions.value.trim(),
     selectedUrl: els.destinationSelect.selectedOptions[0]?.dataset?.url,
     destinationId: els.destinationSelect.value,
     provider: currentProvider
@@ -262,7 +275,7 @@ function capturePromptChoice() {
 }
 
 function buildSelectedPrompt(choice, transcript) {
-  return buildPrompt({ mode: choice.mode, question: choice.question, transcript,
+  return buildPrompt({ mode: choice.mode, question: choice.question, customInstructions: choice.instructions, transcript,
     provider: YT2GPTDestination.provider(choice.selectedUrl) || choice.provider,
     newChat: YT2GPTDestination.isNewChatEntry(choice.selectedUrl) });
 }
@@ -274,6 +287,7 @@ async function preparePromptAction(copy) {
   clearMessages();
   const choice = capturePromptChoice();
   try {
+    validatePromptChoice(choice);
     const transcript = await getSelectedTranscript();
     setBusy(true, copy ? 'Copying prompt…' : 'Preparing preview…');
     const prompt = buildSelectedPrompt(choice, transcript);
@@ -312,6 +326,7 @@ async function sendToChatGPT() {
   const { mode, selectedUrl, destinationId, provider } = choice;
   let promptCopied = false;
   try {
+    validatePromptChoice(choice);
     const transcript = await getSelectedTranscript();
     setBusy(true, 'Preparing prompt…');
 
@@ -343,7 +358,8 @@ async function sendToChatGPT() {
     if (!response?.ok) throw new Error(response?.error || 'Could not open the selected destination.');
 
     await chrome.storage.local.set({
-      lastMode: mode,
+      lastMode: mode === 'custom' && !savedCustomInstructions.trim() ? lastPresetMode : mode,
+      lastPresetMode,
       lastDestinationId: destinationId,
       lastProvider: provider,
       lastDestinationByProvider: { ...providerSelections, [provider]: destinationId }
@@ -358,7 +374,7 @@ async function sendToChatGPT() {
   }
 }
 
-function buildPrompt({ mode, question, transcript, newChat = false, provider = 'chatgpt' }) {
+function buildPrompt({ mode, question, transcript, customInstructions = '', newChat = false, provider = 'chatgpt' }) {
   const projectAssistant = provider === 'claude' ? 'Claude' : 'ChatGPT';
   const modeInstruction = {
     apply: `Analyze this YouTube video as incoming research for the current ${projectAssistant} Project or conversation.\n\nBegin with a brief **Video TL;DR** of 3–5 bullets (roughly 100–200 words total) so I can quickly understand what the video is actually about: its main topic, core thesis, most important ideas/examples, and overall conclusion. Keep this neutral and source-faithful. Do not repeat this summary later.\n\nThen move into the project-specific analysis. Do not assume the creator's recommendations should be adopted. Use the existing context here, including our goals, constraints, current workflows, previous decisions, and current priorities.\n\nIdentify what is genuinely relevant to our situation and classify worthwhile ideas where useful as:\n- ADOPT: useful largely as presented\n- ADAPT: useful principle, but our implementation should differ\n- TEST: promising enough for a small experiment\n- INVESTIGATE: potentially important but evidence is insufficient\n- IGNORE / PARK: interesting but not worth attention now\n\nHighlight anything that challenges our assumptions, improves an existing workflow, or could materially help with our real problems. Prefer adapting useful principles over copying the creator's implementation. Prefer small experiments and practical changes over unnecessary complexity. It is completely acceptable to conclude that little or nothing deserves action.\n\n${provider === 'claude' ? 'Only use project context that is actually available here; ask for missing goals or constraints rather than inventing them.' : "If the content implies something that Hermes could eventually implement, identify the candidate change (for example: skill, workflow, script/tool, operating instruction, or no implementation), but do not create a Hermes handoff unless I ask for one after we discuss the analysis."}\n\nFinish with the one most useful next action, if there is one.`,
@@ -366,7 +382,7 @@ function buildPrompt({ mode, question, transcript, newChat = false, provider = '
     analyze: `Critically analyze the following YouTube video rather than merely summarizing it.\n\nBegin with a brief **Video TL;DR** of 3–5 bullets (roughly 100–200 words total) that neutrally explains the creator's main topic, thesis, important ideas/examples, and conclusion. This is only for orientation; do not repeat the same material in the analysis.\n\nThen independently evaluate the reasoning, evidence, assumptions, novelty, limitations, practical feasibility, and important implications. Identify genuinely valuable insights, weak or unsupported claims, important assumptions, hype or exaggeration, missing considerations, contradictions, and anything that deserves further verification. Distinguish established facts from the creator's claims and from your own inference. Include timestamps where useful.`,
 
     summarize: `Give me a concise but sufficiently complete summary of this YouTube video. Focus on what the creator actually says rather than adding extensive independent analysis.\n\nInclude a short TL;DR, the main ideas and arguments, important examples or demonstrations, conclusions, and timestamps for the most useful sections. Preserve important nuance and do not present the creator's opinions as established facts.`
-  }[mode] || '';
+  }[mode] || (mode === 'custom' ? `Perform this user-defined task for the supplied YouTube video. Use only source information and context actually available here; distinguish source claims from your own inference.\n\nUSER INSTRUCTIONS\n${customInstructions}` : '');
 
   const questionBlock = question
     ? `\n\nSPECIFIC QUESTION\nI particularly want you to address this while still performing the selected mode:\n${question}`
@@ -468,15 +484,50 @@ function updateHandoffHelp() {
   const kind = YT2GPTDestination.kind(selected?.dataset?.url);
   const providerName = currentProvider === 'claude' ? 'Claude' : 'ChatGPT';
   els.destinationHelp.textContent = kind === 'unknown' ? 'This saved link needs repair. Manage destinations to update it; your saved link is kept.'
-    : kind === 'project' ? `Saved ${providerName} Project · All three modes available.`
+    : kind === 'project' ? `Saved ${providerName} Project · All tasks available.`
     : kind === 'conversation' ? `Saved ${providerName} conversation · Drafts stay untouched.`
     : `Save a Project or chat from its page to see it here.`;
 }
 
 async function rememberMode() {
   invalidatePromptPreview();
+  updateCustomUI();
   updateHandoffHelp();
-  await chrome.storage.local.set({ lastMode: getSelectedMode() });
+  const mode = getSelectedMode();
+  if (PRESET_MODES.includes(mode)) lastPresetMode = mode;
+  // Unsaved custom text is one-off; reopening restores the last preset.
+  if (mode !== 'custom' || savedCustomInstructions.trim()) await chrome.storage.local.set({ lastMode: mode, lastPresetMode });
+}
+
+function validatePromptChoice(choice) {
+  if (choice.mode === 'custom' && !choice.instructions) throw new Error('Enter your custom instructions first. Nothing was copied or opened.');
+}
+
+function updateCustomUI() {
+  const custom = getSelectedMode() === 'custom';
+  els.customPanel.classList.toggle('hidden', !custom);
+  els.questionDetails.classList.toggle('hidden', custom);
+  els.customHelp.textContent = savedCustomInstructions.trim()
+    ? 'Saved only on this browser. Edits are one-off until you choose Save locally again.'
+    : 'One-off: cleared when this popup closes. Save locally to reuse on this browser.';
+  els.saveCustomInstructions.disabled = busy || !els.customInstructions.value.trim();
+  els.forgetCustomInstructions.classList.toggle('hidden', !savedCustomInstructions.trim());
+}
+
+async function saveCustomInstructions(forget) {
+  if (busy || sending) return;
+  const text = forget ? '' : els.customInstructions.value.trim();
+  if (!forget && !text) return showError('Enter instructions before saving locally.');
+  clearMessages();
+  setBusy(true, forget ? 'Forgetting instructions…' : 'Saving instructions…');
+  try {
+    await chrome.storage.local.set({ customInstructions: text, lastMode: !forget && getSelectedMode() === 'custom' ? 'custom' : lastPresetMode, lastPresetMode });
+    savedCustomInstructions = text;
+    if (forget) { els.customInstructions.value = ''; invalidatePromptPreview(); }
+    showWarning(forget ? 'Saved custom instructions forgotten on this browser.' : 'Custom instructions saved only on this browser. Future edits stay one-off until you save again.');
+  } catch {
+    showError('Could not update saved instructions. Your current text was kept.');
+  } finally { setBusy(false); updateCustomUI(); }
 }
 
 async function rememberPreferredTrackLanguage() {
@@ -565,8 +616,9 @@ function setBusy(busy, label = 'Loading transcript.') {
 
 function setInteractionBusy(value) {
   busy = value;
-  for (const el of [els.providerChatGPT, els.providerClaude, els.destinationSelect, els.trackSelect, els.optionalQuestion, els.copyTranscript, els.copyChatTitle, els.viewTranscript, els.retryButton, els.copyPrompt, els.previewPrompt]) el.disabled = value;
+  for (const el of [els.providerChatGPT, els.providerClaude, els.destinationSelect, els.trackSelect, els.optionalQuestion, els.copyTranscript, els.copyChatTitle, els.viewTranscript, els.retryButton, els.copyPrompt, els.previewPrompt, els.customInstructions, els.saveCustomInstructions, els.forgetCustomInstructions]) el.disabled = value;
   document.querySelectorAll('input[name="mode"]').forEach((radio) => { radio.disabled = value; });
+  if (!value) updateCustomUI();
 }
 
 function show(el) { el?.classList.remove('hidden'); }

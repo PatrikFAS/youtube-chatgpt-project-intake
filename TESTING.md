@@ -2,6 +2,48 @@
 
 ## Current status
 
+**v0.1.14 candidate: Custom instructions implemented; live Claude recognition remains unresolved.**
+Signed-in Edge accessibility/DevTools were reachable during Patrik's authorized
+free window, but bounded read-only expression and focus/hit-test attempts did
+not return usable DOM evidence. No Claude composer values, drafts, messages,
+cookies or profile files were read/changed, and no AI message was sent. Temporary
+inspection code was confined to DevTools, not Claude's editor. Browser control
+stopped when Patrik returned. Do not repeat input workarounds or claim this
+establishes raw DOM markers; prefer supported inspection or the opt-in report.
+
+### v0.1.14 focused acceptance
+
+1. Overwrite files in the same unpacked folder, Reload the existing extension
+   entry and refresh tabs. Do not uninstall or load a duplicate. Confirm
+   **YouTube AI Bridge / v0.1.14** and your retained destinations/preset.
+2. On a captioned video, choose Custom instructions and enter "Create five
+   discussion questions with timestamps." Preview the full task, source title/
+   link and transcript; Copy should match without opening a tab. Empty Custom
+   must refuse preparation. Switching presets keeps their original behavior.
+3. Close/reopen without saving: custom text should be gone and your last preset
+   restored. Try again with Save locally: reopen to see the saved instruction.
+   Edit without saving and reopen to recover the original saved text. Forget
+   saved instructions clears it. Retry keeps a current one-off draft.
+4. Use Open with your intended provider/destination, review insertion or fallback
+   and send only yourself. Existing drafts remain untouched. Patrik's accepted
+   ChatGPT path needs only a new-Custom regression, not redundant whole-product
+   acceptance. Claude insertion remains a pending live check.
+5. If Claude still reports an unrecognized message box, optionally Copy
+   troubleshooting details and paste that structural report into the support
+   conversation with the destination kind. It contains no prompt/draft/message
+   text or URLs. This replaces the clipboard prompt; Copy prompt restores it.
+
+Required verify/test suites pass. Native popup tests cover 24 combinations
+(four tasks, both providers, new/saved chat/Project), Preview = Copy = Open,
+explicit local save/forget/reload and one-off clearing. Unit fixtures cover
+Retry, async capture, empty instructions and save/forget failures. The existing
+42 Claude safety/diagnostic native-DOM cases pass separately. These are mocked
+handoffs, not live Claude insertion or Sarah's acceptance. Custom's expanded
+editor scrolls within the popup; the primary action remains visible for the
+standard collapsed-preset fixture.
+
+## Previous candidate v0.1.13
+
 **v0.1.13 candidate: YouTube AI Bridge name and bounded Claude editor support.**
 The signed-in accessibility evidence below supports an exact label plus both
 tiptap/ProseMirror classes. The new candidate requires all three on a

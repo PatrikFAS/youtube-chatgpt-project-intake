@@ -2,7 +2,7 @@
 
 A lightweight Chrome/Edge browser extension that extracts YouTube transcripts and routes them to ChatGPT or Claude for summarization, critical analysis, or project-specific application.
 
-**Candidate beta: v0.1.13 - chosen working name and a narrow Claude editor candidate**
+**Candidate beta: v0.1.14 - Custom instructions with explicit local reuse**
 
 YouTube AI Bridge is Patrik's chosen working name, used in forthcoming beta interfaces and documentation. This is the same extension: update the existing installation in place to retain its identity and saved settings. The name is provisional; no trademark/name clearance or store publication is implied.
 
@@ -21,14 +21,19 @@ Starts with the same brief orientation **Video TL;DR**, then critically evaluate
 ### Summarize
 Faithfully compress the video into a TL;DR, key ideas, examples, conclusions, and useful timestamps.
 
-The raw transcript is a separate utility rather than a fourth reasoning mode. The selected task appears above the action button and as SELECTED MODE in the copied prompt, so Summarize and Analyze are easy to distinguish.
+### Custom instructions
+Choose your own task without changing the presets. Enter nonempty instructions, then Preview, Copy or Open as usual. The full title/link, transcript and source-safety instructions are retained. The preset's optional question is preserved when you switch back; it is not appended to Custom.
 
-## Update an existing installation to v0.1.13
+Text is **one-off by default** and cleared when the popup closes. **Save locally** explicitly remembers one instruction on this browser, available under both assistants and retained across restarts/in-place updates. Later edits are one-off until you save again. **Forget saved instructions** clears it. Nothing is synced or uploaded by the extension. Unsaved Custom restores the last preset when you reopen; Retry keeps your current text.
+
+The raw transcript is a separate utility. The selected task appears above the action button and as SELECTED MODE in the copied prompt, so task choices remain easy to distinguish.
+
+## Update an existing installation to v0.1.14
 
 1. Extract the versioned ZIP and overwrite its files in the **same unpacked extension folder** you originally loaded. Keep that folder's location. You can back it up first.
 2. Open `edge://extensions/` or `chrome://extensions/` and click **Reload** on the existing extension entry. Do not uninstall it; updating in place retains saved destinations and preferences.
-3. Refresh your open YouTube, ChatGPT and Claude tabs. Allow claude.ai site access if upgrading from a version before v0.1.10 and your browser asks. Confirm **YouTube AI Bridge** and **v0.1.13** in the popup. Saved links, task and caption preferences remain; the last saved destination selects its provider automatically. This update adds no permissions or settings migration.
-4. Direct, coordinated DOM inspection is preferred for the Claude failure; no diagnostic installation is required just to continue that inspection. If trying this candidate, use [the focused v0.1.13 check](TESTING.md#v0113-focused-acceptance). If recognition still fails, **Copy troubleshooting details** is an optional structural report with no drafts/messages, prompt, URLs or account details. That explicit copy replaces the clipboard prompt; **Copy prompt** in the YouTube popup restores it. Nothing is automatically shared or sent.
+3. Refresh your open YouTube, ChatGPT and Claude tabs. Allow claude.ai site access if upgrading from a version before v0.1.10 and your browser asks. Confirm **YouTube AI Bridge / v0.1.14**. Saved links, preset and caption preferences remain; this update adds no permissions.
+4. Use [the short v0.1.14 checklist](TESTING.md#v0114-focused-acceptance) to try Custom, explicit local save/forget and the existing handoff. Claude's reported recognition failure is **not confirmed fixed**. If it recurs, Copy troubleshooting details is an optional control-only report; it replaces your clipboard prompt, which Copy prompt restores. Nothing is automatically shared or sent.
 
 The update keeps supported destination URLs intact and rejects Codex or unfamiliar routes with repair guidance. It checks the actual URL, selected product controls and specific ChatGPT composer markers before insertion, preserves existing drafts, and consumes a handoff before editing to avoid duplicates. Unrecognized interfaces get a visible clipboard fallback; choose the intended ChatGPT surface before pasting. No product-mode override is invented.
 
@@ -40,7 +45,7 @@ In all three modes, v0.1.6 asks ChatGPT to name new chats `YT · <original YouTu
 
 v0.1.8 puts the original source metadata first and strengthens the new-chat title preference. Patrik reports the earlier request still produced odd names. The extension only requests a title in the prompt; it never sets or verifies the sidebar name. An exact automatic title fix is **not confirmed**. For an exact name, use **Copy title** in the YouTube popup, then paste into the destination's Rename control yourself. This copies the preferred `YT · <full video title>` without opening a tab or renaming an existing chat.
 
-All three modes now ask **ChatGPT and Claude to begin every reply about the video, including follow-ups**, with its full original title, a Featuring line only for speakers/guests explicitly identified in the supplied title or transcript, then the video link. Unknown people are omitted; an uploading channel is not evidence that a person is featured. The TL;DR/analysis follows this header. These are model instructions; actual reply formatting needs your test.
+All tasks, including Custom, ask **ChatGPT and Claude to begin every reply about the video, including follow-ups**, with its full original title, a Featuring line only for speakers/guests explicitly identified in the supplied title or transcript, then the video link. Unknown people are omitted; an uploading channel is not evidence that a person is featured. These are model instructions; actual reply formatting needs your test.
 
 Tab creation uses the captured source tab's current `windowId`, `index + 1` and `openerTabId`, following the [Chrome tabs API](https://developer.chrome.com/docs/extensions/reference/api/tabs). A new result is unpinned; browsers can place it after the pinned area rather than directly after a pinned source. Tab-group behavior needs a browser check; no group-management permission is added. A closed source or creation failure leaves the copied prompt available rather than using an unrelated tab.
 
@@ -98,7 +103,8 @@ You can edit or delete saved destinations from **Manage destinations**.
    - **Apply to Project**
    - **Analyze**
    - **Summarize**
-6. Expand **Add a question** for a specific question. Expand **Caption language** to change tracks.
+   - **Custom instructions** for your own one-off or explicitly saved task
+6. For a preset, expand **Add a question** for a specific question. Custom has its own instructions field. Expand **Caption language** to change tracks.
 7. Check the task summary. Optionally choose **Preview prompt** to read the full instructions, question and transcript. **Copy prompt** copies that complete text without opening a tab; use it to paste into an existing assistant conversation yourself. A changed task, destination, question or caption track clears the old preview.
 8. Click **Open in ChatGPT** or **Open in Claude** when you want the normal handoff. Task, destination and question are captured at this click; controls lock while preparing the prompt.
 9. The destination opens beside the captured YouTube tab. ChatGPT insertion is attempted in a recognized empty composer; for Claude, the beta checks the exact destination and a marked empty message box before attempting insertion. Keep any existing draft until you decide what to do with it.
@@ -127,7 +133,7 @@ This preserves the judgement step before changing Hermes skills/workflows.
 - No analytics.
 - No AI API key.
 - No transcript library/history.
-- Saved destination URLs/preferences stay in Chrome/Edge extension storage.
+- Saved destination URLs/preferences and custom instructions explicitly saved with Save locally stay in this browser's extension storage. One-off custom edits are not stored.
 - Pending ChatGPT and Claude handoffs use session-only extension storage, expire after ten minutes, and are consumed before editing to avoid duplicate insertion.
 - No extension-operated server receives transcripts. You use your own ChatGPT or Claude account and its normal website controls/privacy settings.
 - Claude prompts are copied locally and never put in URLs. Only newly opened handoff tabs receive a temporary insertion payload; existing drafts and attachments block insertion. No Send button or Enter key is activated.

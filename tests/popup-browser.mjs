@@ -11,6 +11,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 const root = process.env.POPUP_FIXTURE_ROOT || path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const hasProviderSwitch = fs.readFileSync(path.join(root, 'popup/popup.html'), 'utf8').includes('providerChatGPT');
 const hasPromptReview = fs.readFileSync(path.join(root, 'popup/popup.html'), 'utf8').includes('copyPrompt');
+const hasCustomInstructions = fs.readFileSync(path.join(root, 'popup/popup.html'), 'utf8').includes('customInstructions');
 const executable = process.argv[2] || process.env.CHROMIUM_EXECUTABLE;
 assert.ok(executable && fs.existsSync(executable), 'Pass an existing Chromium/Chrome/Edge executable. No browser is downloaded.');
 const profile = fs.mkdtempSync(path.join(os.tmpdir(), 'yt-intake-popup-browser-'));
@@ -64,7 +65,8 @@ try {
     analyze: ['Critically analyze the following YouTube video', 'Analyze this YouTube video as incoming research', 'Give me a concise but sufficiently complete summary'],
     summarize: ['Give me a concise but sufficiently complete summary', 'Critically analyze the following YouTube video', 'Analyze this YouTube video as incoming research']
   };
-  const labels = { apply: 'Apply to Project', analyze: 'Analyze', summarize: 'Summarize' };
+  const labels = { apply: 'Apply to Project', analyze: 'Analyze', summarize: 'Summarize', custom: 'Custom instructions' };
+  modeChecks.custom = ['Perform this user-defined task', ...Object.values(modeChecks).map((checks) => checks[0])];
   async function page(storedDestination = 'general') {
     const { targetId } = await call('Target.createTarget', { url: 'about:blank' });
     const { sessionId } = await call('Target.attachToTarget', { targetId, flatten: true });
@@ -104,10 +106,14 @@ try {
   }
   let cases = 0;
   for (const destination of destinations) {
-    for (const mode of ['summarize', 'analyze', 'apply']) {
+    for (const mode of ['summarize', 'analyze', 'apply', ...(hasCustomInstructions ? ['custom'] : [])]) {
       const ui = await page(destination.id);
       // Click the visible label area, not the hidden radio or buildPrompt.
       await ui.click(`label.mode-card:has(input[value="${mode}"]) strong`);
+      if (mode === 'custom') {
+        await ui.click('#customInstructions');
+        await call('Input.insertText', {text:'Create five discussion questions with source timestamps.'}, ui.sessionId);
+      }
       assert.equal(await ui.evaluate('document.querySelector("input[name=mode]:checked").value'), mode);
       if (hasProviderSwitch) assert.ok((await ui.evaluate('document.getElementById("actionSummary").textContent')).startsWith(labels[mode]));
       let reviewedPrompt;
@@ -132,11 +138,13 @@ try {
       assert.equal(result.messages[0].payload, result.copied);
       if (hasPromptReview) assert.equal(result.messages[0].payload, reviewedPrompt, 'Open matches the exact preview/copy payload');
       assert.equal(result.messages[0].destinationUrl, destination.url);
-      assert.equal(result.data.lastMode, mode);
+      const persistedMode = mode === 'custom' ? 'analyze' : mode;
+      assert.equal(result.data.lastMode, persistedMode);
       assert.equal(result.data.lastDestinationId, destination.id);
       await call('Page.reload', {}, ui.sessionId);
       await ui.waitFor(`document.getElementById('youtubeView') && !document.getElementById('youtubeView').classList.contains('hidden')`);
-      assert.equal(await ui.evaluate('document.querySelector("input[name=mode]:checked").value'), mode, 'mode survives a real page reload');
+      assert.equal(await ui.evaluate('document.querySelector("input[name=mode]:checked").value'), persistedMode, 'presets survive reload; one-off Custom returns to the last preset');
+      if (mode === 'custom') assert.equal(await ui.evaluate('document.getElementById("customInstructions").value'), '', 'one-off instruction text never persists');
       assert.equal(await ui.evaluate('document.getElementById("destinationSelect").value'), destination.id, 'destination survives reload');
       cases++;
       await ui.close();
@@ -185,6 +193,33 @@ try {
   }
   await ui.close();
   }
+  if (hasCustomInstructions) {
+    const ui = await page();
+    await ui.click('label.mode-card:has(input[value="custom"]) strong');
+    await ui.click('#customInstructions');
+    const instruction = 'Turn this video into a practical reading-group agenda.';
+    await call('Input.insertText', {text:instruction}, ui.sessionId);
+    await ui.click('#saveCustomInstructions');
+    await ui.waitFor(`fixture.data.customInstructions === ${JSON.stringify(instruction)} && !document.getElementById('saveCustomInstructions').disabled`);
+    await call('Page.reload', {}, ui.sessionId);
+    await ui.waitFor(`document.getElementById('youtubeView') && !document.getElementById('youtubeView').classList.contains('hidden')`);
+    assert.equal(await ui.evaluate('document.querySelector("input[name=mode]:checked").value'), 'custom');
+    assert.equal(await ui.evaluate('document.getElementById("customInstructions").value'), instruction, 'explicit local save survives actual reload');
+    await ui.evaluate(`(() => { const input=document.getElementById('customInstructions'); input.value='One-off edit';input.dispatchEvent(new Event('input',{bubbles:true})); })()`);
+    assert.equal(await ui.evaluate('fixture.data.customInstructions'), instruction, 'editing never silently overwrites saved text');
+    await ui.click('#previewPrompt');
+    await ui.waitFor(`!document.getElementById('promptPanel').classList.contains('hidden')`);
+    await ui.evaluate('new Promise(resolve=>setTimeout(resolve,150))');
+    const customImage=await call('Page.captureScreenshot',{format:'png',captureBeyondViewport:true},ui.sessionId);
+    fs.writeFileSync(path.join(profile,'popup-custom.png'),Buffer.from(customImage.data,'base64'));
+    await ui.click('#forgetCustomInstructions');
+    await ui.waitFor(`fixture.data.customInstructions === '' && !document.getElementById('forgetCustomInstructions').disabled`);
+    await call('Page.reload', {}, ui.sessionId);
+    await ui.waitFor(`document.getElementById('youtubeView') && !document.getElementById('youtubeView').classList.contains('hidden')`);
+    assert.equal(await ui.evaluate('document.querySelector("input[name=mode]:checked").value'), 'analyze');
+    assert.equal(await ui.evaluate('document.getElementById("customInstructions").value'), '');
+    await ui.close();
+  }
   if (process.argv.includes('--inspect-claude')) {
     const { targetId } = await call('Target.createTarget', { url: 'about:blank' });
     const { sessionId } = await call('Target.attachToTarget', { targetId, flatten: true });
@@ -195,7 +230,7 @@ try {
     await call('Target.closeTarget', { targetId });
   }
   assert.equal(errors.length, 0, `No runtime exceptions: ${JSON.stringify(errors)}`);
-  console.log(`PASS: ${cases} native popup task/destination cases${hasPromptReview ? ' with preview = copy = Open, no extra tabs, safe text and stale-preview checks' : ''}, reload retention${hasProviderSwitch ? ' and provider switching' : ' (baseline popup)'} on ${version.product}.`);
+  console.log(`PASS: ${cases} native popup task/destination cases${hasPromptReview ? ' with preview = copy = Open, no extra tabs, safe text and stale-preview checks' : ''}, reload retention${hasProviderSwitch ? ' and provider switching' : ' (baseline popup)'}${hasCustomInstructions ? ', explicit local Custom save/forget and one-off clearing' : ''} on ${version.product}.`);
   if (hasProviderSwitch) console.log(`Synthetic UI screenshots: ${profile}`);
 } finally {
   if (ws?.readyState === WebSocket.OPEN) {

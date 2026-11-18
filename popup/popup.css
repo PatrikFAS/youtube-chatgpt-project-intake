@@ -104,3 +104,6 @@ textarea::placeholder { color: var(--muted); opacity: .8; }
 .question-details { margin: 10px 0 9px; color: var(--muted); font-size: 11px; }
 .question-details summary { cursor: pointer; width: fit-content; }
 .question-details .field { margin-bottom: 3px; }
+.custom-choice { grid-column: 1 / -1; padding: 6px 9px; }
+.custom-choice > span { display: flex; align-items: baseline; gap: 8px; }
+.custom-actions { display: flex; align-items: center; gap: 8px; margin-top: 7px; font-size: 10px; }

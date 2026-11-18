@@ -5,7 +5,7 @@ Updated 2026-11-18. Delivery plan for the existing
 for installation and [TESTING.md](TESTING.md) for evidence and acceptance steps.
 
 **Working name: YouTube AI Bridge**, chosen by Patrik for forthcoming versions
-and ongoing work. v0.1.13 uses it in the local beta interface and documentation,
+and ongoing work. Since v0.1.13 it is used in the local beta interface and documentation,
 while retaining the existing extension identity/settings, package/repository
 identifier and installation compatibility. The name remains provisional; no
 trademark/name clearance or store publication has been performed.
@@ -14,7 +14,8 @@ trademark/name clearance or store publication has been performed.
 
 Help someone turn a captioned video into something useful in their existing
 ChatGPT or Claude work: a faithful summary, an assessment of the ideas, or a
-decision about what to apply to a Project. Keep the three tasks clear and let
+decision about what to apply to a Project. Keep the three presets clear, allow
+optional user-defined instructions and let
 the user review and send. The candidate first audience is people already using
 AI Projects for ongoing work or study. This positioning is a hypothesis to test
 with a few users, not evidence of demand or a claim of market uniqueness.
@@ -34,7 +35,8 @@ fallbacks and source-adjacent tabs; uncertain composers retain clipboard fallbac
 | v0.1.11 user feedback | Adds Preview prompt and Copy prompt without opening a destination; 18 native task/provider/destination cases pass. Patrik confirmed the ChatGPT flow works and overall UI looks very good. His Claude test instead timed out with the unrecognized-message-box fallback. Current Claude reliability takes priority over further product work. |
 | Troubleshooting beta: v0.1.12 | Adds an explicit Copy troubleshooting details action on that failure notice. It copies only bounded, allowlisted control shape, never message/draft contents, prompts, URLs or account data; no automatic copy/upload. All 32 Claude safety/diagnostic native-DOM cases and the 18 popup cases pass. Recognition rules are unchanged; this is **not a confirmed fix**. Actual failing composer evidence is still needed. |
 | Candidate beta: v0.1.13 | Uses the chosen working name and adds a narrow editor candidate requiring the live-accessibility-observed label plus both tiptap/ProseMirror classes. The existing Send marker, route, uniqueness and draft guards remain mandatory. Required checks, 18 popup combinations and 42 Claude native-DOM cases pass. Fixtures reconstruct the candidate shape; raw DOM attributes/Send identity and the affected live handoff remain unverified. This is a bounded candidate change, not a confirmed fix. |
-| Composer safety and live access | Existing guarded injectors/fixtures are retained. An additional read-only check opened https://claude.ai/new in the existing signed-in Edge session: accessibility exposes one enabled editor labelled Write your prompt to Claude with tiptap/ProseMirror classes, and no expected named Send control while empty. No raw DOM marker capture or insertion was performed. DevTools opening stopped at a foreground-window guard before any key was sent. Browser control is now paused so Patrik can use Edge; do not claim all signed-in routes are blocked or that this is a confirmed fix. |
+| Candidate beta: v0.1.14 | Adds Custom instructions with one-off text and explicit Save locally / Forget saved instructions. Required checks, 24 native task/provider/destination combinations, save/forget/reload and 42 Claude guard/diagnostic cases pass. The three presets and Claude v0.1.13 candidate are retained; new Custom acceptance and the affected live Claude handoff remain pending. |
+| Composer safety and live access | Existing signed-in Edge accessibility exposes one enabled editor labelled Write your prompt to Claude with tiptap/ProseMirror classes, and no expected named Send control while empty. DevTools was reachable during the authorized free window, but bounded read-only expression/focus/hit-test attempts produced no usable DOM report. No Claude draft/message text, cookies or account files were read/changed, and no AI message was sent. Visible control stopped when Patrik returned. Prefer supported inspection or the opt-in structural report; do not repeat OS input workarounds or claim a confirmed fix. |
 | Sarah and demand | Sarah's own installation/Claude acceptance is unrecorded. Repeat use, willingness to recommend/support and ease of unaided setup are unknown. Automated tests do not answer these questions. |
 
 ## Chosen improvement and scope
@@ -90,7 +92,7 @@ or revenue promise. The link can be removed if users find it distracting.
 ## Remaining decisions
 
 - **Patrik now:** coordinate a short window for existing-session DOM inspection,
-  or use v0.1.12 to reproduce the affected handoff and explicitly copy/share its
+  or use v0.1.14 to reproduce the affected handoff and explicitly copy/share its
   structural troubleshooting report and destination category if preferred.
   No diagnostic installation is necessary if direct inspection supplies the
   missing DOM evidence. This is not a claim the fix is delivered.
@@ -152,47 +154,36 @@ an auto-send milestone and which provider/account can be tested. The coffee
 footer remains a separate voluntary-support option, with no payment destination
 invented or connected.
 
-## Proposed custom instructions: after the Claude fix
+## Custom instructions in v0.1.14
 
-Patrik suggested a fourth task for people who want their own instructions,
-potentially reusable. This is feasible with the existing local prompt builder,
-destination switch and clipboard flow; no backend, AI API or new permission is
-needed. It may help repeated workflows that the presets do not cover, but its
-value beyond the existing Add a question field is still a hypothesis.
+Patrik requested a new file to test and practical progress while Claude's full
+DOM evidence remains blocked. v0.1.14 implements the small Custom instructions
+option independently; this does not resolve or deprioritize the Claude failure.
+The three presets and their prompt wording remain unchanged.
 
-**Recommendation:** after the Claude bug, validate demand for an expandable
-**Custom instructions** choice below the three existing task cards. Keep Apply,
-Analyze and Summarize unchanged; avoid squeezing a fourth card into the current
-three-column popup. Explain that Add a question supplements a preset, while
-Custom defines the task. Do not add a template manager in this milestone.
+- **One-off by default:** choose Custom instructions and enter a nonempty task.
+  The text is captured at Preview/Copy/Open, is not stored automatically and is
+  cleared when the popup closes. The last preset returns on reopening unless
+  custom instructions were explicitly saved. Retry keeps the current one-off
+  text and selection, so a caption retry does not discard work.
+- **Explicit local reuse:** Save locally stores one instruction on this browser.
+  It is available under both providers and survives restarts/in-place updates.
+  Editing it is one-off until Save locally is chosen again. Forget saved
+  instructions clears it. No sync, account, named-template manager or upload.
+  Storage failures retain the current text and report the error.
+- **Same source and handoff:** Custom keeps source-grounded title/featured-people/
+  link reply instructions, real metadata, the transcript and source-safety
+  boundary. Preview = Copy = Open for the same choices. The preset's optional
+  question is preserved when switching back and is not secretly appended to
+  Custom. Empty custom text refuses extraction/copy/open.
+- **Evidence:** required checks and fixture regressions cover the six
+  provider/destination kinds with four task choices (24 combinations), explicit
+  save/forget/reload, one-off clearing, failure handling, Retry and async capture.
+  These are synthetic tests; Patrik's Custom acceptance and Sarah's first run
+  remain pending. Claude's 42 guard/diagnostic cases remain separate from the
+  still-unverified live composer fix.
 
-- **One-off first:** an editable instructions field must be nonempty before
-  Preview/Copy/Open. Clearly say "One-off: cleared when this popup closes".
-  Capture its text at the action click. Retain the user's last preset and its
-  preferences when switching back; never silently replace a preset's wording.
-- **Explicit reuse:** if users need it, offer an unchecked **Remember on this
-  browser** control, backed only by extension local storage. Show "Saved on
-  this browser" after saving, make editing/clearing obvious, and say it survives
-  browser restarts/extension updates but is not synced or uploaded by the
-  extension. Without that choice, never persist instruction text. Start with
-  one remembered custom instruction, not named-template CRUD or accounts.
-- **Keep the useful source:** use the same source-grounded title/featured-people/
-  link header request, real metadata, complete transcript and untrusted-source
-  boundary. Separate the user's instructions from transcript data. Keep the
-  chosen provider/destination and existing guarded insertion/manual Send.
-  Do not automatically generate instructions or reinterpret the three presets.
-- **Show what will happen:** the action summary should say Custom and the
-  destination. Preview, Copy and Open must use the identical captured payload;
-  editing the custom text clears a stale preview. Avoid a second competing
-  Add a question field in Custom; preserve its existing preset value when
-  switching back, without secretly appending it to Custom.
-- **Verify before delivery:** expand the task/provider/destination matrix to
-  include Custom; cover empty instructions, snapshot races, source/header
-  retention, one-off clearing, opt-in local persistence, clearing saved text
-  and unchanged legacy presets/preferences. No real automatic Send test.
-
-**Owner/next action:** Patrik prioritizes from beta feedback after Claude
-reliability; Codex can implement the small editor and explicit local-memory
-choice if wanted. Custom instructions are a lower-risk candidate than auto-send,
-but neither proposal displaces the current bug. Nothing in this section is
-implemented or user-validated in v0.1.13.
+**Owner/next action:** Codex supplies the committed ZIP and keeps investigating
+Claude with supported access or the opt-in structural report. Patrik tries the
+short checklist in the existing product Space; Sarah accepts her own case later.
+Do not add auto-send until its provider-specific live safeguards can be verified.
