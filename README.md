@@ -26,6 +26,8 @@ Choose your own task without changing the presets. Enter nonempty instructions, 
 
 Text is **one-off by default** and cleared when the popup closes. **Save locally** explicitly remembers one instruction on this browser, available under both assistants and retained across restarts/in-place updates. Later edits are one-off until you save again. **Forget saved instructions** clears it. Nothing is synced or uploaded by the extension. Unsaved Custom restores the last preset when you reopen; Retry keeps your current text.
 
+For an optional skip/skim/watch/apply response experiment, see the [draft Custom prompt and comparison plan](PROJECT_PLAN.md#draft-custom-response-experiment). It uses existing Custom instructions; the preset/default prompts are unchanged.
+
 The raw transcript is a separate utility. The selected task appears above the action button and as SELECTED MODE in the copied prompt, so task choices remain easy to distinguish.
 
 ## Update an existing installation to v0.1.14

@@ -2,6 +2,16 @@
 
 ## Current status
 
+The engineering plan now follows the shared Product and Launch strategy:
+reliability first, a compact-response experiment through existing Custom, then
+independent-user evidence before expansion. This documentation pass changes no
+runtime, preset/default prompt, version or delivered ZIP. The [smallest Claude
+user check](PROJECT_PLAN.md#smallest-claude-user-check) is one affected handoff
+without Send, followed by the opt-in structural report only if recognition still
+fails. Actual DOM/Send identity is still missing, not just final acceptance.
+The [Custom response experiment](PROJECT_PLAN.md#draft-custom-response-experiment)
+needs human output review; payload fixtures cannot establish good AI judgment.
+
 **v0.1.14 candidate: Custom instructions implemented; live Claude recognition remains unresolved.**
 Signed-in Edge accessibility/DevTools were reachable during Patrik's authorized
 free window, but bounded read-only expression and focus/hit-test attempts did
