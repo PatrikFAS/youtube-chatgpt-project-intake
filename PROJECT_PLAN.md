@@ -65,7 +65,7 @@ merge, store publication or acceptance is performed.
 | NEXT: small launch preparation | After reliable beta use, Codex can prepare a small page on Patrik's chosen existing website and one verified 20–40-second workflow demo, with install/support/privacy information. Check name/platform-brand/store/domain constraints when preparing materials. | Patrik chooses site/publisher/contact and reviews honest materials. Website publication, budgets, outreach and Chrome Web Store submission each remain separate decisions. No large marketing site or invented testimonial/metrics. |
 | NEXT: store preparation | Codex prepares ZIP/assets/disclosures and narrow-permission justifications after reliability; Patrik owns account/submission. | Complete reviewable package and separate authorization before account costs/submission/publication. Edge add-ons can be evaluated later. Current [publishing](https://developer.chrome.com/docs/webstore/publish) and [privacy](https://developer.chrome.com/docs/webstore/cws-dashboard-privacy) requirements must be rechecked then. |
 | CONDITIONAL: manual batch experiment | Only after useful single-video use and observed need, Patrik combines 3–5 related transcripts around one question, reducing the set if too long. | One brief attributes sources actually read, distinguishes triage from synthesis, preserves contradictions and useful differences. Repeated claims are not independent corroboration; failed extraction means unavailable, not low value. No batch UI first. |
-| LATER: bounded feature hypothesis | Only if that manual result earns repeat use, evaluate selecting a bounded set of open video tabs and one reviewed handoff. | Investigate inactive tabs, duplicates, missing captions, cancellation, prompt size and source attribution before committing. Arbitrary URL lists, playlists, large queues and automatic staged synthesis remain separate unvalidated retrieval/orchestration work. |
+| LATER: bounded Collection hypothesis | If the manual result earns repeat use and Patrik approves a scoped implementation, evaluate manual Add to collection while each video is open, followed by one reviewed combined handoff. This is now the leading batch UX concept ahead of automatic tab enumeration. | Investigate temporary local transcript storage across popup sessions, duplicate video IDs, reorder/remove/clear, unavailable captions, cancellation, combined size and source attribution. A proposed 3–5-video test is not a proven model limit. No silent truncation, permanent library, tab/playlist discovery or background queue. Arbitrary URLs, playlists and staged synthesis stay separate hypotheses. |
 
 Feature filter: reduce attention spent deciding what to consume; make insight
 more relevant/reliable/usable; fit existing habits instead of adding a chore.
@@ -79,6 +79,13 @@ are not automatically easier. The extension hands off one prompt and does not
 read AI replies or orchestrate staged summarization. Its 100,000-character
 warning is neither automatic chunking nor a provider capacity guarantee.
 Playlist retrieval and automatic multi-stage synthesis require separate work.
+
+The latest Space update calls this manual basket **Collection**. It can accept
+videos originally found in tabs or a saved playlist one at a time without
+claiming playlist import. Validate three related sources manually for both
+triage and project-specific synthesis before proposing development. Nothing
+collects or persistently stores transcripts in the current beta, and the
+Collection concept is not implemented or promoted into NOW work.
 
 ## Smallest Claude user check
 

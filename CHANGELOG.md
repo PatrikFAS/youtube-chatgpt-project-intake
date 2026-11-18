@@ -6,6 +6,7 @@
 - Preserves the full source/safety envelope, naming preference, optional-question behavior, local save/forget semantics, destination routing and manual-send guards. All three preset payloads remain unchanged; a comparison with delivered v0.1.14 is byte-identical across 18 preset/provider/destination cases.
 - Required checks and all 24 native popup handoff cases pass, including both providers, Custom's non-conflicting structure and Preview = Copy = Open. These verify outgoing instructions, not model compliance or live Claude insertion. Claude's reported failure remains open, with no selector/Send change.
 - Prepared in an isolated worktree of the existing repository while Patrik tests v0.1.14. This is an optional next candidate, not a replacement of his running test or a store/public release. Strategy, user feedback, batch/playlist gates and parked auto-send/payment ideas are preserved.
+- Reconciles the latest proposed Collection concept as the leading batch UX to validate manually before development, ahead of automatic tab/playlist discovery. No collection, transcript library or batch feature is implemented.
 
 ## 0.1.14
 
