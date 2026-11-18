@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "YouTube → ChatGPT Project Intake",
-  "short_name": "YT → GPT",
-  "version": "0.1.12",
+  "name": "YouTube AI Bridge",
+  "short_name": "YT AI Bridge",
+  "version": "0.1.13",
   "description": "Route YouTube transcripts to ChatGPT or Claude for summary, analysis, or project application. Review and send yourself.",
   "permissions": [
     "activeTab",
@@ -21,7 +21,7 @@
   },
   "action": {
     "default_popup": "popup/popup.html",
-    "default_title": "YouTube → ChatGPT Project Intake",
+    "default_title": "YouTube AI Bridge",
     "default_icon": {
       "16": "icons/icon16.png",
       "32": "icons/icon32.png",

@@ -79,6 +79,11 @@ try {
       if(options.textarea){const area=document.createElement('textarea');area.id='editor';area.setAttribute('aria-label','Write your prompt to Claude');editor.replaceWith(area);editor=area;}
       if(options.wrapper){editor.removeAttribute('data-testid');const wrapper=document.createElement('div');wrapper.dataset.testid='chat-input';editor.before(wrapper);wrapper.append(editor);}
       if(options.unmarked)editor.removeAttribute('data-testid');
+      // Candidate DOM reconstruction of the label/classes observed through
+      // live accessibility; raw DOM attributes/Send identity are not verified.
+      if(options.labelled){editor.removeAttribute('data-testid');editor.classList.add('tiptap');editor.setAttribute('aria-label',options.wrongLabel?'Different editor':'Write your prompt to Claude');}
+      if(options.noTiptap)editor.classList.remove('tiptap');
+      if(options.noProseMirror)editor.classList.remove('ProseMirror');
       if(options.noSendMarker)send.removeAttribute('data-testid');
       if(options.privateAttributes){editor.setAttribute('aria-label','PRIVATE ACCOUNT NAME');editor.setAttribute('placeholder','PRIVATE QUESTION');editor.dataset.testid='private-project-id';editor.classList.add('private-title','tiptap');send.setAttribute('aria-label','PRIVATE CONVERSATION TITLE');send.setAttribute('title','PRIVATE URL https://claude.ai/chat/private');const privateWrapper=document.createElement('private-account-name');editor.before(privateWrapper);privateWrapper.append(editor);}
       if(options.readonly)editor.setAttribute('aria-readonly','true');
@@ -147,7 +152,8 @@ try {
         const details=JSON.parse(diagnostic.copiedDetails);
         assert.equal(details.kind,'youtube-intake-claude-composer-v1');
         assert.equal(details.editors[0].proseMirror,true);
-        assert.equal(details.editors[0].chatInput,!options.unmarked&&!options.privateAttributes);
+        assert.equal(details.editors[0].chatInput,!options.unmarked&&!options.privateAttributes&&!options.labelled);
+        if(options.labelled){assert.equal(details.recognizedEditorCount,1);assert.equal(details.editors[0].tiptap,true);assert.equal(details.editors[0].label,'Write your prompt to Claude');}
         assert.ok(details.editors[0].ancestors.length>0);
         assert.doesNotMatch(diagnostic.copiedDetails,/PRIVATE|private-|https:|Fixture prompt|Full source transcript|Keep this unrelated draft/,'no content, URLs, names, unknown labels/attributes or prompt');
         assert.match(diagnostic.notice,/Details copied/);
@@ -188,6 +194,16 @@ try {
   await run('missing Send diagnostics',{noSendMarker:true,error:'not recognized',maxEdits:0,diagnostics:true});
   await run('private draft and attributes redacted',{privateAttributes:true,draft:'PRIVATE DRAFT CONTENT',error:'not recognized',maxEdits:0,diagnostics:true});
   await run('diagnostic copy denied',{unmarked:true,error:'not recognized',maxEdits:0,diagnostics:true,copyFails:true});
+  await run('exactly labelled tiptap editor',{labelled:true});
+  await run('labelled exact Project',{labelled:true,expected:'https://claude.ai/project/fixture'});
+  await run('labelled exact conversation',{labelled:true,expected:'https://claude.ai/chat/fixture?view=saved#notes'});
+  await run('labelled draft protected',{labelled:true,draft:'Keep this labelled draft',error:'draft or attachment',maxEdits:0});
+  await run('labelled editor still needs Send marker',{labelled:true,noSendMarker:true,error:'not recognized',maxEdits:0,diagnostics:true});
+  await run('different label rejected',{labelled:true,wrongLabel:true,error:'not recognized',maxEdits:0});
+  await run('missing tiptap class rejected',{labelled:true,noTiptap:true,error:'not recognized',maxEdits:0});
+  await run('missing ProseMirror class rejected',{labelled:true,noProseMirror:true,error:'not recognized',maxEdits:0});
+  await run('duplicate labelled editors rejected',{labelled:true,duplicate:true,error:'not recognized',maxEdits:0});
+  await run('labelled focus-restored draft',{labelled:true,focusDraft:true,error:'changed on focus',expectedText:'Restored on focus',claims:1,maxEdits:0});
   assert.equal(errors.length,0,JSON.stringify(errors));
   console.log(`PASS: ${cases} Claude native-DOM cases: complete insertion, exact routes, draft/attachment guards, framework readiness, opt-in redacted diagnostics, no retries and zero automatic sends. Synthetic fixture; the reported live recognition failure remains unresolved.`);
 } finally {

@@ -1,12 +1,14 @@
-# YouTube intake: product and release plan
+# YouTube AI Bridge: product and release plan
 
 Updated 2026-11-18. Delivery plan for the existing
 `PatrikFAS/youtube-chatgpt-project-intake` extension. See [README.md](README.md)
 for installation and [TESTING.md](TESTING.md) for evidence and acceptance steps.
 
-**Provisional working name: YouTube AI Bridge**, chosen by Patrik. Record this
-for product planning only. The manifest/display name and existing published
-identity are unchanged; no trademark/name clearance has been performed.
+**Working name: YouTube AI Bridge**, chosen by Patrik for forthcoming versions
+and ongoing work. v0.1.13 uses it in the local beta interface and documentation,
+while retaining the existing extension identity/settings, package/repository
+identifier and installation compatibility. The name remains provisional; no
+trademark/name clearance or store publication has been performed.
 
 ## Goal and proposed audience
 
@@ -31,6 +33,7 @@ fallbacks and source-adjacent tabs; uncertain composers retain clipboard fallbac
 | Naming and reply headers | Preserve v0.1.6's new-ChatGPT-chat naming preference and the later source-grounded full-title/featured-people/link reply-header instruction in all modes/providers. Sidebar naming was reported unreliable and is provider-controlled. Copy title supports manual Rename. Actual sidebar names and model reply formatting remain separate user checks; unknown participants must be omitted. |
 | v0.1.11 user feedback | Adds Preview prompt and Copy prompt without opening a destination; 18 native task/provider/destination cases pass. Patrik confirmed the ChatGPT flow works and overall UI looks very good. His Claude test instead timed out with the unrecognized-message-box fallback. Current Claude reliability takes priority over further product work. |
 | Troubleshooting beta: v0.1.12 | Adds an explicit Copy troubleshooting details action on that failure notice. It copies only bounded, allowlisted control shape, never message/draft contents, prompts, URLs or account data; no automatic copy/upload. All 32 Claude safety/diagnostic native-DOM cases and the 18 popup cases pass. Recognition rules are unchanged; this is **not a confirmed fix**. Actual failing composer evidence is still needed. |
+| Candidate beta: v0.1.13 | Uses the chosen working name and adds a narrow editor candidate requiring the live-accessibility-observed label plus both tiptap/ProseMirror classes. The existing Send marker, route, uniqueness and draft guards remain mandatory. Required checks, 18 popup combinations and 42 Claude native-DOM cases pass. Fixtures reconstruct the candidate shape; raw DOM attributes/Send identity and the affected live handoff remain unverified. This is a bounded candidate change, not a confirmed fix. |
 | Composer safety and live access | Existing guarded injectors/fixtures are retained. An additional read-only check opened https://claude.ai/new in the existing signed-in Edge session: accessibility exposes one enabled editor labelled Write your prompt to Claude with tiptap/ProseMirror classes, and no expected named Send control while empty. No raw DOM marker capture or insertion was performed. DevTools opening stopped at a foreground-window guard before any key was sent. Browser control is now paused so Patrik can use Edge; do not claim all signed-in routes are blocked or that this is a confirmed fix. |
 | Sarah and demand | Sarah's own installation/Claude acceptance is unrecorded. Repeat use, willingness to recommend/support and ease of unaided setup are unknown. Automated tests do not answer these questions. |
 
@@ -106,7 +109,7 @@ or revenue promise. The link can be removed if users find it distracting.
 ## Proposed optional auto-send: evaluate after Claude reliability
 
 Patrik proposed an optional auto-send toggle for people processing many videos.
-This is a later design candidate, not part of v0.1.12. Current product/code
+This is a later design candidate, not part of the current beta. Current product/code
 guidance still requires manual Send. Its possible benefit is one fewer action
 per video; its costs are unwanted messages/model usage, harder recovery from a
 wrong context, and additional provider-specific maintenance. First establish
@@ -148,3 +151,48 @@ Claude recognition. Patrik then decides whether repeat-use feedback justifies
 an auto-send milestone and which provider/account can be tested. The coffee
 footer remains a separate voluntary-support option, with no payment destination
 invented or connected.
+
+## Proposed custom instructions: after the Claude fix
+
+Patrik suggested a fourth task for people who want their own instructions,
+potentially reusable. This is feasible with the existing local prompt builder,
+destination switch and clipboard flow; no backend, AI API or new permission is
+needed. It may help repeated workflows that the presets do not cover, but its
+value beyond the existing Add a question field is still a hypothesis.
+
+**Recommendation:** after the Claude bug, validate demand for an expandable
+**Custom instructions** choice below the three existing task cards. Keep Apply,
+Analyze and Summarize unchanged; avoid squeezing a fourth card into the current
+three-column popup. Explain that Add a question supplements a preset, while
+Custom defines the task. Do not add a template manager in this milestone.
+
+- **One-off first:** an editable instructions field must be nonempty before
+  Preview/Copy/Open. Clearly say "One-off: cleared when this popup closes".
+  Capture its text at the action click. Retain the user's last preset and its
+  preferences when switching back; never silently replace a preset's wording.
+- **Explicit reuse:** if users need it, offer an unchecked **Remember on this
+  browser** control, backed only by extension local storage. Show "Saved on
+  this browser" after saving, make editing/clearing obvious, and say it survives
+  browser restarts/extension updates but is not synced or uploaded by the
+  extension. Without that choice, never persist instruction text. Start with
+  one remembered custom instruction, not named-template CRUD or accounts.
+- **Keep the useful source:** use the same source-grounded title/featured-people/
+  link header request, real metadata, complete transcript and untrusted-source
+  boundary. Separate the user's instructions from transcript data. Keep the
+  chosen provider/destination and existing guarded insertion/manual Send.
+  Do not automatically generate instructions or reinterpret the three presets.
+- **Show what will happen:** the action summary should say Custom and the
+  destination. Preview, Copy and Open must use the identical captured payload;
+  editing the custom text clears a stale preview. Avoid a second competing
+  Add a question field in Custom; preserve its existing preset value when
+  switching back, without secretly appending it to Custom.
+- **Verify before delivery:** expand the task/provider/destination matrix to
+  include Custom; cover empty instructions, snapshot races, source/header
+  retention, one-off clearing, opt-in local persistence, clearing saved text
+  and unchanged legacy presets/preferences. No real automatic Send test.
+
+**Owner/next action:** Patrik prioritizes from beta feedback after Claude
+reliability; Codex can implement the small editor and explicit local-memory
+choice if wanted. Custom instructions are a lower-risk candidate than auto-send,
+but neither proposal displaces the current bug. Nothing in this section is
+implemented or user-validated in v0.1.13.

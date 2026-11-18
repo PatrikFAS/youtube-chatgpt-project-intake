@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.13
+
+- Uses Patrik's chosen working name, YouTube AI Bridge, in the manifest/action title, popup, destination manager, both providers' notices and current documentation. Keeps the repository/package identifier, internal message/element IDs, storage keys and saved settings unchanged. Update the same unpacked installation; no new extension entry or permissions. The name remains provisional with no clearance/publication implied.
+- Adds one narrowly bounded Claude editor candidate: contenteditable with both tiptap and ProseMirror classes and the exact Write your prompt to Claude aria-label. The class/accessible-label combination was observed read-only in the signed-in Edge session; exact DOM attributes and Send identity remain unverified. Existing Send-marker, unique-editor, exact-destination, one-time-claim and draft/attachment guards stay in place. This is not a generic editor fallback or a confirmed fix of Patrik's reported case.
+- Adds native-DOM coverage for the labelled candidate on all destination kinds, missing/wrong markers, drafts, duplicate editors and focus-restored drafts. These reconstructed fixtures do not establish live insertion. The opt-in structural diagnostic remains, and browser control is paused pending a coordinated inspection window.
+- Required verification and fixture suites pass, along with 18 native popup combinations and 42 Claude native-DOM cases. Records Patrik's custom-instructions proposal for after the Claude bug: one-off by default, explicit local reuse if useful, and unchanged presets/source envelope. No Custom mode, auto-send or payment infrastructure is implemented.
+
 ## 0.1.12
 
 - Adds an opt-in Copy troubleshooting details action only to Claude's unrecognized-composer failure notice. It copies a bounded, allowlisted control-shape report after an explicit click; it does not collect message/draft text, prompts, raw HTML, URLs, arbitrary labels/attributes or account information. No automatic clipboard replacement or remote upload.

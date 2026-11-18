@@ -51,8 +51,8 @@
           return failVisible('The page or draft changed while preparing the prompt. Nothing was inserted.', false);
         }
         const ok = insertIntoComposer(composer, claimed.payload, claimed.destinationUrl);
-        if (ok) showToast('YouTube → ChatGPT: prompt inserted. Review it, then press Send.');
-        else showToast('YouTube → ChatGPT: insertion could not be confirmed. Check the composer before pasting; the complete prompt remains on your clipboard.', true);
+        if (ok) showToast('YouTube AI Bridge: prompt inserted in ChatGPT. Review it, then press Send.');
+        else showToast('YouTube AI Bridge: ChatGPT insertion could not be confirmed. Check the composer before pasting; the complete prompt remains on your clipboard.', true);
         return;
       }
       await sleep(POLL_MS);
@@ -141,7 +141,7 @@
   }
 
   async function failVisible(reason, needsRepair = true) {
-    showToast(`YouTube → ChatGPT: ${reason} ${needsRepair ? YT2GPTDestination.REPAIR + ' ' : ''}The complete prompt remains on your clipboard; paste it only after checking the destination.`, true);
+    showToast(`YouTube AI Bridge: ${reason} ${needsRepair ? YT2GPTDestination.REPAIR + ' ' : ''}The complete prompt remains on your clipboard; paste it only after checking the destination.`, true);
     await clearPending();
   }
 

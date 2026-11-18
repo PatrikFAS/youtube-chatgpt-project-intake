@@ -2,6 +2,43 @@
 
 ## Current status
 
+**v0.1.13 candidate: YouTube AI Bridge name and bounded Claude editor support.**
+The signed-in accessibility evidence below supports an exact label plus both
+tiptap/ProseMirror classes. The new candidate requires all three on a
+contenteditable element, while the original Claude Send marker and all route,
+unique-editor, draft/attachment and one-time-claim checks remain mandatory.
+Accessible name can come from different DOM mechanisms; the actual aria-label
+and Send marker have not yet been inspected. Fixtures reconstruct that
+candidate; they do not prove that the real page matches or that the reported
+failure is fixed. Browser control stays paused until a coordinated window.
+
+### v0.1.13 focused acceptance
+
+1. Prefer direct, coordinated inspection of the existing signed-in Claude tab
+   before asking for another installation. If trying the candidate, overwrite
+   the same unpacked folder and Reload its existing entry. Do not uninstall or
+   load a duplicate. Refresh tabs and confirm YouTube AI Bridge / v0.1.13.
+2. Confirm saved destinations, task and caption preferences remain. The name
+   change affects display text, not IDs, storage keys or URL handling. All
+   three modes and Preview/Copy/Open keep their existing prompt wording.
+3. For the affected Claude destination, inspect exact editor/Send controls
+   read-only before any broader change. If the candidate is tested, review
+   insertion or fallback without sending; existing drafts must stay untouched.
+   Do not claim success for an untested route/account/layout.
+4. If it still fails and a self-service report is preferred, use the optional
+   Copy troubleshooting details button as described below. That explicit copy
+   replaces the clipboard prompt; the YouTube popup's Copy prompt restores it.
+
+Required verify/test checks pass. The isolated native popup passes all 18
+task/provider/destination combinations and the longer product name fits the
+reviewed light/dark layouts without horizontal overflow. Claude's native-DOM
+fixture passes 42 cases, including ten cases for the labelled candidate across
+destination kinds and missing-marker/draft/duplicate/focus-race refusal paths.
+The missing-Send case also verifies its opt-in diagnostic identifies the editor
+without permitting insertion. No signed-in insertion or submission is claimed.
+
+## v0.1.12 investigation and diagnostic evidence
+
 **v0.1.12 troubleshooting beta: Claude recognition failure remains unresolved.**
 Patrik confirmed v0.1.11's ChatGPT flow and UI, but Claude waited and reported
 "This Claude message box was not recognized. Your saved destination was kept."

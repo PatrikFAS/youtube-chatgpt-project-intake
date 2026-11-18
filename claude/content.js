@@ -5,7 +5,10 @@
   window.__YT2GPT_CLAUDE_INSTALLED__ = true;
 
   const MAX_WAIT_MS = 30000;
-  const EDITOR_SELECTOR = '[data-testid="chat-input"][contenteditable="true"], [data-testid="chat-input"] .ProseMirror[contenteditable="true"], textarea[aria-label="Write your prompt to Claude"]';
+  // The final candidate uses the exact editor label/classes observed through
+  // signed-in Edge accessibility. Its DOM attributes and nearby Send marker
+  // remain to be verified live; never fall back to generic ProseMirror editors.
+  const EDITOR_SELECTOR = '[data-testid="chat-input"][contenteditable="true"], [data-testid="chat-input"] .ProseMirror[contenteditable="true"], textarea[aria-label="Write your prompt to Claude"], .tiptap.ProseMirror[contenteditable="true"][aria-label="Write your prompt to Claude"]';
   const SEND_SELECTOR = 'button[data-testid="chat-input-send"]';
   const ATTACHMENT_SELECTOR = 'img, video, audio, iframe, [data-type="mention"], [data-testid*="attachment"], [data-testid*="file-preview"], [data-testid*="upload-preview"], button[aria-label*="remove" i], button[aria-label*="delete" i], [role="progressbar"], [aria-busy="true"]';
 
@@ -96,7 +99,7 @@
     const candidates = [...document.querySelectorAll(EDITOR_SELECTOR)].filter(editable);
     if (candidates.length !== 1) return null;
     const editor = candidates[0];
-    // Require the editor marker AND the specific Claude Send marker in a
+    // Require a specific editor identity AND the Claude Send marker in a
     // nearby scope. A generic ProseMirror or unrelated editor is insufficient.
     let scope = editor.parentElement;
     for (let depth = 0; scope && depth < 6 && scope !== document.body && scope !== document.documentElement; depth++, scope = scope.parentElement) {
@@ -143,7 +146,7 @@
     const el = document.createElement('div');
     el.id = 'yt2gpt-claude-toast';
     el.setAttribute('role', error ? 'alert' : 'status');
-    el.textContent = `YouTube intake: ${message}`;
+    el.textContent = `YouTube AI Bridge: ${message}`;
     el.style.cssText = `position:fixed;right:18px;bottom:18px;z-index:2147483647;max-width:420px;padding:12px 15px;border-radius:10px;background:${error ? '#5b2424' : '#253b30'};color:white;font:13px/1.45 system-ui;box-shadow:0 6px 24px #0004`;
     if (troubleshoot) addTroubleshooting(el);
     document.documentElement.appendChild(el);
