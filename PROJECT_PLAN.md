@@ -33,21 +33,54 @@ infrastructure is part of this beta. Revenue is uncertain.
 - Candidate editor/control markers are supported by primary open-source integration reports, not an inspected signed-in session. The tool browser still reached security verification. All 28 native-DOM scenarios pass; **Patrik confirmed automatic insertion in his signed-in Claude browser on 2026-11-17**. His exact browser version and destination were not recorded. This is user-reported acceptance of the tested case, not tool inspection of every live guard or route. Unknown markup must refuse editing rather than try a generic editor.
 - Automated verification and regression checks pass for the beta source. They
   do not prove an authenticated session. **Sarah's Claude acceptance is not run**.
-- Patrik explicitly approved pushing and merging the accepted v0.1.10 version.
-  Store submission and public deployment remain separate decisions. The tested
-  ZIP remains available through Library; acceptance documentation does not
-  change its runtime behavior.
+- The accepted v0.1.10 version is merged in
+  [PR #3](https://github.com/PatrikFAS/youtube-chatgpt-project-intake/pull/3).
+  The user-testable `youtube-chatgpt-project-intake-0.1.10.zip`, available through
+  the original Library delivery, remains the package. This plan changes no runtime or
+  version and requires no reinstall. Send Sarah the downloaded ZIP itself for
+  her own installation/account. Her acceptance is still unrecorded. Store
+  submission and public deployment remain separate decisions.
 
 ## Milestones and next actions
 
 | Milestone | Owner | Status and next action | Done when |
 | --- | --- | --- | --- |
-| Claude beta for Sarah | Codex implements; Sarah accepts; Patrik supplies beta | Patrik confirmed handoff/Apply; Sarah acceptance remains unrecorded. v0.1.9 UI/workflow accepted by Patrik. Patrik confirmed v0.1.10 automatic insertion and approved push/merge. Next gather Sarah's own feedback without repeating Patrik's accepted normal-case test. | All three modes copy completely, chosen Claude context opens beside YouTube, manual paste works, existing drafts remain untouched, and Sarah confirms it is usable. |
+| Claude beta for Sarah | Codex implements; Sarah accepts; Patrik supplies beta | v0.1.10 is delivered and merged; Patrik confirmed UI/workflow and automatic Claude insertion in his tested case. Next give Sarah the ZIP and gather her own feedback, without repeating Patrik's accepted normal-case test. | Sarah confirms all three modes prepare the correct prompt, her chosen Claude context opens beside YouTube, guarded insertion or a clear clipboard fallback works, existing drafts remain untouched, and she reviews/sends manually. |
 | Simple onboarding and reliability | Codex; Patrik prioritizes feedback | Instructions and copy/paste guidance are included. Next fix only problems observed in Sarah's path. Retain Patrik's live acceptance record; inspect any new failing layout before broadening recognition. | A new tester completes a video unaided and understands captions, destination selection, clipboard fallback and manual Send. |
 | Chrome Web Store preparation | Patrik owns account/submission; Codex prepares assets | After Sarah's acceptance, prepare concise listing copy, screenshots with synthetic data, icons, privacy disclosure and permission explanations; check current submission requirements then. | Patrik reviews the complete package and separately authorizes submission. Existing scope/terms research is not reopened for this beta. |
 | Small beta | Patrik recruits; Sarah and a few invited testers give feedback | After Sarah's first successful run, invite 3-5 people using their own ChatGPT/Claude accounts. Ask for browser/version, task completed, friction and whether they would reuse it; collect feedback manually without analytics. | Repeated use and main failure patterns are understood; priority bugs have fixes and clear owners. |
-| Promotion experiments | Patrik approves/posts; Codex prepares drafts | After reliable beta use, try a short demo video and one relevant community post where allowed. Compare manually reported installs, repeat use and support effort; no outreach is sent by this plan. | One or two small experiments show whether people understand and want this workflow. |
+| Promotion experiments | Patrik approves/posts; Codex prepares drafts | After reliable beta use, consider the optional demonstration experiment below, then one relevant community post where allowed. Compare manually reported completion, repeat use and support effort; no outreach is sent by this plan. | One or two small experiments show whether people understand and want this workflow. |
 | Free plus optional coffee | Patrik decides | Recommend a free useful extension first, with an optional coffee link only if Patrik wants one. No checkout, billing, account system or payment integration now. | Beta feedback shows enough value to justify offering voluntary support. |
 | Later monetization decision | Patrik | Revisit after the small beta and promotion experiments. Compare repeat use, willingness to support/pay, maintenance/support cost and store constraints. | Make an explicit keep-free / optional-support / paid-feature decision before building payment infrastructure. No revenue is promised. |
 
-**Next action:** gather Sarah's individual acceptance and a small beta's feedback, then prepare store assets and disclosures for a separate submission decision. The approved v0.1.10 delivery is tracked in [PR #3](https://github.com/PatrikFAS/youtube-chatgpt-project-intake/pull/3); Patrik authorized its push and merge after confirming Claude automatic insertion. No repeat of his accepted normal-case test is required without new failure evidence. Exact sidebar titles remain provider-controlled, with Copy title available for manual Rename.
+## Optional demonstration experiment
+
+An option informed by Patrik's creator playbook: demonstrate one useful workflow,
+then see whether a few beta users can reproduce it unaided. This stays behind
+requested implementation, reliability fixes and Sarah's acceptance.
+
+- **Owner and timing:** Patrik chooses/approves the demonstration and any sharing;
+  Codex can prepare a short script. Use the existing small beta cohort of 3-5
+  volunteers after the workflow is reliable. This is an optional experiment,
+  not the next delivery priority.
+- **Demonstrate a verified result:** use a captioned video and an existing saved
+  Project with a clear goal. Verify that particular end-to-end run before
+  recording: choose Apply to Project, review the prepared prompt, send manually,
+  then show one useful ADOPT/ADAPT/TEST decision tied to the Project's goal.
+  Show clipboard fallback if that is the verified path; do not imply automatic
+  insertion is verified for an untested provider, route or account. Use safe demo
+  content so private Project names, links and conversation details stay private.
+- **Test reproduction:** give volunteers the brief demonstration and normal
+  installation instructions. Ask each to use the same video in their own
+  existing Project, with their own account and goal. Initially provide no live
+  coaching. Success means reaching the intended Project, choosing Apply,
+  reviewing/sending themselves and explaining one useful project-specific
+  decision, without additional help.
+- **Record and decide:** tally completion unaided, approximate time, where help
+  was needed and whether they choose to reuse the workflow. Collect this
+  feedback manually, without analytics. If most can reproduce it and describe
+  the value, keep the demonstration as an onboarding/promotion candidate;
+  otherwise improve the confusing step before wider promotion. A small sample
+  informs usability, not guaranteed demand or revenue.
+
+**Next action:** give Sarah the delivered v0.1.10 ZIP and record her individual acceptance, then gather the small beta's feedback. The optional demonstration experiment stays behind that acceptance and any reliability fixes. Prepare store assets and disclosures only for a separate submission decision. No repeat of Patrik's accepted normal-case test is required without new failure evidence. Exact sidebar titles remain provider-controlled, with Copy title available for manual Rename.
