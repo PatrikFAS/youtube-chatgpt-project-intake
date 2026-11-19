@@ -368,14 +368,16 @@ try {
   assert.equal(await compact.evaluate('fixture.data.lastMode'),'summarize');
   assert.equal(await compact.evaluate('fixture.data.lastDestinationId'),'gpt-project');
   async function footerVisible(ui,label){
-    const r=await ui.evaluate(`(()=>{const b=document.getElementById('sendButton'),r=b.getBoundingClientRect(),f=document.getElementById('handoffFooter').getBoundingClientRect(),c=document.getElementById('contentScroll').getBoundingClientRect(),hit=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);return {w:innerWidth,h:innerHeight,docW:document.documentElement.scrollWidth,docH:document.documentElement.scrollHeight,bodyH:document.body.scrollHeight,windowY:scrollY,top:r.top,bottom:r.bottom,right:r.right,left:r.left,footerTop:f.top,contentBottom:c.bottom,hit:hit===b||b.contains(hit)};})()`);
+    const r=await ui.evaluate(`(()=>{const b=document.getElementById('sendButton'),r=b.getBoundingClientRect(),f=document.getElementById('handoffFooter').getBoundingClientRect(),c=document.getElementById('contentScroll').getBoundingClientRect(),hit=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);return {w:innerWidth,h:innerHeight,docW:document.documentElement.scrollWidth,docH:document.documentElement.scrollHeight,bodyH:document.body.scrollHeight,windowY:scrollY,shellW:document.querySelector('.shell').getBoundingClientRect().width,shellH:document.querySelector('.shell').getBoundingClientRect().height,shellOverflow:document.querySelector('.shell').scrollWidth-document.querySelector('.shell').clientWidth,rootOverflow:getComputedStyle(document.documentElement).overflow,top:r.top,bottom:r.bottom,right:r.right,left:r.left,footerTop:f.top,contentBottom:c.bottom,hit:hit===b||b.contains(hit)};})()`);
     assert.ok(r.top>=0&&r.bottom<=r.h&&r.left>=0&&r.right<=r.w,label+': action in viewport '+JSON.stringify(r));
     assert.ok(r.contentBottom<=r.footerTop+1,label+': body cannot overlap footer');
-    assert.ok(r.docW<=r.w&&r.docH<=r.h&&r.bodyH<=r.h&&r.windowY===0,label+': only body region scrolls '+JSON.stringify(r));
+    // The root supplies a stable preferred size for the action autosizer; the
+    // fixed shell must fit even when this page fixture forces a smaller viewport.
+    assert.ok(r.shellW<=r.w&&r.shellH<=r.h&&r.shellOverflow<=1&&r.rootOverflow==='hidden'&&r.windowY===0,label+': only body region scrolls '+JSON.stringify(r));
     assert.equal(r.hit,true,label+': native action hit target');
     return r;
   }
-  for(const [width,height] of [[400,600],[360,480]]){
+  for(const [width,height] of [[400,600],[360,480],[320,400]]){
     await call('Emulation.setDeviceMetricsOverride',{width,height,deviceScaleFactor:1,mobile:false},compact.sessionId);
     await compact.evaluate(`videoContext.title='A full source title '+('long title '.repeat(70));renderVideoContext();document.getElementById('contentScroll').scrollTop=0`);
     await footerVisible(compact,'inherited Send '+width+'x'+height);
@@ -401,7 +403,7 @@ try {
   const layoutShot=await call('Page.captureScreenshot',{format:'png'},compact.sessionId);fs.writeFileSync(path.join(profile,'compact-footer-keyboard.png'),Buffer.from(layoutShot.data,'base64'));
   assert.equal(await compact.evaluate('fixture.messages.length'),0,'layout/keyboard QA never hands off or sends');
   await compact.close();
-  console.log('PASS: inherited settings and 400x600/360x480 footer visibility, long titles/basket, native hit targets, body-only scrolling, keyboard intent/primary access and no Collection Send.');
+  console.log('PASS: inherited settings and 400x600/360x480/320x400 footer visibility, long titles/basket, native hit targets, body-only scrolling, keyboard intent/primary access and no Collection Send.');
   assert.equal(errors.length, 0, `No runtime exceptions: ${JSON.stringify(errors)}`);
   console.log(`PASS: ${cases} native popup task/destination cases${hasPromptReview ? ' with preview = copy = Open, no extra tabs, safe text and stale-preview checks' : ''}, reload retention${hasProviderSwitch ? ' and provider switching' : ' (baseline popup)'}${hasCustomInstructions ? ', explicit local Custom save/forget and one-off clearing' : ''} on ${version.product}.`);
   if (hasProviderSwitch) console.log(`Synthetic UI screenshots: ${profile}`);

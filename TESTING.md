@@ -1,5 +1,58 @@
 # Manual and regression testing
 
+## v0.1.21 startup check
+
+**Confirmed regression:** Patrik installed v0.1.20 and got only a small green
+square. The exact shipped ZIP reproduces a 25x25 **real action popup** with
+startup complete and the manifest loaded. v0.1.19 opens normally. The root's
+max-width:100vw / max-height:100vh formed a loop with Chromium's initial action
+auto-sizing. Fixed viewport tests hid that loop. v0.1.21 changes only root/shell
+layout and version metadata; permissions, preferences, prompts and Send guards
+are unchanged. Keep v0.1.20 for regression evidence, not as the working fallback.
+
+**Actual action test:** run `npm run test:action-browser -- CHROMIUM OLD19 OLD20 CANDIDATE`
+with the existing Chromium executable and extracted exact ZIP directories. It
+loads an unpacked extension into disposable profiles and opens chrome.action.openPopup
+through its own options-page control context. No Emulation/device-metrics command
+sets the popup size. Each action is a native popup view, not a normal extension
+tab (getViews popup count=1, tabs.getCurrent=null). Its API/worker/storage are real;
+YouTube/provider HTTP responses and captions are intercepted synthetic fixtures.
+It checks unsupported/no-source content, collapsed controls, actual caption Add,
+ready Collection/manual file action, retained ChatGPT opt-in and saved destination
+view. No primary handoff/Send is activated and no pending/Send records appear.
+
+The same unpacked path/profile is updated 19 -> 20 -> candidate **between browser
+restarts**; this verifies local settings and URL/query/fragment retention through
+that update path. The browser extension-entry Reload button itself is not driven.
+A separate fresh candidate profile runs the same states. In this headless Chromium
+setup the candidate's actual viewport is approximately 415x510, constrained by its
+display/work area; the footer fits the actual height. Do not claim every browser
+will grant those exact dimensions. The root's preferred 400x600 is independent
+of the initial viewport, and the fixed shell fits the available viewport.
+
+**Separate page fixtures:** `npm run test:browser -- CHROMIUM` still forces
+400x600, 360x480 and 320x400 to test keyboard/hit targets, long source/basket
+scrolling and footer access. Those page/API fixtures validate 24 task/provider
+cases plus Collection and exact 78,817-unit Preview/Copy/download/manual-Open
+equality. They supplement real action startup coverage; they do not establish
+intrinsic action sizing or authenticated ChatGPT/Claude behavior.
+
+The supplied PNG's metadata/caption was accessible, but its transfer helper
+failed on Windows extended-attribute support before leaving readable local bytes.
+User pixels were not inspected. The independently reproduced native green square
+was captured and viewed locally; no personal browser/draft was accessed.
+
+**Smallest owner test after receiving the verified v0.1.21 ZIP:** overwrite the
+SAME unpacked folder, Reload the existing extension, then refresh relevant tabs
+safely. Do not uninstall/load a duplicate. Click Bridge and confirm v0.1.21 opens
+normally. Set Auto-send off first: a prior opt-in remains remembered. Check saved
+destinations/Custom and one ordinary manual/Collection handoff. Session baskets
+clear on reload; downloaded/clipboard/provider copies have separate lifetimes.
+If Send is tested later, use one harmless sample and report only its code if
+withheld; never retry an uncertain send. The prior COMPOSER_UNSAFE investigation
+is preserved, and this CSS fix makes no new live Send claim.
+
+
 ## v0.1.20 focused UI check
 
 Patrik confirmed **Collection worked in his v0.1.19 browser**. The report does

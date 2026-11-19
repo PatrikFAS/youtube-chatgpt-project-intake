@@ -56,12 +56,41 @@ its own acceptance and fixture results do not establish live behavior.
 | --- | --- |
 | Accepted baseline | v0.1.10 is merged in [PR #3](https://github.com/PatrikFAS/youtube-chatgpt-project-intake/pull/3). Patrik confirmed the Chrome/Edge workflow, provider UI and automatic Claude insertion in his tested case. The precise Claude route/browser version was not recorded. |
 | Delivered versions | v0.1.14 added Custom; v0.1.15 removed its compulsory TL;DR conflict. All 18 preset payloads stayed byte-identical to v0.1.14, and 24 native task/provider/destination cases passed. Patrik tested v0.1.15 and reported no Claude insertion. Its supplied control-shape report now replaces the missing structural evidence; no repeat diagnostic is needed. |
-| Current candidates | v0.1.20 adds the footer/compact-selector correction and narrower composer refusal codes; v0.1.19 remains the delivered rollback. v0.1.19 refines the existing v0.1.18 Collection and explicit Send after Patrik's reported refusal and 78,817-character case; see the current refinement below. The work remains on `codex/custom-output-contract` / [draft PR #5](https://github.com/PatrikFAS/youtube-chatgpt-project-intake/pull/5), stacked on PR #4. Separate v0.1.17 ZIP permits independent Send testing; v0.1.16 ZIP remains the accepted fallback. Required tests, 24 native popup combinations plus full Collection/Send interactions, 45 native Send cases and 68 Claude cases pass. New live acceptance remains open. |
+| Current candidates | v0.1.21 corrects the confirmed v0.1.20 action-startup regression. v0.1.20 is withdrawn; v0.1.19 remains the prior working fallback. Historical v0.1.20 adds the footer/compact-selector correction and narrower composer refusal codes; v0.1.19 remains the delivered rollback. v0.1.19 refines the existing v0.1.18 Collection and explicit Send after Patrik's reported refusal and 78,817-character case; see the current refinement below. The work remains on `codex/custom-output-contract` / [draft PR #5](https://github.com/PatrikFAS/youtube-chatgpt-project-intake/pull/5), stacked on PR #4. Separate v0.1.17 ZIP permits independent Send testing; v0.1.16 ZIP remains the accepted fallback. Required tests, 24 native popup combinations plus full Collection/Send interactions, 45 native Send cases and 68 Claude cases pass. New live acceptance remains open. |
 | Claude acceptance | Patrik confirmed v0.1.16 autofill in his selected real-browser journey after the report-grounded fix. This does not establish all layouts or Sarah acceptance. New Collection handoffs and explicit ChatGPT Send have separate user checks; no personal browser or live messages are controlled by Codex. |
 | Browser and safety | The authorized free window reached DevTools but produced no usable DOM report. No Claude draft/message text, cookies or profile files were read/changed and no AI message was sent. Visible control stopped when Patrik returned. Do not repeat OS input workarounds or take over the browser; use supplied structural evidence or supported inspection. Unknown controls keep fallback. |
 | Mode report and demand | Earlier Summarize/Analyze mismatch was not reproduced; later click snapshots/visible mode and retention fixtures pass. No original cause is claimed. The Space records Patrik's 19 November acceptance of ChatGPT and Custom in v0.1.15. Sarah's own journey, independent reuse and willingness to pay remain unrecorded. |
 
 The original v0.1.14 checkout stays untouched. The existing worktree/PR stack owns v0.1.17 and v0.1.18. Update the same loaded unpacked folder in place; no automatic installation, merge or publication.
+
+## Priority startup correction — v0.1.21
+
+**Owner evidence:** Patrik installed v0.1.20 and reported a small green square.
+Codex reproduced exact shipped assets in an actual Chromium extension action:
+25x25, initialized manifest/page, no script/manifest startup failure. v0.1.19
+opened normally. The root viewport caps caused circular intrinsic sizing; the
+fixed-size page fixtures were insufficient and are no longer treated as action
+startup acceptance. The input PNG could not be materialized due Windows helper
+metadata support; own native reproduction pixels were viewed instead.
+
+**Narrow correction:** independent preferred root size plus a viewport-fitted
+fixed shell; no business JS, host permissions, storage keys, source prompts or
+Send/insertion guards change. A new true action-surface harness uses native
+extension APIs/storage with intercepted synthetic sources, no forced popup
+viewport, same-folder retained-profile updates across browser restarts and a
+fresh profile. Caption Add, collapsed/unsupported/destination/Collection states
+and the footer are checked without any real handoff or Send. Tiny viewport and
+24-flow/export/keyboard regressions remain separate forced page fixtures.
+
+**Next owner: Patrik.** After the verified v0.1.21 artifact is delivered, update
+the same folder and Reload; confirm the popup opens, local settings remain and
+one manual/Collection path is usable. Set remembered Auto-send off for this test.
+Do not use v0.1.20; preserve that ZIP for regression evidence and v0.1.19 as the
+prior working fallback. Installed Chrome/Edge acceptance remains separate from
+headless action evidence; the extension-entry Reload UI was not automated.
+The earlier COMPOSER_UNSAFE live diagnosis and Sarah's acceptance remain open;
+this startup fix does not claim to fix Send or provider attachment handling.
+No merge, store/public release or personal browser control.
 
 ## Current owner evidence and candidate — v0.1.20
 

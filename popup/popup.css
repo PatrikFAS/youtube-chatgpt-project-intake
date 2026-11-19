@@ -122,10 +122,12 @@ body[data-collection="true"] .utility-row > span { display:none; }
 #explicitSendDestination { margin-bottom:0; font-size:10px; }
 
 
-/* Bound the actual popup; only source/task/review content scrolls. */
-html { width:400px; max-width:100vw; height:600px; max-height:100vh; overflow:hidden; }
+/* Give Chrome an intrinsic preferred size before its viewport exists.
+   Viewport caps on this root collapse an action popup to its 25px minimum.
+   The fixed shell below fits the viewport Chrome actually grants. */
+html { width:400px; height:600px; overflow:hidden; }
 body { width:100%; height:100%; overflow:hidden; }
-.shell { width:100%; height:100%; padding:0; display:flex; flex-direction:column; overflow:hidden; }
+.shell { position:fixed; inset:0; width:auto; height:auto; max-height:600px; padding:0; display:flex; flex-direction:column; overflow:hidden; }
 .header { flex:none; padding:12px 16px 0; margin-bottom:10px; }
 .content-scroll { flex:1 1 auto; min-height:0; overflow-y:auto; overscroll-behavior:contain; padding:0 16px 8px; scroll-padding:8px; }
 .handoff-footer { flex:none; border-top:1px solid var(--line); padding:8px 16px; background:var(--panel); box-shadow:0 -3px 14px #00000008; }

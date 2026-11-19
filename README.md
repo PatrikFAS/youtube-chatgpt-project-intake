@@ -2,7 +2,13 @@
 
 A lightweight Chrome/Edge browser extension that extracts YouTube transcripts and routes them to ChatGPT or Claude for summarization, critical analysis, or project-specific application.
 
-**Beta candidate v0.1.20 — persistent action footer and compact Collection intent**
+**Beta candidate v0.1.21 — action-popup startup correction**
+
+Do not use v0.1.20: its root viewport caps caused the real toolbar popup to
+collapse to a 25x25 green square. v0.1.21 gives Chrome a stable intrinsic preferred
+size and fits the pinned-footer shell to the granted viewport. The exact v0.1.19
+ZIP remains the prior working fallback. Previous fixed-size page fixtures missed
+this startup failure; a separate real action-surface test now covers it.
 
 The selected task/count and destination stay beside one main action in a fixed
 footer; only source/task/review content scrolls. Add current video stays visible
@@ -18,10 +24,11 @@ export or Retry. Uncertain attempts never retry.
 
 Patrik confirmed **Collection worked in his v0.1.19 browser**, without specifying
 a mode or attachment format. His separate ChatGPT Send refusal now identifies
-COMPOSER_UNSAFE. v0.1.20 splits its possible post-insertion branches into specific
+COMPOSER_UNSAFE. v0.1.20/21 split its possible post-insertion branches into specific
 allowlisted codes; no safety predicate is relaxed and his affected shape is
 still unknown. Earlier v0.1.16 Claude/v0.1.15 Custom passes remain separate. Keep
-the exact v0.1.19 ZIP as rollback; new UI/Send acceptance remains pending.
+the exact v0.1.19 ZIP as rollback; v0.1.20 has the confirmed startup bug.
+Installed v0.1.21 startup/flow and live Send acceptance remain separate checks.
 
 YouTube AI Bridge is Patrik's chosen working name, used in forthcoming beta interfaces and documentation. This is the same extension: update the existing installation in place to retain its identity and saved settings. The name is provisional; no trademark/name clearance or store publication is implied.
 
@@ -53,12 +60,12 @@ The [optional compact-triage example](examples/compact-triage.txt) works in the 
 
 The raw transcript is a separate utility. The selected task appears above the action button and as SELECTED MODE in the copied prompt, so task choices remain easy to distinguish.
 
-## Update an existing installation to v0.1.20
+## Update an existing installation to v0.1.21
 
 1. Extract the versioned ZIP and overwrite its files in the **same unpacked extension folder** you originally loaded. Keep that folder's location. You can back it up first.
 2. Open `edge://extensions/` or `chrome://extensions/` and click **Reload** on the existing extension entry. Do not uninstall it; updating in place retains saved destinations and preferences.
-3. Refresh relevant tabs without clearing drafts and confirm **YouTube AI Bridge / v0.1.20**. No new permissions. Keep the working v0.1.16 ZIP as a fallback; destinations/preferences remain. Reload/update clears any session Collection and Send attempt records.
-4. For the new action, use [the v0.1.20 focused check](TESTING.md#v0120-focused-ui-check). Send requires the exact saved route/document, one empty recognized composer, the complete exact prompt and one stable known enabled native Send control. Uncertain/partial cases stay manual. Same-video/prompt/destination requests are blocked for the browser session after any Send request, even if opening or sending failed. Check the conversation before any manual retry; a notice confirms the click request, not server acceptance.
+3. Refresh relevant tabs without clearing drafts and confirm **YouTube AI Bridge / v0.1.21**. No new permissions. Keep the working v0.1.16 ZIP as a fallback; destinations/preferences remain. Reload/update clears any session Collection and Send attempt records.
+4. For the new action, use [the v0.1.21 startup check](TESTING.md#v0121-startup-check). Send requires the exact saved route/document, one empty recognized composer, the complete exact prompt and one stable known enabled native Send control. Uncertain/partial cases stay manual. Same-video/prompt/destination requests are blocked for the browser session after any Send request, even if opening or sending failed. Check the conversation before any manual retry; a notice confirms the click request, not server acceptance.
 
 ## Collect two or three videos
 
@@ -78,7 +85,7 @@ the previous preset or Custom draft; Collection tasks do not overwrite that pref
 Preview, Copy and Open use the same complete selected prompt. Collection Send stays manual.
 
 The prior **60,000-character cap was a local trial bound, not a provider limit**.
-v0.1.20 keeps complete prompts up to 250,000 JavaScript characters (UTF-16 units)
+v0.1.21 keeps complete prompts up to 250,000 JavaScript characters (UTF-16 units)
 for Preview, Copy and **Save prompt .txt**, subject to the unchanged 512 KiB session
 basket guard. Nothing is truncated or split silently. Above 60,000 the primary action is **Download .txt**. The alternative Open
 copies the full text and opens the chosen destination **without autofill**.

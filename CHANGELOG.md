@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.21
+
+- Fixes v0.1.20's 25x25 action-popup startup regression. Root preferred size no longer depends on the viewport being auto-calculated. A fixed shell fits Chrome's actual granted viewport, retaining the scrolling body and reachable footer. No prompt, Send/insertion logic, permissions, identity or storage keys change. v0.1.20 is withdrawn from testing; previous ZIPs stay unchanged.
+- Adds an actual unpacked action-popup regression using chrome.action.openPopup, native extension APIs/storage and no device-metrics override. Compares exact v0.1.19/v0.1.20 assets, same-folder updates with a retained disposable profile across browser restarts, and a fresh candidate profile. Synthetic network responses supply YouTube/provider data; this is not authenticated provider acceptance.
+- Retains page-fixture regression for 400x600, 360x480 and 320x400, keyboard/hit targets, 24 task/provider combinations, Collection intent/restoration and the complete 78,817-character export route. Actual action tests separately verify normal initial intrinsic size, unsupported/empty/collapsed/source/destination/Collection states, retained preferences and zero handoff/Send requests.
+
 ## 0.1.20
 
 - Splits the user-reported post-insertion COMPOSER_UNSAFE refusal into allowlisted parent-state, writable-field-count, node-wrapper and non-editable-element codes. Keeps every safety predicate and exact-payload check; no automatic attachment or broader editor recognition. The affected live shape remains unknown.
