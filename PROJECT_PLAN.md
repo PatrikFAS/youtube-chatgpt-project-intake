@@ -65,6 +65,18 @@ The original v0.1.14 checkout stays untouched. The existing worktree/PR stack ow
 
 ## NOW NEXT LATER
 
+**Bounded trust audit, 19 November:** exact v0.1.18 permissions, network/clipboard
+paths, local/session fields and clearing behavior were reviewed. Private tester
+copy now makes clear that Copy leaves the extension via the system clipboard
+and inserted/pasted text is available to the provider website before Send.
+Clear Collection is not a clipboard/provider/global reset. A factual private
+privacy/permissions draft is in the original checkout's `.private/beta` and
+Space. No runtime, permission or ZIP changes; installer wording/provider network
+behavior were not live-observed. The activeTab/host-access overlap was noted,
+not changed. No further preparation is queued: wait for Patrik's v0.1.18 live
+acceptance, then the unaided private beta. Earlier Claude/Custom passes remain
+separate, and all live checkboxes remain pending.
+
 **Independent-beta preparation, 19 November:** a private tester guide, blank
 feedback form and exact v0.1.18 ZIP are ready in `.private/beta` in the original
 project checkout, excluded through local Git info/exclude. The repository is
