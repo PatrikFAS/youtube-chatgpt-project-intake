@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased optional Custom example
+
+- Adds examples/compact-triage.txt for deliberate use through existing Custom. Requests a source-grounded opening of at most 60 words, separates relevance/quality, allows provisional judgment for missing context/captions, avoids numerical scores and limits watch suggestions to approximate supplied starts. No runtime/preset/default/UI/storage change and no new extension build.
+- Compares three presets, ordinary Custom and the optional example across four labelled synthetic source cases and both providers: 40 prepared payloads preserve exact metadata/captions. Popup fixtures prove one-off Preview = Copy = Open and manual Open even with explicit Send opt-in. These are instruction/source tests, not generated-answer quality or word-count evidence. Keep the exact v0.1.18 ZIP and its pending live checks intact.
+
 ## 0.1.18
 
 - Required suites, all 24 native single-video combinations plus complete Collection/opt-in journeys, 35 Send native-DOM cases and 68 Claude cases pass. Native tests include actual combined builder payloads with manual insertion and protected drafts. These are local fixtures, not live new-feature acceptance.

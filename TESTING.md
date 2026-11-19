@@ -2,6 +2,17 @@
 
 ## Current status
 
+**Optional compact example follow-up, no new extension build:**
+examples/compact-triage.txt can be pasted deliberately into existing v0.1.18
+Custom. Forty prepared-prompt comparisons cover useful, weak, off-topic and
+incomplete synthetic captions, both providers, the three unchanged presets,
+ordinary Custom and this example. Full titles/URLs/captions, source safety and
+hour-long timestamps remain intact. Two popup fixture journeys verify matching
+Preview/Copy/Open, no automatic save and manual Open even after Send opt-in.
+No AI answers were generated: the 60-word target, judgments, timestamp choices,
+missing-caption awareness and practical usefulness still need human review.
+The versioned v0.1.18 ZIP and live Send/Collection checklists below are unchanged.
+
 **v0.1.18 Collection milestone:** two or three captioned videos in a manually
 filled session basket. Review/reorder/remove/clear, one comparison question and
 source-labelled Preview/Copy/Open work with both providers; Send remains manual.

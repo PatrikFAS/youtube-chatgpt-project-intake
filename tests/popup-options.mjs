@@ -137,6 +137,24 @@ async function makePopup({
 }
 
 const popup = await makePopup();
+const compactExample=fs.readFileSync(path.join(root,'examples/compact-triage.txt'),'utf8').trim();
+for(const destinationUrl of ['https://chatgpt.com/','https://claude.ai/new']){
+  const ui=await makePopup({runtimeOk:true,destinationUrl,storedSettings:{chatgptExplicitSendEnabled:true}});
+  ui.radios.forEach(r=>{r.checked=r.value==='custom';});
+  ui.els.customInstructions.value=compactExample;
+  await ui.radios.find(r=>r.value==='custom').listeners.change();
+  await vm.runInContext('preparePromptAction(false)',ui.context);
+  const preview=ui.els.promptPreview.textContent;
+  assert.ok(preview.includes(compactExample));
+  assert.equal(ui.events.clipboard,undefined,'example Preview does not copy');
+  assert.equal(ui.events.message,undefined,'example Preview does not open/send');
+  await vm.runInContext('preparePromptAction(true)',ui.context);
+  assert.equal(ui.events.clipboard,preview,'full example Copy equals Preview');
+  await vm.runInContext('sendToChatGPT()',ui.context);
+  assert.equal(ui.events.message.payload,preview,'example Open equals Preview/Copy');
+  assert.equal(ui.events.message.type,'OPEN_DESTINATION_WITH_PAYLOAD','example Open remains manual even with Send opt-in');
+  assert.equal(ui.storageData.customInstructions,undefined,'one-off example never auto-saves');
+}
 assert.equal(popup.els.explicitSendOptIn.checked,false,'Send is off by default');
 assert.equal(popup.els.explicitSendButton.classList.contains('hidden'),true);
 await vm.runInContext('sendToChatGPT(true)',popup.context);

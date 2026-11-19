@@ -34,6 +34,8 @@ Text is **one-off by default** and cleared when the popup closes. **Save locally
 
 For an optional skip/skim/watch/apply response experiment, see the [draft Custom prompt and comparison plan](PROJECT_PLAN.md#draft-custom-response-experiment). It uses existing Custom instructions; the preset/default prompts are unchanged.
 
+The [optional compact-triage example](examples/compact-triage.txt) works in the already delivered v0.1.18: choose Custom, deliberately paste/edit the text, then Preview or Copy/Open and review manually. It requests one opening of at most 60 words after the full source header, distinguishes quality from relevance, allows provisional judgments and treats timestamps as approximate starts. Save locally only if useful; no example is loaded or saved automatically. Fixtures verify the prepared instructions/source integrity, not the resulting answer or actual time saved. No new extension update is needed; v0.1.18's Send/Collection live checks remain pending.
+
 The raw transcript is a separate utility. The selected task appears above the action button and as SELECTED MODE in the copied prompt, so task choices remain easy to distinguish.
 
 ## Update an existing installation to v0.1.18

@@ -5,7 +5,7 @@
   "description": "Lightweight Chromium extension for routing YouTube transcripts into ChatGPT or Claude.",
   "scripts": {
     "verify": "node scripts/verify.mjs",
-    "test": "node tests/transcript-fallback.mjs && node tests/dom-transcript-fallback.mjs && node tests/routing-handoff.mjs && node tests/popup-options.mjs",
+    "test": "node tests/transcript-fallback.mjs && node tests/dom-transcript-fallback.mjs && node tests/routing-handoff.mjs && node tests/popup-options.mjs && node tests/compact-response.mjs",
     "package": "python3 scripts/package.py",
     "test:browser": "node tests/popup-browser.mjs",
     "test:claude-browser": "node tests/claude-browser.mjs",
