@@ -112,3 +112,13 @@ textarea::placeholder { color: var(--muted); opacity: .8; }
 .collection-item { padding:10px 0; border-bottom:1px solid var(--line); overflow-wrap:anywhere; }
 .collection-item > strong { font-size:12px; }
 body[data-collection="true"] .utility-row > span { display:none; }
+
+/* Keep one destination action in view; optional detail stays collapsed. */
+.send-choice { margin:10px 0; padding:5px 0; }
+.toggle-label { display:flex; align-items:center; gap:7px; font-size:11px; font-weight:650; cursor:pointer; }
+.toggle-label input { accent-color:var(--accent); width:27px; height:16px; margin:0; }
+.send-choice .field-help { margin-top:5px; font-size:10px; }
+.collection-panel { padding:8px 10px; margin:8px 0; }
+#explicitSendDestination { margin-bottom:0; font-size:10px; }
+
+.collection-choice { grid-column:1 / -1; }

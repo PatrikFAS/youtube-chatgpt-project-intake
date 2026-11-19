@@ -94,7 +94,7 @@ try {
           if(fixture.holdCapture){fixture.awaitingCapture=true;await new Promise(resolve=>{fixture.releaseCapture=resolve;});}
           await new Promise(resolve => setTimeout(resolve, 20));
           if(fixture.missingCaptions)return {ok:false,error:'Fixture captions unavailable'};
-          const start=data.__video===1?3665:0,content=fixture.largeCaptions?'x'.repeat(61000):'A synthetic transcript for native popup testing.';
+          const start=data.__video===1?3665:0,content=fixture.largeCaptions?'x'.repeat(251000):'A synthetic transcript for native popup testing.';
           return { ok: true, data: { text: '['+(start?'1:01:05':'0:00')+'] '+content, characterCount: content.length+8, segments:[{start,text:content}], track: { name: 'English' } } };
         } }
       };
@@ -246,19 +246,19 @@ try {
   }
   const quick=await page('general');
   assert.equal(await quick.evaluate('document.getElementById("explicitSendOptIn").checked'),false);
-  await quick.click('#explicitSendPanel summary');
+
   await quick.click('#explicitSendOptIn');
   await quick.waitFor('fixture.data.chatgptExplicitSendEnabled === true');
   await quick.evaluate('location.reload()');
   await quick.waitFor('document.getElementById("explicitSendOptIn")?.checked');
-  await quick.click('#explicitSendPanel summary');
+
   assert.match(await quick.evaluate('document.getElementById("explicitSendDestination").textContent'),/https:\/\/chatgpt.com/);
   await quick.click('#previewPrompt');
   await quick.waitFor('document.getElementById("promptPreview").textContent.length > 0');
   await quick.click('#copyPrompt');
   await quick.waitFor('fixture.copied.length > 0');
   assert.equal(await quick.evaluate('fixture.messages.length'),0);
-  await quick.click('#explicitSendButton');
+  await quick.click('#sendButton');
   await quick.waitFor('fixture.messages.length === 1');
   assert.equal(await quick.evaluate('fixture.messages[0].type'),'OPEN_CHATGPT_WITH_EXPLICIT_SEND');
   await quick.close();
@@ -274,7 +274,7 @@ try {
   await basket.waitFor('document.getElementById("error").textContent.length>0&&!document.getElementById("addToCollection").disabled');
   assert.equal((await state())?.items?.length||0,0,'failed write never acknowledges Add');
   await basket.evaluate('fixture.failCollectionWrite=false;fixture.largeCaptions=true');await basket.click('#addToCollection');
-  await basket.waitFor('document.getElementById("error").textContent.includes("60,000")');
+  await basket.waitFor('document.getElementById("error").textContent.includes("250,000")');
   assert.equal((await state())?.items?.length||0,0);
   await basket.evaluate('fixture.largeCaptions=false');await basket.click('#addToCollection');
   await basket.waitFor('document.getElementById("collectionCount").textContent.includes("1/3")');
@@ -312,6 +312,39 @@ try {
   await basket.evaluate(`fixture.collectionRequest({type:'COLLECTION_CLEAR',revision:fixture.data.__session.collection_v1.revision,generation:fixture.data.__session.collection_v1.generation})`);
   await basket.evaluate('fixture.releaseCapture()');await basket.waitFor('document.getElementById("error").textContent.includes("collection changed")');
   assert.equal((await state()).items.length,0);
+  // Four distinct collection tasks restore single-video Custom unchanged.
+  await basket.evaluate(`fixture.data.__session.collection_v1={version:1,revision:0,generation:0,items:[1,2].map(n=>({videoId:'fixture'+n,title:'Large fixture '+n+' \\u2014 caf\\u00e9 \\ud83d\\ude00',url:'https://www.youtube.com/watch?v=fixture'+n,channel:'Fixture',publishDate:'',capturedAt:0,transcript:{text:'source '+n,segments:[],track:{name:'English'}}}))};fixture.data.lastMode='custom';fixture.data.customInstructions='Keep my saved task';window.name=JSON.stringify(fixture.data);location.reload()`);
+  await basket.waitFor('document.getElementById("customInstructions")?.value === "Keep my saved task"');
+  await basket.click('#collectionPanel summary');await basket.click('#useCollection');
+  assert.equal(await basket.evaluate(`document.querySelector('input[name="mode"]:checked').value`),'compare','Collection defaults to Compare & synthesize');
+  for(const [mode,marker] of [['compare','Compare and synthesize the included sources'],['summarize','Synthesize the included sources'],['analyze','Compare the evidence and reasoning'],['apply','Apply the included sources']]){
+    await basket.click(`.mode-card:has(input[value="${mode}"])`);
+    await basket.click('#previewPrompt');await basket.waitFor('document.getElementById("promptPreview").textContent.length>0');
+    const prompt=await basket.evaluate('document.getElementById("promptPreview").textContent');assert.ok(prompt.includes(marker));
+    await basket.click('#copyPrompt');assert.equal(await basket.evaluate('fixture.copied'),prompt);
+    assert.equal(await basket.evaluate('fixture.data.lastMode'),'custom');
+    if(mode==='analyze'){await basket.click('#transcriptTools summary');await basket.click('#retryButton');await basket.waitFor(`!document.getElementById('youtubeView').classList.contains('hidden')`);assert.equal(await basket.evaluate(`document.querySelector('input[name="mode"]:checked').value`),'analyze','Retry keeps Collection task');}
+  }
+  await basket.click('#useCollection');assert.equal(await basket.evaluate(`document.querySelector('input[name="mode"]:checked').value`),'custom');
+  // Construct exactly the reported complete prompt size; real content stays private.
+  await basket.evaluate(`(()=>{const items=fixture.data.__session.collection_v1.items;const base=YT2GPTCollection.build(items,'',false,'compare').length;items[0].transcript.text+='x'.repeat(78817-base);window.name=JSON.stringify(fixture.data);location.reload();})()`);
+  await basket.waitFor('document.getElementById("customInstructions")?.value === "Keep my saved task"');
+  await basket.click('#collectionPanel summary');await basket.click('#useCollection');
+  await basket.click('#previewPrompt');await basket.waitFor('document.getElementById("promptPreview").textContent.length===78817');
+  const longPrompt=await basket.evaluate('document.getElementById("promptPreview").textContent');
+  assert.match(await basket.evaluate('document.getElementById("handoffHelp").textContent'),/without autofill/);
+  await basket.click('#copyPrompt');assert.equal(await basket.evaluate('fixture.copied'),longPrompt);
+  await call('Browser.setDownloadBehavior',{behavior:'allow',downloadPath:profile});
+  await basket.evaluate(`fixture.copied='Keep clipboard unchanged during export'`);
+  await basket.click('#downloadPrompt');
+  const downloaded=path.join(profile,'youtube-ai-bridge-collection.txt');
+  for(let attempt=0;attempt<100&&!fs.existsSync(downloaded);attempt++)await new Promise(r=>setTimeout(r,30));
+  assert.ok(fs.existsSync(downloaded),'native .txt download completes');assert.equal(fs.readFileSync(downloaded,'utf8'),longPrompt,'download equals complete Preview/Copy');
+  assert.equal(await basket.evaluate('fixture.copied'),'Keep clipboard unchanged during export','file saving does not copy');
+  assert.equal(await basket.evaluate('fixture.messages.length'),0,'download opens no assistant and never sends');
+  await basket.click('#sendButton');await basket.waitFor('fixture.messages.length===1');
+  assert.equal(await basket.evaluate('fixture.messages[0].payload'),longPrompt);assert.equal(await basket.evaluate('fixture.messages[0].manualOnly'),true);assert.equal(await basket.evaluate('fixture.messages[0].type'),'OPEN_DESTINATION_WITH_PAYLOAD');
+  console.log('PASS: four native Collection task selections/restoration and exact 78,817-character Preview/Copy/.txt/Open-only export.');
   await basket.close();
   console.log('PASS: native three-video Collection Add/reopen/reorder/remove/clear, missing/oversized/duplicate/write/late-capture failures, source timestamps and manual provider handoffs; Preview = Copy = Open.');
   assert.equal(errors.length, 0, `No runtime exceptions: ${JSON.stringify(errors)}`);

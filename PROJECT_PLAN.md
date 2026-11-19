@@ -56,14 +56,51 @@ its own acceptance and fixture results do not establish live behavior.
 | --- | --- |
 | Accepted baseline | v0.1.10 is merged in [PR #3](https://github.com/PatrikFAS/youtube-chatgpt-project-intake/pull/3). Patrik confirmed the Chrome/Edge workflow, provider UI and automatic Claude insertion in his tested case. The precise Claude route/browser version was not recorded. |
 | Delivered versions | v0.1.14 added Custom; v0.1.15 removed its compulsory TL;DR conflict. All 18 preset payloads stayed byte-identical to v0.1.14, and 24 native task/provider/destination cases passed. Patrik tested v0.1.15 and reported no Claude insertion. Its supplied control-shape report now replaces the missing structural evidence; no repeat diagnostic is needed. |
-| Current candidates | v0.1.18 includes Collection plus the v0.1.17 explicit ChatGPT Send milestone on `codex/custom-output-contract` / [draft PR #5](https://github.com/PatrikFAS/youtube-chatgpt-project-intake/pull/5), stacked on PR #4. Separate v0.1.17 ZIP permits independent Send testing; v0.1.16 ZIP remains the accepted fallback. Required tests, 24 native popup combinations plus full Collection/Send interactions, 35 native Send cases and 68 Claude cases pass. New live acceptance remains open. |
+| Current candidates | v0.1.19 refines the existing v0.1.18 Collection and explicit Send after Patrik's reported refusal and 78,817-character case; see the current refinement below. The work remains on `codex/custom-output-contract` / [draft PR #5](https://github.com/PatrikFAS/youtube-chatgpt-project-intake/pull/5), stacked on PR #4. Separate v0.1.17 ZIP permits independent Send testing; v0.1.16 ZIP remains the accepted fallback. Required tests, 24 native popup combinations plus full Collection/Send interactions, 45 native Send cases and 68 Claude cases pass. New live acceptance remains open. |
 | Claude acceptance | Patrik confirmed v0.1.16 autofill in his selected real-browser journey after the report-grounded fix. This does not establish all layouts or Sarah acceptance. New Collection handoffs and explicit ChatGPT Send have separate user checks; no personal browser or live messages are controlled by Codex. |
 | Browser and safety | The authorized free window reached DevTools but produced no usable DOM report. No Claude draft/message text, cookies or profile files were read/changed and no AI message was sent. Visible control stopped when Patrik returned. Do not repeat OS input workarounds or take over the browser; use supplied structural evidence or supported inspection. Unknown controls keep fallback. |
 | Mode report and demand | Earlier Summarize/Analyze mismatch was not reproduced; later click snapshots/visible mode and retention fixtures pass. No original cause is claimed. The Space records Patrik's 19 November acceptance of ChatGPT and Custom in v0.1.15. Sarah's own journey, independent reuse and willingness to pay remain unrecorded. |
 
 The original v0.1.14 checkout stays untouched. The existing worktree/PR stack owns v0.1.17 and v0.1.18. Update the same loaded unpacked folder in place; no automatic installation, merge or publication.
 
+## Current feedback refinement — v0.1.19
+
+Patrik's real v0.1.18 ChatGPT test reached the generic post-insertion Send refusal;
+Claude was not tested in this report. Its exact failing guard cannot be recovered
+from that notice. The candidate adds closed actionable reason codes, with no
+prompt/draft/credential capture and no relaxation of destination, empty composer,
+exact full text, known unique stable Send or one-time/no-retry gates. Native local
+Send effects pass in 45 cases; no live AI message/browser control was performed.
+
+At his request the popup now has one main destination action: Open with the
+optional remembered ChatGPT Auto-send toggle off, Send to ChatGPT with it on.
+The intended URL is shown for Send. Copy/Preview/local export/Retry, Claude and
+Collection never auto-send. Transcript/title utilities are collapsed separately.
+
+Collection now defaults to Compare & synthesize in the same task group, with
+Summarize (faithful digest), Analyze (critical evidence assessment) and Apply
+(available project-context implications). The old builder used one comparison
+prompt regardless of individual mode. New mode fixtures preserve source identity,
+question and each source's timestamps, and restore prior single-video Custom.
+
+His 78,817-character case exceeds our local 60,000 trial bound, not an established
+provider limit. The candidate allows full review/copy/local .txt export up to
+250,000 UTF-16 units while retaining 60,000 for Collection autofill and the 512 KiB
+session-state guard. Larger Open copies and opens only; no pending insertion or
+automatic attachment. The exact-size native fixture validates full-file equality.
+
+**Next owner: Patrik.** Test v0.1.19 with Auto-send off first; optionally replay one
+harmless explicit ChatGPT Send and report only the bracketed code if withheld,
+without retrying uncertain sends. Replay the large Collection through complete
+Preview/Copy/.txt and manual handoff. Live Send, provider file limits/output
+quality, real lifecycle and Sarah's independent acceptance remain unperformed.
+Earlier v0.1.16 Claude/v0.1.15 Custom passes remain separate; preserve all prior
+ZIPs and Space checklists. No merge, store/public release, costs or tester contact.
+
 ## NOW NEXT LATER
+
+The preparation notes below record the pre-feedback v0.1.18 state; the current
+v0.1.19 refinement and smallest next checks are specified above.
 
 **Bounded trust audit, 19 November:** exact v0.1.18 permissions, network/clipboard
 paths, local/session fields and clearing behavior were reviewed. Private tester

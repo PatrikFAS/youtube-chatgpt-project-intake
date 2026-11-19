@@ -42,7 +42,10 @@ try{
    if(o.rich){const n=document.createElement('span');n.contentEditable='false';editor.append(n);}
    if(o.attachment){const n=document.createElement('div');n.dataset.testid='upload-preview';n.hidden=true;form.append(n);}
    if(o.unknown)send.removeAttribute('data-testid');
+   if(o.unmarkedSendLabel){send.removeAttribute('data-testid');send.setAttribute('aria-label','Send');}
    if(o.duplicateSend){const n=send.cloneNode(true);n.id='duplicate-send';form.append(n);}
+   if(o.activityOnInput)editor.addEventListener('input',()=>form.setAttribute('aria-busy','true'));
+   if(o.unsupportedOnInput)editor.addEventListener('input',()=>{const n=document.createElement('span');while(editor.firstChild)n.append(editor.firstChild);editor.append(n);});
    if(o.otherSend){const n=document.createElement('button');n.setAttribute('aria-label','Send prompt');n.textContent='Other';form.append(n);}
    if(o.duplicateEditor){const n=editor.cloneNode(true);n.id='other-editor';form.append(n);}
    if(o.dialog){const n=document.createElement('div');n.setAttribute('role','dialog');n.style='width:100px;height:60px';document.body.append(n);}
@@ -55,7 +58,7 @@ try{
     if(m.type==='GET_PENDING_PAYLOAD')return {...response,payload:available?payload:null};
     if(m.type==='CLEAR_PENDING_PAYLOAD'){available=false;return {ok:true};}
     if(m.type==='CLAIM_PENDING_PAYLOAD'){fixture.claims++;available=false;if(o.claimDraft)editor.textContent='Restored during claim';return response;}
-    if(m.type==='AUTHORIZE_CHATGPT_SEND_ONCE'){fixture.authorizations++;if(o.changeControl){const n=send.cloneNode(true);send.replaceWith(n);send=n;}if(o.disableOnAuth)send.disabled=true;if(o.changeText)editor.textContent+=' Changed';if(o.routeOnAuth)history.replaceState(null,'',o.routeOnAuth);return {ok:!o.deny};}
+    if(m.type==='AUTHORIZE_CHATGPT_SEND_ONCE'){fixture.authorizations++;if(o.changeControl){const n=send.cloneNode(true);send.replaceWith(n);send=n;}if(o.disableOnAuth)send.disabled=true;if(o.changeText)editor.textContent+=' Changed';if(o.routeOnAuth)history.replaceState(null,'',o.routeOnAuth);return {ok:!o.deny,...(o.denyReason?{reason:o.denyReason}:{})};}
     return {ok:false};
    }}};
    let tick=0;Date.now=()=>{tick+=100;return tick;};const timeout=window.setTimeout.bind(window);window.setTimeout=(fn,ms,...args)=>timeout(fn,ms===100||ms===500?0:ms,...args);
@@ -66,6 +69,7 @@ try{
   assert.equal(r.clicks,o.send?1:0,name+': click boundary '+JSON.stringify(r));assert.equal(r.submits,o.send?1:0,name+': native submit effects');assert.equal(r.enters,0);assert.equal(r.unrelated,'Keep unrelated draft');
   if(o.send){assert.match(r.notice,/Send was requested once/);assert.equal(r.authorizations,1);}
   else if(o.notice)assert.match(r.notice,new RegExp(o.notice),name+': useful manual status');
+  if(o.code) {assert.ok(r.notice.includes('['+o.code+']'),name+': specific reason '+r.notice);assert.ok(!r.notice.includes(o.payload||'Harmless fixture sample.'),'diagnostic never includes payload');}
   if(o.edits!==undefined)assert.equal(r.edits,o.edits,name+': editing bound');
   if(o.text!==undefined)assert.equal(r.text,o.text,name+': preserve draft/partial content');
   if(o.auth!==undefined)assert.equal(r.authorizations,o.auth);
@@ -92,19 +96,24 @@ try{
  await run('restored claim draft',{claimDraft:true,text:'Restored during claim',edits:0,auth:0});
  await run('wrong saved destination',{actual:'https://chatgpt.com/c/other',edits:0,auth:0});
  await run('Project redirect remains manual',{expected:'https://chatgpt.com/g/g-p-fixture/project',actual:'https://chatgpt.com/g/g-p-fixture/c/fixture',notice:'withheld',auth:0});
- await run('unknown Send',{unknown:true,notice:'withheld',auth:0});
- await run('two Send controls',{duplicateSend:true,notice:'withheld',auth:0});
- await run('other unmarked Send-labelled control',{otherSend:true,notice:'withheld',auth:0});
- await run('disabled Send',{disabled:true,notice:'withheld',auth:0});
+ await run('unknown Send',{unknown:true,notice:'withheld',code:'SEND_MISSING',auth:0});
+ await run('Send label alone stays manual',{unmarkedSendLabel:true,notice:'withheld',code:'SEND_UNKNOWN',auth:0});
+ await run('two Send controls',{duplicateSend:true,notice:'withheld',code:'SEND_AMBIGUOUS',auth:0});
+ await run('other unmarked Send-labelled control',{otherSend:true,notice:'withheld',code:'SEND_AMBIGUOUS',auth:0});
+ await run('disabled Send',{disabled:true,notice:'withheld',code:'SEND_DISABLED',auth:0});
  await run('disabled fieldset Send',{disabledFieldset:true,notice:'withheld',auth:0});
  await run('readonly ancestor',{ancestorReadonly:true,edits:0,auth:0});
- await run('changed Send after authorization',{changeControl:true,notice:'withheld',auth:1});
- await run('disabled after authorization',{disableOnAuth:true,notice:'withheld',auth:1});
- await run('changed draft after authorization',{changeText:true,notice:'withheld',auth:1});
- await run('changed route after authorization',{routeOnAuth:'/c/other',notice:'withheld',auth:1});
- await run('authorization denied',{deny:true,notice:'withheld',auth:1});
+ await run('changed Send after authorization',{changeControl:true,notice:'withheld',code:'SEND_CONTROL_CHANGED',auth:1});
+ await run('disabled after authorization',{disableOnAuth:true,notice:'withheld',code:'SEND_DISABLED',auth:1});
+ await run('changed draft after authorization',{changeText:true,notice:'withheld',code:'PAYLOAD_MISMATCH',auth:1});
+ await run('changed route after authorization',{routeOnAuth:'/c/other',notice:'withheld',code:'DESTINATION',auth:1});
+ await run('authorization denied',{deny:true,notice:'withheld',code:'AUTH_UNAVAILABLE',auth:1});
  await run('framework rejects insertion',{reject:true,notice:'withheld',auth:0});
  await run('partial edit',{partial:true,text:'Partial',edits:1,auth:0,notice:'could not be confirmed'});
  await run('route changes after insertion',{routeOnInput:'/c/other',notice:'withheld',auth:0});
+ await run('reported generic refusal now distinguishes activity',{activityOnInput:true,notice:'withheld',code:'UPLOAD_OR_ACTIVITY',auth:0});
+ await run('unsupported serialized markup remains manual',{unsupportedOnInput:true,notice:'withheld',code:'PAYLOAD_MISMATCH',auth:0});
+ for(const reason of ['AUTH_CONTEXT','AUTH_RECORD','AUTH_DESTINATION','AUTH_EXPIRED','AUTH_DISABLED','AUTH_STORAGE'])await run('closed authorization reason '+reason,{deny:true,denyReason:reason,notice:'withheld',code:reason,auth:1});
+ await run('untrusted authorization error is never echoed',{deny:true,denyReason:'Private draft secret',notice:'withheld',code:'AUTH_UNAVAILABLE',auth:1});
  assert.equal(errors.length,0,JSON.stringify(errors));console.log(`PASS: ${cases} explicit Send native-DOM cases; successful one-click effects and guarded no-send failures. Synthetic only.`);
 }finally{if(ws?.readyState===WebSocket.OPEN){ws.send(JSON.stringify({id:++sequence,method:'Browser.close'}));await new Promise(resolve=>{const t=setTimeout(resolve,2000);browser.once('exit',()=>{clearTimeout(t);resolve();});});}ws?.close();browser.kill();browser.stderr.destroy();browser.unref();for(const p of pending.values()){clearTimeout(p.timer);p.reject(Error('Closed'));}}

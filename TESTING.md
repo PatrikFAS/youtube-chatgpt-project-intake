@@ -1,5 +1,52 @@
 # Manual and regression testing
 
+## v0.1.19 focused user check
+
+**Actual report:** Patrik's v0.1.18 ChatGPT attempt displayed the generic
+“automatic Send was withheld” warning. This proves the post-insertion Send
+routine ended without a native click; it does not identify whether route,
+composer, exact serialization, Send-control readiness or authorization failed.
+Claude was not tested in that report. No personal browser/draft was inspected.
+
+1. Update the SAME unpacked folder to v0.1.19, Reload the existing extension,
+   refresh relevant tabs safely and confirm the version. Reload loses any basket.
+   Do not uninstall or load a duplicate. Keep old ZIPs unchanged.
+2. Normal manual task: leave Auto-send off, choose the provider/destination and
+   mode, Preview, then Open. Inspect source, exact destination and full unsent
+   draft. Existing drafts must remain untouched. Claude stays manual.
+3. Optional ChatGPT Send: choose one harmless short sample and an empty intended
+   composer; turn Auto-send on. Check the displayed URL and main button labelled
+   Send to ChatGPT, then click ONCE. Record one sent message or only the bracketed
+   code and public notice. Never share the prompt, draft, Project URL or credentials.
+   Do not retry an uncertain attempt; check the conversation first. Disable the
+   toggle afterward if unwanted. Codex performs no live third-party sends.
+4. Collection: Add two/three captioned sources, review and Use collection. Confirm
+   Compare & synthesize is selected. Try Summarize, Analyze and Apply via Preview:
+   SELECTED MODE and the task instructions must differ. Back to single video must
+   restore the prior task/Custom draft. Collections always use manual Send.
+5. For a large Collection, Preview and Copy retain all sources. Save prompt .txt,
+   open the file locally and check the last source/end marker. Above the local
+   60,000-unit autofill bound, Open copies and opens only. Attach the file yourself
+   if supported and ask “Follow the instructions in the attached file.” This is
+   not automatic attachment or a provider-size guarantee. Delete local files and
+   clear clipboard/provider copies separately when appropriate.
+
+**Fixture evidence:** mandated verify/tests; 24 native single-video popup
+combinations plus opt-in/main-action and Collection journeys; exact 78,817-unit
+Preview = Copy = downloaded UTF-8 .txt = Open payload; no pending worker insertion
+for oversized Collections on either provider; four Collection prompts/defaults and
+single Custom restoration; existing missing/duplicate/quota/race/source guards;
+45 native Send cases with closed reason codes and native one-click/no-send effects;
+68 Claude manual/draft/route cases. No model answers, real installation lifecycle,
+provider upload behavior or live Send success are inferred from these fixtures.
+
+Reason codes identify a conservative guard, not a diagnosis of the provider.
+UPLOAD_OR_ACTIVITY may include an idle upload-shaped control; recognition was
+not broadened without live evidence. PAYLOAD_MISMATCH keeps exact comparison.
+AUTH_* reports one-time worker refusal; no URL/content is echoed or uploaded.
+The original v0.1.18 generic report cannot be assigned a specific code retroactively.
+
+
 ## Current status
 
 **Optional compact example follow-up, no new extension build:**

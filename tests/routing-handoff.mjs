@@ -113,6 +113,13 @@ async function testBackground() {
     assert.equal(claude.queried, false);
   }
 
+  for (const url of ['https://chatgpt.com/','https://claude.ai/new']) {
+    const long = createBackground();
+    const result=await long.message({type:'OPEN_DESTINATION_WITH_PAYLOAD',collection:true,payload:'x'.repeat(78817),destinationUrl:url,sourceTabId:11});
+    assert.equal(result.ok,true);assert.equal(result.manualOnly,true);assert.equal(long.creates[0].url,url);
+    assert.equal(long.pending.size,0,'oversized Collection creates no pending insertion, even without popup flag');
+    assert.equal((await long.message({type:'GET_PENDING_PAYLOAD'},{tab:{id:90},frameId:0,url})).payload,null);
+  }
   const localData = {
     destinations: [{ id: 'general', name: 'General ChatGPT', url: 'https://chatgpt.com/', builtIn: true }, { id: 'saved-project', name: 'Existing Project', url: 'https://chatgpt.com/g/g-p-fixture/project?view=saved#notes', builtIn: false }],
     lastMode: 'summarize', lastDestinationId: 'saved-project', preferredTranscriptLanguage: 'fr'
@@ -803,6 +810,22 @@ async function testCollection() {
   for(const input of [item(1),{...item(1),transcript:{...item(1).transcript,track:{name:'Other'}}}])assert.throws(()=>change('COLLECTION_ADD',{item:input}),/Already added/);
   assert.throws(()=>change('COLLECTION_ADD',{item:item(4)}),/three videos/);
   assert.equal(JSON.stringify(state),before,'rejected changes preserve full state');
+  const modeMarkers={compare:'Compare and synthesize the included sources',summarize:'Synthesize the included sources',analyze:'Compare the evidence and reasoning',apply:'Apply the included sources'};
+  for(const [mode,marker] of Object.entries(modeMarkers)){
+    const selected=api.build(state.items,'What conflicts?',false,mode);
+    assert.ok(selected.includes(marker));assert.ok(selected.includes('fixture2&t=3665s'));assert.ok(selected.includes('Full source 3'));
+    for(const other of Object.values(modeMarkers).filter(m=>m!==marker))assert.ok(!selected.includes(other),'distinct Collection task');
+  }
+  assert.ok(api.build(state.items).includes('SELECTED MODE: Compare & synthesize'),'default Collection intent');
+  assert.throws(()=>api.build(state.items,'',false,'custom'),/Choose Compare/);
+  const longItems=JSON.parse(JSON.stringify(state.items));
+  longItems[0].transcript={...longItems[0].transcript,segments:[],text:'Source kept in full.'};
+  const unpadded=api.build(longItems).length;
+  longItems[0].transcript.text+='x'.repeat(78817-unpadded);
+  assert.equal(api.build(longItems).length,78817,'reported size is permitted intact for review/export');
+  assert.ok(api.build(longItems).length>api.MAX_INSERT);
+  const storedLong=api.mutate(api.empty(),{type:'COLLECTION_ADD',revision:0,generation:0,item:longItems[0]});
+  assert.equal(storedLong.items[0].transcript.text,longItems[0].transcript.text,'complete capture retained, not truncated');
   const tooLong=api.MAX_PROMPT-prompt.length;
   const exact=api.build(state.items,'What conflicts?'+'x'.repeat(tooLong));assert.equal(exact.length,api.MAX_PROMPT);
   assert.throws(()=>api.build(state.items,'What conflicts?'+'x'.repeat(tooLong+1)),/Nothing was truncated/);

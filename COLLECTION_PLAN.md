@@ -1,5 +1,40 @@
 # Collection implementation and acceptance
 
+## v0.1.19 refinement from real feedback
+
+Patrik hit a serialized Collection of 78,817 characters. v0.1.18's 60,000-unit
+bound came from the offline three-sample experiment below; it was a conservative
+application trial budget, with no evidence of a provider limit or maximum safe
+DOM insertion length. It blocked Add/review as well as handoff, causing avoidable
+loss of usefulness. Preserve the v0.1.18 history below as history.
+
+The candidate separates full review/copy/local .txt export (250,000 UTF-16 units)
+from guarded web-composer insertion (60,000 units). The 512 KiB encoded-state
+budget and three-source count stay unchanged. The larger bound is a bounded
+local memory/export choice, not measured model capacity. Native fixtures cover
+exactly 78,817 units with identical Preview, Copy, downloaded UTF-8 file and Open
+payload. The worker independently opens oversized Collections without a pending
+insertion record, preserving exact destination/tab placement and manual Send.
+Manual attachment depends on the assistant/account's actual capabilities; Bridge
+neither attaches files nor assumes an attachment API. No silent truncation.
+
+v0.1.18's Collection builder ignored the individual mode selection and always
+requested comparison/synthesis. v0.1.19 exposes **Compare & synthesize** as the
+Collection default in the same task selector; it integrates takeaways and weighs
+agreement/disagreement/support without counting repetition as corroboration.
+Summarize makes a faithful digest; Analyze critically assesses claims/evidence;
+Apply uses actually available destination/project goals. They share source/header
+and timestamp safety, with one optional question. Collection selection stays
+one-off; exiting restores the previous single-video mode and Custom draft.
+
+All new behavior is fixture-verified only. Next owner Patrik: replay his large
+Collection, choose an intent and inspect complete source attribution/file; one
+manual provider handoff is enough. Keep real output quality, upload/context
+limits, storage lifecycle and Sarah's acceptance separate. Downloaded files live
+outside extension storage and require their own deletion; Clear erases only the
+basket. No expansion to persistence, playlist scraping or Collection Auto-send.
+
+
 Updated 19 November 2026. Patrik explicitly authorized this bounded milestone
 after accepting his v0.1.16 Claude autofill journey and v0.1.15 Custom. v0.1.18
 implements Collection in the existing repository/PR stack, retaining the

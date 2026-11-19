@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.19
+
+- Replaces the duplicate Send action/settings with one primary destination action and a default-off, remembered ChatGPT Auto-send toggle. The main label and exact visible URL identify each deliberate Send; Claude, Collection, Copy, Preview, file export and Retry remain manual.
+- Replaces the generic post-insertion automatic-Send refusal with allowlisted actionable guard codes. No prompt/draft/account text is captured or uploaded. Reproduces guarded refusals locally, including payload/control/authorization changes, without weakening destination, draft, exact payload, stable native Send or one-time/no-retry checks. The actual guard behind Patrik's v0.1.18 report remains unknown.
+- Gives Collection its own default Compare & synthesize choice alongside distinct Summarize, Analyze and Apply in the same task group. Restores the previous single-video task/Custom draft on exit without persisting Collection choices as single-video preferences.
+- Separates the 60,000-unit local Collection autofill trial bound from a 250,000-unit full Preview/Copy/.txt export bound and unchanged 512 KiB session-state guard. Exact 78,817-character fixture retains all sources; oversized Open copies/opens only with no pending injection, automatic attachment or Send. No provider capacity is claimed and nothing is truncated.
+- Required suites, 24 native popup combinations plus expanded journeys, 45 native Send cases and 68 Claude cases pass. These are isolated fixtures; v0.1.19 live acceptance remains open. No new permissions, backend, publication or merge. Keeps prior beta ZIPs intact.
+
 ## Unreleased optional Custom example
 
 - Adds examples/compact-triage.txt for deliberate use through existing Custom. Requests a source-grounded opening of at most 60 words, separates relevance/quality, allows provisional judgment for missing context/captions, avoids numerical scores and limits watch suggestions to approximate supplied starts. No runtime/preset/default/UI/storage change and no new extension build.

@@ -41,7 +41,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
   if (message.type === 'AUTHORIZE_CHATGPT_SEND_ONCE') {
     serializeExplicitSend(() => authorizeExplicitSend(message, sender))
-      .then(sendResponse).catch(() => sendResponse({ ok: false }));
+      .then(sendResponse).catch(() => sendResponse({ ok: false, reason:'AUTH_STORAGE' }));
     return true;
   }
 
@@ -111,6 +111,9 @@ async function handleOpenDestination(message) {
     throw new Error('Could not open the destination beside the YouTube tab. Open the intended destination and paste the copied prompt.');
   }
   if (!Number.isInteger(tab?.id) || tab.id < 0) throw new Error('Could not open the destination tab. Paste the copied prompt into the intended destination.');
+
+  // Oversized Collection exports open only; never prepare insertion/Send.
+  if (message.manualOnly === true || (message.collection === true && payload.length > YT2GPTCollection.MAX_INSERT)) return {ok:true,tabId:tab.id,manualOnly:true};
 
   const key = `${PENDING_PREFIX}${tab.id}`;
   try {
@@ -216,12 +219,13 @@ async function handleCollection(message,sender) {
 
 async function authorizeExplicitSend(message, sender) {
   const key = message.explicitSendKey;
-  if (typeof key !== 'string' || !/^explicit_send_[a-f0-9]{64}$/.test(key) || sender.frameId !== 0 || !sender.documentId) return {ok:false};
+  if (typeof key !== 'string' || !/^explicit_send_[a-f0-9]{64}$/.test(key) || sender.frameId !== 0 || !sender.documentId) return {ok:false,reason:'AUTH_CONTEXT'};
   const record = (await chrome.storage.session.get(key))[key];
-  if (!record || record.state !== 'claimed' || record.tabId !== sender.tab?.id || record.documentId !== sender.documentId ||
-      YT2GPTDestination.provider(record.destinationUrl) !== 'chatgpt' || YT2GPTDestination.normalize(sender.url) !== record.destinationUrl ||
-      Date.now()-record.createdAt > PENDING_TTL_MS ||
-      (await chrome.storage.local.get('chatgptExplicitSendEnabled')).chatgptExplicitSendEnabled !== true) return {ok:false};
+  if (!record || record.state !== 'claimed') return {ok:false,reason:'AUTH_RECORD'};
+  if (record.tabId !== sender.tab?.id || record.documentId !== sender.documentId) return {ok:false,reason:'AUTH_CONTEXT'};
+  if (YT2GPTDestination.provider(record.destinationUrl) !== 'chatgpt' || YT2GPTDestination.normalize(sender.url) !== record.destinationUrl) return {ok:false,reason:'AUTH_DESTINATION'};
+  if (Date.now()-record.createdAt > PENDING_TTL_MS) return {ok:false,reason:'AUTH_EXPIRED'};
+  if ((await chrome.storage.local.get('chatgptExplicitSendEnabled')).chatgptExplicitSendEnabled !== true) return {ok:false,reason:'AUTH_DISABLED'};
   // Persist the irreversible attempt boundary BEFORE granting the one click.
   // A crash/reload/changed control after this point always means manual review.
   await chrome.storage.session.set({[key]:{...record,state:'attempted'}});

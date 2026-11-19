@@ -192,15 +192,41 @@
       [...form.querySelectorAll('[data-composer-attachments]')].some(node=>node.childElementCount>0) ||
       [...form.querySelectorAll('input[type="file"]')].some(input=>input.files?.length);
   }
-  function readySend(el, claimed) {
-    if (location.origin !== 'https://chatgpt.com' || YT2GPTDestination.normalize(location.href) !== claimed.destinationUrl ||
-        destinationProblem(claimed.destinationUrl) || findComposer() !== el || unsafeForSend(el) ||
-        exactComposerText(el) !== claimed.payload.replace(/\r\n/g,'\n')) return null;
+  // Closed reason vocabulary: no URLs, DOM text, draft or prompt fragments.
+  const SEND_REASONS = Object.freeze({
+    DESTINATION: 'The exact saved destination is no longer confirmed. Check the selected conversation or Project.',
+    PAGE_BLOCKED: 'A dialog, sign-in screen or product mode needs attention.',
+    COMPOSER_CHANGED: 'The recognized message box changed. Review the draft on this page.',
+    COMPOSER_UNSAFE: 'The message box is read-only, ambiguous or contains an unsupported rich element.',
+    UPLOAD_OR_ACTIVITY: 'An attachment, upload-shaped control or active response was detected. Review the composer; an idle control may also trigger this conservative guard.',
+    PAYLOAD_MISMATCH: 'The complete inserted text could not be verified exactly. Compare the draft with the copied prompt.',
+    SEND_MISSING: 'No recognized visible Send control was found. Use the website Send control manually after review.',
+    SEND_AMBIGUOUS: 'More than one possible Send control was found. Choose the intended control yourself.',
+    SEND_UNKNOWN: 'The Send control lacks a supported identity. Send manually after review.',
+    SEND_DISABLED: 'The recognized Send control did not become enabled. Wait for the page and review manually.',
+    SEND_CONTROL_CHANGED: 'The Send control changed during the final check. Review manually.',
+    AUTH_CONTEXT: 'This page or document could not be authorized for the one-time Send.',
+    AUTH_RECORD: 'The one-time Send request is missing or was already consumed. Check the conversation before any manual action.',
+    AUTH_DESTINATION: 'The one-time request does not match this exact destination.',
+    AUTH_EXPIRED: 'The one-time Send request expired. Review manually.',
+    AUTH_DISABLED: 'Auto-send was turned off before sending. Review manually.',
+    AUTH_STORAGE: 'The one-time Send record could not be safely updated. Check the conversation and review manually.',
+    AUTH_UNAVAILABLE: 'One-time Send authorization could not be confirmed. Check the conversation and review manually.'
+  });
+  function checkSend(el, claimed) {
+    if (location.origin !== 'https://chatgpt.com' || YT2GPTDestination.normalize(location.href) !== claimed.destinationUrl) return {code:'DESTINATION'};
+    if (destinationProblem(claimed.destinationUrl)) return {code:'PAGE_BLOCKED'};
+    if (findComposer() !== el) return {code:'COMPOSER_CHANGED'};
+    if (hasAttachmentsOrActivity(el.closest('form'))) return {code:'UPLOAD_OR_ACTIVITY'};
+    if (unsafeForSend(el)) return {code:'COMPOSER_UNSAFE'};
+    if (exactComposerText(el) !== claimed.payload.replace(/\r\n/g,'\n')) return {code:'PAYLOAD_MISMATCH'};
     const buttons = [...el.closest('form').querySelectorAll('[data-testid="send-button"], [data-testid="composer-send-button"], button[aria-label="Send"], button[aria-label="Send prompt"], button[aria-label="Send message"]')].filter(isVisible);
-    if (buttons.length !== 1) return null;
+    if (!buttons.length) return {code:'SEND_MISSING'};
+    if (buttons.length !== 1) return {code:'SEND_AMBIGUOUS'};
     const button = buttons[0];
-    return button instanceof HTMLButtonElement && button.matches('[data-testid="send-button"], [data-testid="composer-send-button"]') && !button.matches(':disabled') && button.getAttribute('aria-disabled') !== 'true' &&
-      button.getAttribute('aria-readonly') !== 'true' && !button.closest('[inert], [aria-hidden="true"], [aria-disabled="true"], [aria-readonly="true"]') ? button : null;
+    if (!(button instanceof HTMLButtonElement) || !button.matches('[data-testid="send-button"], [data-testid="composer-send-button"]')) return {code:'SEND_UNKNOWN'};
+    if (button.matches(':disabled') || button.getAttribute('aria-disabled') === 'true' || button.getAttribute('aria-readonly') === 'true' || button.closest('[inert], [aria-hidden="true"], [aria-disabled="true"], [aria-readonly="true"]')) return {code:'SEND_DISABLED'};
+    return {button};
   }
   function exactComposerText(el) {
     if (el instanceof HTMLTextAreaElement || el instanceof HTMLInputElement) return el.value.replace(/\r\n/g,'\n');
@@ -224,24 +250,25 @@
   }
   async function sendExplicitlyOnce(el, claimed) {
     const started = Date.now();
-    let stable = null;
+    let stable = null, reason = 'SEND_MISSING';
     while (Date.now()-started < 2500) {
       await sleep(100);
-      const button = readySend(el, claimed);
-      if (!button) { stable = null; continue; }
-      if (stable !== button) { stable = button; continue; }
+      const checked = checkSend(el, claimed), button = checked.button;
+      if (!button) { reason = checked.code; stable = null; continue; }
+      if (stable !== button) { stable = button; reason = 'SEND_CONTROL_CHANGED'; continue; }
       let authorization;
       try { authorization = await chrome.runtime.sendMessage({type:'AUTHORIZE_CHATGPT_SEND_ONCE',explicitSendKey:claimed.explicitSendKey}); } catch {}
-      if (!authorization?.ok || readySend(el, claimed) !== button) break;
+      if (!authorization?.ok) { reason = Object.hasOwn(SEND_REASONS, authorization?.reason) ? authorization.reason : 'AUTH_UNAVAILABLE'; break; }
+      const finalCheck = checkSend(el, claimed);
+      if (finalCheck.button !== button) { reason = finalCheck.code || 'SEND_CONTROL_CHANGED'; break; }
       try {
-        // One native control activation only. Authorization is consumed first;
-        // never retry, even if the site rejects or the document changes.
+        // One native activation only, with authorization consumed first.
         HTMLButtonElement.prototype.click.call(button);
         showToast('YouTube AI Bridge: Send was requested once in ChatGPT. Check the conversation for the result; it will not be retried.');
-      } catch { showToast('YouTube AI Bridge: the Send attempt is uncertain. Check the conversation before doing anything else; no retry will occur.', true); }
+      } catch { showToast('YouTube AI Bridge: the Send attempt is uncertain [SEND_UNCERTAIN]. Check the conversation before doing anything else; no retry will occur.', true); }
       return;
     }
-    showToast('YouTube AI Bridge: automatic Send was withheld. Check the destination and complete draft, then send manually if appropriate. Nothing will be retried.', true);
+    showToast(`YouTube AI Bridge: automatic Send was withheld [${reason}]. ${SEND_REASONS[reason]} The complete prompt remains on your clipboard. Nothing will be retried; send manually only after checking the destination and full draft.`, true);
   }
 
   function setNativeValue(el, value) {

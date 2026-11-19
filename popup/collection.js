@@ -1,15 +1,20 @@
 'use strict';
 let collectionState = null;
 let collectionActive = false;
+let singleVideoMode = null;
+let collectionMode = 'compare';
 function wireCollectionEvents() {
   els.addToCollection.addEventListener('click',addCurrentToCollection);
   els.useCollection.addEventListener('click',()=>{
     if(busy||sending)return;
+    if (!collectionActive) singleVideoMode=getSelectedMode();
     collectionActive=!collectionActive;
+    if (collectionActive) setModeRadio(collectionMode);
+    if (!collectionActive) restoreSingleVideoMode();
     invalidatePromptPreview();renderCollection();updateCustomUI();updateHandoffHelp();
   });
   els.clearCollection.addEventListener('click',()=>changeCollection('COLLECTION_CLEAR'));
-  els.collectionQuestion.addEventListener('input',invalidatePromptPreview);
+  els.collectionQuestion.addEventListener('input',()=>{invalidatePromptPreview();updateHandoffHelp();});
 }
 async function refreshCollection() {
   try {
@@ -21,7 +26,7 @@ async function refreshCollection() {
 }
 function renderCollection() {
   const items=collectionState?.items||[];
-  if(items.length<2)collectionActive=false;
+  if(items.length<2 && collectionActive){collectionActive=false;restoreSingleVideoMode();}
   document.body.dataset.collection=String(collectionActive);
   for(const button of [els.viewTranscript,els.copyTranscript,els.copyChatTitle])button.classList.toggle('hidden',collectionActive);
   if(collectionActive)hide(els.transcriptPanel);
@@ -46,7 +51,8 @@ function renderCollection() {
   els.useCollection.textContent=collectionActive?'Back to single video':'Use collection';
   els.clearCollection.disabled=busy||sending||!items.length;
   els.collectionQuestion.disabled=busy||sending;
-  document.querySelector('.mode-group')?.classList.toggle('hidden',collectionActive);
+  document.querySelector('.custom-choice')?.classList.toggle('hidden',collectionActive);
+  document.querySelector('.collection-choice')?.classList.toggle('hidden',!collectionActive);
   els.collectionQuestionWrap.classList.toggle('hidden',!collectionActive);
   els.copyPrompt.textContent=collectionActive?'Copy collection':'Copy prompt';
 }
@@ -78,4 +84,11 @@ async function changeCollection(type,videoId,offset) {
     collectionState=response.state;invalidatePromptPreview();
   }catch(error){showError(friendlyError(error));await refreshCollection();}
   finally{sending=false;setBusy(false);renderCollection();updateCustomUI();updateHandoffHelp();}
+}
+
+function setModeRadio(mode) {
+  document.querySelectorAll('input[name="mode"]').forEach(radio=>{radio.checked=radio.value===mode;});
+}
+function restoreSingleVideoMode() {
+  if(singleVideoMode){setModeRadio(singleVideoMode);singleVideoMode=null;}
 }

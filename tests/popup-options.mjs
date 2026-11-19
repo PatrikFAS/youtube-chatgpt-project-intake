@@ -156,7 +156,8 @@ for(const destinationUrl of ['https://chatgpt.com/','https://claude.ai/new']){
   assert.equal(ui.storageData.customInstructions,undefined,'one-off example never auto-saves');
 }
 assert.equal(popup.els.explicitSendOptIn.checked,false,'Send is off by default');
-assert.equal(popup.els.explicitSendButton.classList.contains('hidden'),true);
+assert.equal(popup.els.sendButton.textContent,'Open in ChatGPT');
+assert.ok(!popupHtml.includes('id="explicitSendButton"'),'one primary destination action');
 await vm.runInContext('sendToChatGPT(true)',popup.context);
 assert.equal(popup.events.message,undefined,'no send before opt-in');
 assert.equal(popup.queriedTabs(), 1, 'active tab is captured once during popup initialization');
@@ -170,7 +171,7 @@ assert.match(popup.events.clipboard, /Transcript contents\./);
 assert.match(popup.els.error.textContent, /Simulated opening failure\..*complete prompt is already on your clipboard/);
 assert.equal(popup.closed(), false, 'failed open leaves the popup available');
 const opted=await makePopup({storedSettings:{chatgptExplicitSendEnabled:true},runtimeOk:true});
-assert.equal(opted.els.explicitSendButton.classList.contains('hidden'),false);
+assert.equal(opted.els.sendButton.textContent,'Send to ChatGPT');
 assert.match(opted.els.explicitSendDestination.textContent,/https:\/\/chatgpt.com/);
 await vm.runInContext('preparePromptAction(false)',opted.context);
 assert.equal(opted.events.message,undefined,'Preview cannot send after opt-in');
@@ -179,7 +180,7 @@ assert.equal(opted.events.message,undefined,'Copy cannot send after opt-in');
 await vm.runInContext('sendToChatGPT()',opted.context);
 assert.equal(opted.events.message.type,'OPEN_DESTINATION_WITH_PAYLOAD','Open remains manual after opt-in');
 const explicit=await makePopup({storedSettings:{chatgptExplicitSendEnabled:true},runtimeOk:true});
-await vm.runInContext('sendToChatGPT(true)',explicit.context);
+await explicit.els.sendButton.listeners.click();
 assert.equal(explicit.events.message.type,'OPEN_CHATGPT_WITH_EXPLICIT_SEND');
 assert.equal(explicit.events.message.videoId,'abc');
 

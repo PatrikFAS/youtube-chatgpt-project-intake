@@ -61,8 +61,29 @@
         <p id="destinationHelp" class="field-help"></p>
       </div>
 
+      <details id="collectionPanel" class="collection-panel">
+        <summary id="collectionCount">Collection (0/3)</summary>
+        <p class="field-help">Add videos individually while open. Captions stay in this browser session only: lost on browser restart or extension reload, update or disable. No background capture.</p>
+        <p id="collectionStatus" class="field-help" aria-live="polite"></p>
+        <button id="addToCollection" class="secondary wide">Add current video</button>
+        <div id="collectionItems"></div>
+        <div class="custom-actions">
+          <button id="useCollection" class="secondary small" disabled>Use collection</button>
+          <button id="clearCollection" class="link-button" disabled>Clear collection</button>
+        </div>
+        <div id="collectionQuestionWrap" class="field hidden">
+          <label for="collectionQuestion">Collection question <span class="optional-label">Optional question</span></label>
+          <textarea id="collectionQuestion" rows="2" placeholder="What do these sources collectively change for my project?"></textarea>
+          <p class="field-help">Choose the Collection task below. Full source titles, links and timestamps stay paired. Collection always uses manual Send; large prompts can be saved as .txt for manual upload.</p>
+        </div>
+      </details>
+
       <fieldset class="mode-group">
         <legend>Make it useful</legend>
+        <label class="mode-card collection-choice hidden">
+          <input type="radio" name="mode" value="compare">
+          <span><strong>Compare &amp; synthesize</strong><small>Find shared and conflicting insights</small></span>
+        </label>
 
         <label class="mode-card">
           <input type="radio" name="mode" value="apply">
@@ -114,39 +135,26 @@
       <div id="warning" class="warning hidden"></div>
       <div id="error" class="error hidden"></div>
 
+      <div id="explicitSendPanel" class="send-choice">
+        <label class="toggle-label"><input id="explicitSendOptIn" type="checkbox" role="switch"> Auto-send to ChatGPT <span class="optional-label">Optional beta</span></label>
+        <p class="field-help">Off by default · remembered here. Copy and Preview never send.</p>
+        <p id="explicitSendDestination" class="url-preview hidden"></p>
+      </div>
       <p id="actionSummary" class="action-summary" aria-live="polite"></p>
       <div class="handoff-actions">
         <button id="sendButton" class="primary wide">Open in ChatGPT</button>
         <button id="copyPrompt" class="secondary" title="Copy the full prepared prompt without opening a tab">Copy prompt</button>
       </div>
       <p id="handoffHelp" class="muted" aria-live="polite"></p>
-      <details id="collectionPanel" class="collection-panel">
-        <summary id="collectionCount">Collection (0/3)</summary>
-        <p class="field-help">Add videos individually while open. Captions stay in this browser session only: lost on browser restart or extension reload, update or disable. No background capture.</p>
-        <p id="collectionStatus" class="field-help" aria-live="polite"></p>
-        <button id="addToCollection" class="secondary wide">Add current video</button>
-        <div id="collectionItems"></div>
-        <div class="custom-actions">
-          <button id="useCollection" class="secondary small" disabled>Use collection</button>
-          <button id="clearCollection" class="link-button" disabled>Clear collection</button>
-        </div>
-        <div id="collectionQuestionWrap" class="field hidden">
-          <label for="collectionQuestion">Compare these videos <span class="optional-label">Optional question</span></label>
-          <textarea id="collectionQuestion" rows="2" placeholder="What do these sources collectively change for my project?"></textarea>
-          <p class="field-help">One combined comparison with source titles, links and timestamps. Review and send manually; explicit Send is unavailable for Collections.</p>
-        </div>
-      </details>
-      <details id="explicitSendPanel" class="question-details">
-        <summary>Faster sending <span class="optional-label">ChatGPT beta</span></summary>
-        <label><input id="explicitSendOptIn" type="checkbox"> Enable explicit Send to ChatGPT on this browser</label>
-        <p class="field-help">Off by default. Remembered locally. Only the separate Send action below can submit this video to the visible destination. Open, Copy, Preview and Retry never send. Uncertain cases stay manual.</p>
-        <p id="explicitSendDestination" class="url-preview"></p>
-        <button id="explicitSendButton" class="secondary wide hidden">Send to ChatGPT</button>
-      </details>
-
       <div class="utility-row">
+        <button id="downloadPrompt" class="link-button">Save prompt .txt</button>
+        <span aria-hidden="true">&middot;</span>
         <button id="previewPrompt" class="link-button" aria-controls="promptPanel" aria-expanded="false">Preview prompt</button>
-        <span>·</span>
+      </div>
+
+      <details id="transcriptTools" class="question-details">
+        <summary>Transcript &amp; title tools</summary>
+        <div class="utility-row">
         <button id="viewTranscript" class="link-button">View transcript</button>
         <span>·</span>
         <button id="copyTranscript" class="link-button">Copy transcript</button>
@@ -154,14 +162,15 @@
         <button id="copyChatTitle" class="link-button">Copy title</button>
         <span>·</span>
         <button id="retryButton" class="link-button">Retry</button>
-      </div>
+        </div>
+      </details>
 
       <section id="promptPanel" class="transcript-panel hidden" aria-label="Prepared prompt preview">
         <div class="transcript-panel-header">
           <strong>Prompt preview</strong>
           <span id="promptCount"></span>
         </div>
-        <p class="prompt-help">This is the full prompt for your selected task, including your question or instructions and transcript. You review and send it yourself.</p>
+        <p class="prompt-help">This is the full prompt for your selected task, including your question or instructions and transcript. Copy, preview and file export never send.</p>
         <pre id="promptPreview" tabindex="0"></pre>
       </section>
 
@@ -201,7 +210,7 @@
       </div>
     </section>
 
-    <footer class="footer">Local extraction <span>·</span> No API keys <span>·</span> You send <span id="buildVersion"></span></footer>
+    <footer class="footer">Local extraction <span>·</span> No API keys <span>·</span> You choose when to send <span id="buildVersion"></span></footer>
   </main>
 
   <script src="../shared/destination.js"></script>
