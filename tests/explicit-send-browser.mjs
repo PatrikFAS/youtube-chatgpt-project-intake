@@ -6,11 +6,12 @@ import path from 'node:path';
 import vm from 'node:vm';
 import {spawn} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
-const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
+const root=process.env.SEND_FIXTURE_ROOT || path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const executable=process.argv[2];assert.ok(executable&&fs.existsSync(executable));
 const destination=fs.readFileSync(path.join(root,'shared/destination.js'),'utf8');
 const injector=fs.readFileSync(path.join(root,'chatgpt/content.js'),'utf8');
 const collectionContext=vm.createContext({URL,TextEncoder,Date});vm.runInContext(fs.readFileSync(path.join(root,'shared/collection.js'),'utf8'),collectionContext);
+const legacyUnsafe=injector.includes('COMPOSER_UNSAFE:');
 const collectionPayload=collectionContext.YT2GPTCollection.build([1,2,3].map(n=>({videoId:'fixture'+n,title:'Collection source '+n,url:'https://www.youtube.com/watch?v=fixture'+n,channel:'Fixture',transcript:{text:'[0:00] Source '+n,segments:[{start:0,text:'Source '+n}],track:{name:'English'}}})));
 const html=`<!doctype html><style>body{margin:30px}form{width:600px;padding:20px}#prompt-textarea{min-height:100px;white-space:pre-wrap}button{min-width:90px;min-height:35px}textarea{min-height:40px}</style><form data-chatgpt-composer><div data-composer-body><div data-composer-input><div id="prompt-textarea" data-composer-markdown role="textbox" aria-multiline="true" contenteditable="true"><p><br></p></div></div><div data-composer-attachments hidden></div></div><button type="button" aria-label="Select ChatGPT model">Pro</button><button id="send" data-testid="send-button" disabled>Send</button></form><textarea id="unrelated">Keep unrelated draft</textarea>`;
 const profile=fs.mkdtempSync(path.join(os.tmpdir(),'yt-bridge-explicit-send-'));
@@ -44,6 +45,12 @@ try{
    if(o.unknown)send.removeAttribute('data-testid');
    if(o.unmarkedSendLabel){send.removeAttribute('data-testid');send.setAttribute('aria-label','Send');}
    if(o.duplicateSend){const n=send.cloneNode(true);n.id='duplicate-send';form.append(n);}
+   if(o.blockedOnInput)editor.addEventListener('input',()=>form.setAttribute('aria-readonly','true'));
+   if(o.helperOnInput)editor.addEventListener('input',()=>{const n=document.createElement('textarea');n.style=o.offscreenHelper?'position:fixed;left:-10000px;width:100px;height:30px':'width:100px;height:30px';n.value='Synthetic helper text';form.append(n);});
+   if(o.noneditableOnInput)editor.addEventListener('input',()=>{const n=document.createElement('span');n.contentEditable='false';editor.append(n);});
+   if(o.nodeViewOnInput)editor.addEventListener('input',()=>{const n=document.createElement('span');n.setAttribute('data-node-view-wrapper','');editor.append(n);});
+   if(o.attachmentAfterInput)editor.addEventListener('input',()=>setTimeout(()=>{editor.replaceChildren();const n=document.createElement('div');n.dataset.testid='attachment-preview';n.textContent='Synthetic attachment';form.append(n);},0));
+   if(o.unmarkedConversion)editor.addEventListener('input',()=>setTimeout(()=>{const n=document.createElement('span');n.setAttribute('data-node-view-wrapper','');n.contentEditable='false';n.textContent='Synthetic pasted attachment';editor.replaceChildren(n);},0));
    if(o.activityOnInput)editor.addEventListener('input',()=>form.setAttribute('aria-busy','true'));
    if(o.unsupportedOnInput)editor.addEventListener('input',()=>{const n=document.createElement('span');while(editor.firstChild)n.append(editor.firstChild);editor.append(n);});
    if(o.otherSend){const n=document.createElement('button');n.setAttribute('aria-label','Send prompt');n.textContent='Other';form.append(n);}
@@ -115,5 +122,15 @@ try{
  await run('unsupported serialized markup remains manual',{unsupportedOnInput:true,notice:'withheld',code:'PAYLOAD_MISMATCH',auth:0});
  for(const reason of ['AUTH_CONTEXT','AUTH_RECORD','AUTH_DESTINATION','AUTH_EXPIRED','AUTH_DISABLED','AUTH_STORAGE'])await run('closed authorization reason '+reason,{deny:true,denyReason:reason,notice:'withheld',code:reason,auth:1});
  await run('untrusted authorization error is never echoed',{deny:true,denyReason:'Private draft secret',notice:'withheld',code:'AUTH_UNAVAILABLE',auth:1});
+ await run('long native insertText remains plain in the local fixture',{send:true,payload:'[0:00] Synthetic long caption. '+('plain text only.\n'.repeat(1300))});
+ for(const [name,options,code] of [
+  ['parent changes after insertion',{blockedOnInput:true},'COMPOSER_ANCESTOR_BLOCKED'],
+  ['additional writable field after insertion',{helperOnInput:true},'COMPOSER_EDITOR_COUNT'],
+  ['offscreen helper is conservatively ambiguous',{helperOnInput:true,offscreenHelper:true},'COMPOSER_EDITOR_COUNT'],
+  ['empty non-editable rich element after insertion',{noneditableOnInput:true},'COMPOSER_NONEDITABLE_NODE'],
+  ['empty rich node wrapper after insertion',{nodeViewOnInput:true},'COMPOSER_NODE_VIEW'],
+  ['unmarked synthetic paste-to-file conversion',{unmarkedConversion:true},'COMPOSER_NODE_VIEW']
+ ])await run(name,{...options,code:legacyUnsafe?'COMPOSER_UNSAFE':code,notice:'withheld',auth:0,edits:1});
+ await run('marked synthetic paste-to-attachment remains manual',{attachmentAfterInput:true,code:'UPLOAD_OR_ACTIVITY',notice:'withheld',auth:0,edits:1});
  assert.equal(errors.length,0,JSON.stringify(errors));console.log(`PASS: ${cases} explicit Send native-DOM cases; successful one-click effects and guarded no-send failures. Synthetic only.`);
 }finally{if(ws?.readyState===WebSocket.OPEN){ws.send(JSON.stringify({id:++sequence,method:'Browser.close'}));await new Promise(resolve=>{const t=setTimeout(resolve,2000);browser.once('exit',()=>{clearTimeout(t);resolve();});});}ws?.close();browser.kill();browser.stderr.destroy();browser.unref();for(const p of pending.values()){clearTimeout(p.timer);p.reject(Error('Closed'));}}

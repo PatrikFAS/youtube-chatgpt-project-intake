@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.20 candidate
+
+- Splits the user-reported post-insertion COMPOSER_UNSAFE refusal into allowlisted parent-state, writable-field-count, node-wrapper and non-editable-element codes. Keeps every safety predicate and exact-payload check; no automatic attachment or broader editor recognition. The affected live shape remains unknown.
+- Replays 53 native Send cases against both exact v0.1.19 ZIP assets and the candidate, including long insertText, added helper fields, changed parents and marked/unmarked synthetic attachment conversion. Those fixtures establish branch diagnosis and unchanged no-send behavior, not live ChatGPT markup or Send acceptance.
+
 ## 0.1.19
 
 - Replaces the duplicate Send action/settings with one primary destination action and a default-off, remembered ChatGPT Auto-send toggle. The main label and exact visible URL identify each deliberate Send; Claude, Collection, Copy, Preview, file export and Retry remain manual.

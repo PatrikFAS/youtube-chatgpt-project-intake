@@ -1,5 +1,40 @@
 # Manual and regression testing
 
+## v0.1.20 Send diagnosis candidate
+
+**User evidence:** Patrik received COMPOSER_UNSAFE in v0.1.19. That code is
+produced only in checkSend, after the initial insertion verification. No Send
+is requested on that path. Since destination, recognized editor and known
+attachment/activity checks precede it, the remaining ordinary reachable branches
+are a blocked ancestor, unexpected writable-field count, or a node wrapper /
+non-editable child. An offscreen textarea with layout dimensions is conservatively
+counted by the existing predicate. Own read-only state or a missing form normally
+fails the preceding recognized-editor check instead. These are reachable cases,
+not a diagnosis of his unseen DOM.
+
+The exact shipped v0.1.19 ZIP reproduces COMPOSER_UNSAFE for six injected local
+shapes; the candidate distinguishes COMPOSER_ANCESTOR_BLOCKED,
+COMPOSER_EDITOR_COUNT, COMPOSER_NODE_VIEW and COMPOSER_NONEDITABLE_NODE. Marked
+synthetic attachment conversion yields UPLOAD_OR_ACTIVITY; plain unsupported
+formatting still fails exact payload verification. A long native insertText
+remains plain in the local fixture. All 53 Send cases pass against both asset
+sets, with the same click/no-click results. No recognition or safety condition
+is relaxed; no unknown rich node is assumed harmless.
+
+[OpenAI release notes](https://help.openai.com/en/articles/6825453-chatgpt-release-notes)
+describe large pastes over 10,000 characters converting to attachments, and rich
+paste retaining formatting. Bridge uses insertText rather than a paste handler;
+the documentation does not establish its result or Patrik's affected DOM.
+
+**Smallest next Send test, owner Patrik:** after reviewing any earlier uncertain
+conversation result, choose one harmless short captioned sample and the intended
+empty destination. Check the exact URL, deliberately enable Auto-send and choose
+Send to ChatGPT once. Report only the bracketed code if withheld. Do not provide
+transcript, draft, HTML, Project URL, account IDs or credentials. Do not repeat an
+uncertain Send; review manually. No extra diagnostic-copy step is required and
+the full copied prompt is preserved. Keep the v0.1.19 ZIP unchanged as rollback.
+
+
 ## v0.1.19 focused user check
 
 **Actual report:** Patrik's v0.1.18 ChatGPT attempt displayed the generic

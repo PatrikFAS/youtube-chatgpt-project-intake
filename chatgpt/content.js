@@ -180,11 +180,19 @@
   }
 
   function unsafeForSend(el, requireEmpty = false) {
+    return Boolean(sendSafetyProblem(el, requireEmpty));
+  }
+  function sendSafetyProblem(el, requireEmpty = false) {
+    if (!isVisibleAndEditable(el)) return 'COMPOSER_NOT_WRITABLE';
     const form = el.closest('form');
-    return !isVisibleAndEditable(el) || !form || Boolean(el.closest('[inert], [aria-hidden="true"], [aria-disabled="true"], [aria-readonly="true"], fieldset[disabled]')) ||
-      [...form.querySelectorAll('[contenteditable="true"], textarea, input[type="text"]')].filter(isVisibleAndEditable).length !== 1 ||
-      (requireEmpty && Boolean(el instanceof HTMLTextAreaElement || el instanceof HTMLInputElement ? el.value : el.textContent)) || hasAttachmentsOrActivity(form) ||
-      Boolean(el.querySelector('[contenteditable="false"], [data-node-view-wrapper]'));
+    if (!form) return 'COMPOSER_FORM_MISSING';
+    if (el.closest('[inert], [aria-hidden="true"], [aria-disabled="true"], [aria-readonly="true"], fieldset[disabled]')) return 'COMPOSER_ANCESTOR_BLOCKED';
+    if ([...form.querySelectorAll('[contenteditable="true"], textarea, input[type="text"]')].filter(isVisibleAndEditable).length !== 1) return 'COMPOSER_EDITOR_COUNT';
+    if (requireEmpty && Boolean(el instanceof HTMLTextAreaElement || el instanceof HTMLInputElement ? el.value : el.textContent)) return 'COMPOSER_NOT_EMPTY';
+    if (hasAttachmentsOrActivity(form)) return 'UPLOAD_OR_ACTIVITY';
+    if (el.querySelector('[data-node-view-wrapper]')) return 'COMPOSER_NODE_VIEW';
+    if (el.querySelector('[contenteditable="false"]')) return 'COMPOSER_NONEDITABLE_NODE';
+    return '';
   }
   function hasAttachmentsOrActivity(form) {
     return form.getAttribute('aria-busy') === 'true' ||
@@ -197,7 +205,13 @@
     DESTINATION: 'The exact saved destination is no longer confirmed. Check the selected conversation or Project.',
     PAGE_BLOCKED: 'A dialog, sign-in screen or product mode needs attention.',
     COMPOSER_CHANGED: 'The recognized message box changed. Review the draft on this page.',
-    COMPOSER_UNSAFE: 'The message box is read-only, ambiguous or contains an unsupported rich element.',
+    COMPOSER_NOT_WRITABLE: 'The message box is no longer visible and writable. Review manually.',
+    COMPOSER_FORM_MISSING: 'The message box is no longer inside its recognized form. Review manually.',
+    COMPOSER_ANCESTOR_BLOCKED: 'A parent of the message box is disabled, read-only, hidden or inert. Review manually.',
+    COMPOSER_EDITOR_COUNT: 'The form has an unexpected number of writable text fields. No field was selected for Send. Review manually.',
+    COMPOSER_NOT_EMPTY: 'The message box was not empty before insertion. Review your existing draft manually.',
+    COMPOSER_NODE_VIEW: 'The inserted draft contains a rich node wrapper. This could represent site formatting or an attachment; its contents were not inferred. Review the complete draft and any attachment manually.',
+    COMPOSER_NONEDITABLE_NODE: 'The inserted draft contains a non-editable element. It was not treated as verified plain text. Review the draft and any attachment manually.',
     UPLOAD_OR_ACTIVITY: 'An attachment, upload-shaped control or active response was detected. Review the composer; an idle control may also trigger this conservative guard.',
     PAYLOAD_MISMATCH: 'The complete inserted text could not be verified exactly. Compare the draft with the copied prompt.',
     SEND_MISSING: 'No recognized visible Send control was found. Use the website Send control manually after review.',
@@ -218,7 +232,8 @@
     if (destinationProblem(claimed.destinationUrl)) return {code:'PAGE_BLOCKED'};
     if (findComposer() !== el) return {code:'COMPOSER_CHANGED'};
     if (hasAttachmentsOrActivity(el.closest('form'))) return {code:'UPLOAD_OR_ACTIVITY'};
-    if (unsafeForSend(el)) return {code:'COMPOSER_UNSAFE'};
+    const safetyProblem = sendSafetyProblem(el);
+    if (safetyProblem) return {code:safetyProblem};
     if (exactComposerText(el) !== claimed.payload.replace(/\r\n/g,'\n')) return {code:'PAYLOAD_MISMATCH'};
     const buttons = [...el.closest('form').querySelectorAll('[data-testid="send-button"], [data-testid="composer-send-button"], button[aria-label="Send"], button[aria-label="Send prompt"], button[aria-label="Send message"]')].filter(isVisible);
     if (!buttons.length) return {code:'SEND_MISSING'};
