@@ -1,5 +1,54 @@
 # Manual and regression testing
 
+## v0.1.20 focused UI check
+
+Patrik confirmed **Collection worked in his v0.1.19 browser**. The report does
+not identify a specific mode or attachment format. He reported the popup was
+clunky and separately supplied the Send code discussed below. Keep those
+outcomes separate; v0.1.19 is retained as rollback.
+
+A read-only native check of the exact shipped ZIP at 400x600, with the prior
+Send opt-in remembered, placed the primary action at y=651..694, below the
+viewport; no message was opened/sent. The candidate fixes that measured layout
+issue with a bounded body scroller and a separate footer. Local fixtures pass
+400x600 and 360x480 with long titles/baskets, open alternatives, native hit targets,
+no horizontal/whole-popup scrolling, keyboard intent selection and Tab access
+to the primary action. These are geometry/fixture checks, not personal-browser
+inspection or a real install/update lifecycle test.
+
+1. Review any earlier uncertain conversation result before changing builds.
+   Overwrite the SAME unpacked folder with v0.1.20, Reload its existing entry,
+   refresh tabs safely and check the version. No uninstall/duplicate entry.
+   Session baskets/attempt records clear on reload; local settings survive.
+2. **Set Auto-send off** for the manual check. A prior opt-in stays remembered;
+   updating does not reset it. The visible main label must be Open in ChatGPT
+   or Open in Claude. Confirm the footer remains reachable while scrolling the
+   body, opening source review and using the keyboard.
+3. With zero/one Collection entries, Add current video stays visible; one entry
+   asks for another. At two/three, choose Use collection. Its compact selector
+   defaults to Compare & synthesize; Summarize/Apply have distinct purposes,
+   and Analyze remains an explicit focused evidence-review option. No saved
+   Analyze setting is silently remapped; Collection intent is still one-off.
+   The optional decision question is disclosed, not required. Back to single
+   video restores its preset/Custom draft. Collections never auto-send.
+4. A Collection above our local 60,000-unit autofill bound shows **Download .txt**
+   as its primary action. Check the file's complete last source/end marker;
+   Preview/Copy are under Other options. Use the alternative Open in the chosen
+   assistant, attach the file yourself if supported, and type only “Follow the
+   instructions in the attached file.” Do not also paste the whole copied
+   prompt. Check destination and any pre-existing draft; Send stays manual.
+   Provider file/context limits remain separate and unverified.
+5. Optional Send diagnosis: follow the separate harmless-sample check below once.
+   Report only the bracketed code if withheld; never retry an uncertain Send.
+
+**Two live outcomes still needed:** (a) footer/intent/file flow is understandable
+and reachable in Patrik's installed popup, with one complete manual Collection
+handoff; (b) one controlled ChatGPT Send succeeds once or identifies the remaining
+guard through the new code. Claude's selected v0.1.16 acceptance remains separate.
+After acceptance, the highest-value next step is one independent unaided beta
+using an actual task and the existing feedback guide, not another feature sprint.
+
+
 ## v0.1.20 Send diagnosis candidate
 
 **User evidence:** Patrik received COMPOSER_UNSAFE in v0.1.19. That code is

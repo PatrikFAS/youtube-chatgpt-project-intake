@@ -1,5 +1,37 @@
 # Collection implementation and acceptance
 
+## v0.1.20 usability refinement
+
+Owner evidence: **Patrik said Collection worked in his v0.1.19 browser.** No
+specific mode or attachment format is inferred. He asked for a less clunky
+popup with the primary action reachable without scrolling. The shipped ZIP is
+unchanged as rollback.
+
+We compared a default comparison plus question, a compact intent selector and
+separate cards. A general digest of long talks, conflicting advice and a current
+Project each need a meaningfully different task, so use one compact selector.
+Compare & synthesize remains default; Summarize requests a faithful digest and
+conditional watch moments; Apply uses real available context. Analyze is kept
+under focused evidence review in the same menu for existing users, with its
+prompt intact. There is no silent migration or compulsory decision question.
+
+Add current video stays visible for zero/one/ready entries, and the basket/status
+explain when a second source is needed. Review/remove/reorder/clear and session
+lifetime stay behind source details. The footer shows intent/count/destination
+and the correct main action while only the body scrolls. Above 60,000 local
+UTF-16 units it says Download .txt; manual Open is an alternative. Attach the
+complete file yourself if supported and use a short instruction rather than also
+pasting the entire prompt. No automatic attachments or Collection Send.
+
+Native fixtures validate the 78,817-unit complete-file route, four keyboard
+intent choices, single-video restoration, 400x600/360x480 long-title/basket
+geometry, footer hit targets and Tab access. In-place setting reads retain
+legacy destinations, saved Custom and the Send opt-in; a remembered opt-in is
+visible and should be turned off for manual tests. Actual installed geometry,
+provider upload/context limits, output quality and Sarah acceptance remain user
+gates. No new retention, capture or provider API behavior is introduced.
+
+
 ## v0.1.19 refinement from real feedback
 
 Patrik hit a serialized Collection of 78,817 characters. v0.1.18's 60,000-unit

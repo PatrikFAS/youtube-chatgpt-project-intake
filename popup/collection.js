@@ -1,18 +1,15 @@
 'use strict';
 let collectionState = null;
 let collectionActive = false;
-let singleVideoMode = null;
 let collectionMode = 'compare';
 function wireCollectionEvents() {
   els.addToCollection.addEventListener('click',addCurrentToCollection);
   els.useCollection.addEventListener('click',()=>{
     if(busy||sending)return;
-    if (!collectionActive) singleVideoMode=getSelectedMode();
     collectionActive=!collectionActive;
-    if (collectionActive) setModeRadio(collectionMode);
-    if (!collectionActive) restoreSingleVideoMode();
     invalidatePromptPreview();renderCollection();updateCustomUI();updateHandoffHelp();
   });
+  els.collectionModeSelect.addEventListener('change',()=>{if(busy||sending)return;collectionMode=els.collectionModeSelect.value;invalidatePromptPreview();updateHandoffHelp();});
   els.clearCollection.addEventListener('click',()=>changeCollection('COLLECTION_CLEAR'));
   els.collectionQuestion.addEventListener('input',()=>{invalidatePromptPreview();updateHandoffHelp();});
 }
@@ -26,11 +23,11 @@ async function refreshCollection() {
 }
 function renderCollection() {
   const items=collectionState?.items||[];
-  if(items.length<2 && collectionActive){collectionActive=false;restoreSingleVideoMode();}
+  if(items.length<2)collectionActive=false;
   document.body.dataset.collection=String(collectionActive);
   for(const button of [els.viewTranscript,els.copyTranscript,els.copyChatTitle])button.classList.toggle('hidden',collectionActive);
   if(collectionActive)hide(els.transcriptPanel);
-  els.collectionCount.textContent=`Collection (${items.length}/3)`;
+  els.collectionCount.textContent=`Collection (${items.length}/3)${collectionActive?' · In use':''}`;
   els.collectionItems.replaceChildren();
   for(const [index,item] of items.entries()) {
     const row=document.createElement('div');row.className='collection-item';
@@ -45,14 +42,16 @@ function renderCollection() {
     }
     row.append(title,meta,link,actions);els.collectionItems.append(row);
   }
-  if(collectionState)els.collectionStatus.textContent=items.length?`${items.length} captioned ${items.length===1?'video':'videos'} ready. Add up to three; review before handoff.`:'No videos added. Capture each video while it is open.';
-  els.addToCollection.disabled=busy||sending||!collectionState||!videoContext;
+  if(collectionState)els.collectionStatus.textContent=items.length>1?'Ready to use. Review sources when needed.':items.length?'Add another captioned video to use the collection.':'Add this video, then visit another to collect more.';
+  els.addToCollection.disabled=busy||sending||!collectionState||!videoContext||items.length>=YT2GPTCollection.MAX_ITEMS;
   els.useCollection.disabled=busy||sending||items.length<2;
   els.useCollection.textContent=collectionActive?'Back to single video':'Use collection';
   els.clearCollection.disabled=busy||sending||!items.length;
   els.collectionQuestion.disabled=busy||sending;
-  document.querySelector('.custom-choice')?.classList.toggle('hidden',collectionActive);
-  document.querySelector('.collection-choice')?.classList.toggle('hidden',!collectionActive);
+  document.querySelector('.mode-group')?.classList.toggle('hidden',collectionActive);
+  els.collectionTaskField.classList.toggle('hidden',!collectionActive);
+  els.collectionModeSelect.value=collectionMode;
+  els.collectionModeSelect.disabled=busy||sending;
   els.collectionQuestionWrap.classList.toggle('hidden',!collectionActive);
   els.copyPrompt.textContent=collectionActive?'Copy collection':'Copy prompt';
 }
@@ -84,11 +83,4 @@ async function changeCollection(type,videoId,offset) {
     collectionState=response.state;invalidatePromptPreview();
   }catch(error){showError(friendlyError(error));await refreshCollection();}
   finally{sending=false;setBusy(false);renderCollection();updateCustomUI();updateHandoffHelp();}
-}
-
-function setModeRadio(mode) {
-  document.querySelectorAll('input[name="mode"]').forEach(radio=>{radio.checked=radio.value===mode;});
-}
-function restoreSingleVideoMode() {
-  if(singleVideoMode){setModeRadio(singleVideoMode);singleVideoMode=null;}
 }

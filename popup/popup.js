@@ -55,14 +55,22 @@ function cacheElements() {
     'providerChatGPT','providerClaude','destinationHelp','saveHeading','saveHelp','actionSummary','buildVersion',
     'copyPrompt','previewPrompt','promptPanel','promptPreview','promptCount',
     'customPanel','customInstructions','customHelp','saveCustomInstructions','forgetCustomInstructions','questionDetails',
-    'explicitSendPanel','explicitSendOptIn','explicitSendDestination','downloadPrompt',
+    'explicitSendPanel','explicitSendOptIn','explicitSendDestination','downloadPrompt','handoffFooter','openManually',
+    'collectionTaskField','collectionModeSelect',
     'collectionPanel','collectionCount','collectionStatus','addToCollection','collectionItems','useCollection','clearCollection','collectionQuestion','collectionQuestionWrap'
   ]) els[id] = document.getElementById(id);
 }
 
 function wireEvents() {
   wireCollectionEvents();
-  els.sendButton.addEventListener('click', () => sendToChatGPT(currentProvider === 'chatgpt' && !collectionActive && els.explicitSendOptIn.checked));
+  els.sendButton.addEventListener('click', () => {
+    if(collectionActive){
+      try {if(buildSelectedPrompt(capturePromptChoice(),null).length>YT2GPTCollection.MAX_INSERT)return downloadPrompt();}
+      catch(error){return showError(friendlyError(error));}
+    }
+    return sendToChatGPT(currentProvider === 'chatgpt' && !collectionActive && els.explicitSendOptIn.checked);
+  });
+  els.openManually.addEventListener('click',()=>sendToChatGPT(false));
   els.downloadPrompt.addEventListener('click', downloadPrompt);
   els.explicitSendOptIn.addEventListener('change', async () => {
     try { await chrome.storage.local.set({chatgptExplicitSendEnabled:els.explicitSendOptIn.checked}); }
@@ -130,6 +138,7 @@ async function initYouTube(force = false) {
 
 function renderVideoContext() {
   els.videoTitle.textContent = videoContext.title || 'YouTube video';
+  els.videoTitle.title=els.videoTitle.textContent;
 
   const metaParts = [];
   if (videoContext.channel) metaParts.push(videoContext.channel);
@@ -161,13 +170,13 @@ function renderVideoContext() {
 }
 
 async function loadPreferences(preserveCustom = false) {
-  const customDraft = preserveCustom ? { value: els.customInstructions.value, selected: getSelectedMode() === 'custom' } : null;
+  const customDraft = preserveCustom ? { value: els.customInstructions.value, selected: getSingleVideoMode() === 'custom' } : null;
   const stored = await chrome.storage.local.get(['lastMode', 'lastDestinationId', 'preferredTranscriptLanguage', 'lastProvider', 'lastDestinationByProvider', 'customInstructions', 'lastPresetMode', 'chatgptExplicitSendEnabled']);
   els.explicitSendOptIn.checked = stored.chatgptExplicitSendEnabled === true;
   savedCustomInstructions = typeof stored.customInstructions === 'string' ? stored.customInstructions : '';
   els.customInstructions.value = customDraft ? customDraft.value : savedCustomInstructions;
   lastPresetMode = PRESET_MODES.includes(stored.lastMode) ? stored.lastMode : PRESET_MODES.includes(stored.lastPresetMode) ? stored.lastPresetMode : 'apply';
-  const mode = collectionActive ? collectionMode : customDraft?.selected ? 'custom' : PRESET_MODES.includes(stored.lastMode) ? stored.lastMode : stored.lastMode === 'custom' && savedCustomInstructions.trim() ? 'custom' : lastPresetMode;
+  const mode = customDraft?.selected ? 'custom' : PRESET_MODES.includes(stored.lastMode) ? stored.lastMode : stored.lastMode === 'custom' && savedCustomInstructions.trim() ? 'custom' : lastPresetMode;
   document.querySelectorAll('input[name="mode"]').forEach((radio) => { radio.checked = radio.value === mode; });
   updateCustomUI();
 
@@ -314,6 +323,7 @@ async function preparePromptAction(copy) {
       show(els.promptPanel);
       els.previewPrompt.textContent = 'Hide prompt';
       els.previewPrompt.setAttribute('aria-expanded', 'true');
+      els.promptPanel.scrollIntoView?.({block:'start'});
     }
     if (copy) {
       await copyText(prompt);
@@ -517,21 +527,29 @@ async function rememberDestination() {
 
 function updateHandoffHelp() {
   updateExplicitSend();
+  hide(els.openManually);
+  show(els.downloadPrompt);
   const claude = currentProvider === 'claude';
   const autoSend = !claude && !collectionActive && els.explicitSendOptIn.checked;
   if (!busy) els.sendButton.textContent = autoSend ? 'Send to ChatGPT' : claude ? 'Open in Claude' : 'Open in ChatGPT';
   els.handoffHelp.textContent = autoSend
     ? 'This click copies the full prompt, opens the visible destination and requests Send once only if every safety check passes. Otherwise review manually; nothing is retried.'
-    : 'Copies first, then opens and tries to fill an empty message box. The website can access inserted text before Send. Review and send yourself; paste (Ctrl+V) if needed. Existing drafts are left untouched.';
+    : 'Copies first and tries an empty message box. Review before Send; the website can access inserted text. Use clipboard paste (Ctrl+V) if needed. Existing drafts are left untouched.';
   const selected = els.destinationSelect.selectedOptions[0];
-  els.actionSummary.textContent = `${MODE_LABELS[getSelectedMode()]} · ${selected?.textContent || 'Choose a destination'}`;
+  els.actionSummary.textContent = `${MODE_LABELS[getSelectedMode()]} · ${claude?'Claude':'ChatGPT'} / ${selected?.textContent || 'Choose a destination'}`;
   if(collectionActive){
-    els.actionSummary.textContent=`${MODE_LABELS[getSelectedMode()]} · ${collectionState?.items.length||0} videos · ${selected?.textContent||'Choose a destination'}`;
-    if(!busy)els.sendButton.textContent=claude?'Open collection in Claude':'Open collection in ChatGPT';
+    els.actionSummary.textContent=`${MODE_LABELS[getSelectedMode()]} · ${collectionState?.items.length||0} videos · ${claude?'Claude':'ChatGPT'} / ${selected?.textContent||'Choose a destination'}`;
+    if(!busy)els.sendButton.textContent=claude?'Open in Claude':'Open in ChatGPT';
     try {
-      if(YT2GPTCollection.build(collectionState.items,els.collectionQuestion.value,false,getSelectedMode()).length>YT2GPTCollection.MAX_INSERT) els.handoffHelp.textContent='Large collection: Open copies the COMPLETE prompt and opens the destination without autofill. Save prompt .txt, then attach it yourself if your assistant supports it, or paste if it fits. Nothing is truncated or sent automatically. The 60,000-character autofill bound is a local beta guard, not a provider limit.';
+      if(YT2GPTCollection.build(collectionState.items,els.collectionQuestion.value,false,getSelectedMode()).length>YT2GPTCollection.MAX_INSERT){
+        if(!busy)els.sendButton.textContent='Download .txt';
+        els.openManually.textContent=claude?'Open in Claude':'Open in ChatGPT';
+        show(els.openManually);hide(els.downloadPrompt);
+        els.handoffHelp.textContent='Full collection file; attach it yourself if supported and ask: Follow the instructions in the attached file. Open is available under other options without autofill. Do not also paste the complete prompt. No automatic attachment or Send; provider limits apply.';
+      }
     } catch {}
   }
+  els.actionSummary.title=els.actionSummary.textContent;
   const kind = YT2GPTDestination.kind(selected?.dataset?.url);
   const providerName = currentProvider === 'claude' ? 'Claude' : 'ChatGPT';
   els.destinationHelp.textContent = kind === 'unknown' ? 'This saved link needs repair. Manage destinations to update it; your saved link is kept.'
@@ -635,22 +653,29 @@ function showChatGPTSaveStatus(message, isError) {
 }
 
 function getSelectedMode() {
+  return collectionActive ? collectionMode : getSingleVideoMode();
+}
+
+function getSingleVideoMode() {
   return document.querySelector('input[name="mode"]:checked')?.value || 'apply';
 }
 
 function showView(id) {
   for (const viewId of ['loadingView','youtubeView','chatgptView','otherView']) hide(els[viewId]);
   show(els[id]);
+  els.handoffFooter.classList.toggle('hidden',id!=='youtubeView');
 }
 
 function showError(message) {
   els.error.textContent = message;
   show(els.error);
+  els.error.scrollIntoView?.({block:'nearest'});
 }
 
 function showWarning(message) {
   els.warning.textContent = message;
   show(els.warning);
+  els.warning.scrollIntoView?.({block:'nearest'});
 }
 
 function clearMessages() {
@@ -672,6 +697,7 @@ function setInteractionBusy(value) {
   for (const el of [els.providerChatGPT, els.providerClaude, els.destinationSelect, els.trackSelect, els.optionalQuestion, els.copyTranscript, els.copyChatTitle, els.viewTranscript, els.retryButton, els.copyPrompt, els.previewPrompt, els.customInstructions, els.saveCustomInstructions, els.forgetCustomInstructions]) el.disabled = value;
   document.querySelectorAll('input[name="mode"]').forEach((radio) => { radio.disabled = value; });
   els.explicitSendOptIn.disabled = value;
+  els.openManually.disabled = value;
   els.downloadPrompt.disabled = value;
   if (!value) updateCustomUI();
   renderCollection();

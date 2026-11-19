@@ -2,22 +2,26 @@
 
 A lightweight Chrome/Edge browser extension that extracts YouTube transcripts and routes them to ChatGPT or Claude for summarization, critical analysis, or project-specific application.
 
-**Beta candidate v0.1.19 — one destination action, clearer Send refusals and larger Collections**
+**Beta candidate v0.1.20 — persistent action footer and compact Collection intent**
 
-Patrik's real v0.1.18 ChatGPT attempt reached a generic automatic-Send refusal;
-Claude was not tested in that attempt. v0.1.19 reports a specific allowlisted reason
-code for each post-insertion Send guard without collecting prompt/draft/account
-text. The original failed guard remains unknown; fixtures do not establish a
-live fix. Earlier v0.1.16 Claude autofill and v0.1.15 Custom acceptance remain
-separate. Keep the exact v0.1.18 and accepted v0.1.16 ZIPs intact.
+The selected task/count and destination stay beside one main action in a fixed
+footer; only source/task/review content scrolls. Add current video stays visible
+in the Collection strip. Source management and Preview/Copy/file alternatives
+are disclosed when useful. The same three single-video presets and Custom remain.
 
-There is one main destination button. With **Auto-send to ChatGPT** off (default),
-it says **Open in ChatGPT** and leaves Send to you. Enabling the remembered
-optional toggle changes it to **Send to ChatGPT**, with the exact destination
-shown. Each deliberate click authorizes one guarded attempt; nothing retries.
-Copy, Preview, file export and Retry never send. Claude and Collections remain
-manual regardless of the toggle. Review the actual conversation before any
-manual action after an uncertain result.
+With **Auto-send to ChatGPT** off (default), the main button says **Open in
+ChatGPT** and leaves Send to you. A prior opt-in remains remembered across an
+in-place update: set it off for a manual check. When on, **Send to ChatGPT** and
+the exact destination URL identify each deliberate one-time attempt. Claude and
+all Collections remain manual; no automatic sending on load, Copy, Preview,
+export or Retry. Uncertain attempts never retry.
+
+Patrik confirmed **Collection worked in his v0.1.19 browser**, without specifying
+a mode or attachment format. His separate ChatGPT Send refusal now identifies
+COMPOSER_UNSAFE. v0.1.20 splits its possible post-insertion branches into specific
+allowlisted codes; no safety predicate is relaxed and his affected shape is
+still unknown. Earlier v0.1.16 Claude/v0.1.15 Custom passes remain separate. Keep
+the exact v0.1.19 ZIP as rollback; new UI/Send acceptance remains pending.
 
 YouTube AI Bridge is Patrik's chosen working name, used in forthcoming beta interfaces and documentation. This is the same extension: update the existing installation in place to retain its identity and saved settings. The name is provisional; no trademark/name clearance or store publication is implied.
 
@@ -49,37 +53,37 @@ The [optional compact-triage example](examples/compact-triage.txt) works in the 
 
 The raw transcript is a separate utility. The selected task appears above the action button and as SELECTED MODE in the copied prompt, so task choices remain easy to distinguish.
 
-## Update an existing installation to v0.1.19
+## Update an existing installation to v0.1.20
 
 1. Extract the versioned ZIP and overwrite its files in the **same unpacked extension folder** you originally loaded. Keep that folder's location. You can back it up first.
 2. Open `edge://extensions/` or `chrome://extensions/` and click **Reload** on the existing extension entry. Do not uninstall it; updating in place retains saved destinations and preferences.
-3. Refresh relevant tabs without clearing drafts and confirm **YouTube AI Bridge / v0.1.19**. No new permissions. Keep the working v0.1.16 ZIP as a fallback; destinations/preferences remain. Reload/update clears any session Collection and Send attempt records.
-4. For the new action, use [the v0.1.19 focused check](TESTING.md#v0119-focused-user-check). Send requires the exact saved route/document, one empty recognized composer, the complete exact prompt and one stable known enabled native Send control. Uncertain/partial cases stay manual. Same-video/prompt/destination requests are blocked for the browser session after any Send request, even if opening or sending failed. Check the conversation before any manual retry; a notice confirms the click request, not server acceptance.
+3. Refresh relevant tabs without clearing drafts and confirm **YouTube AI Bridge / v0.1.20**. No new permissions. Keep the working v0.1.16 ZIP as a fallback; destinations/preferences remain. Reload/update clears any session Collection and Send attempt records.
+4. For the new action, use [the v0.1.20 focused check](TESTING.md#v0120-focused-ui-check). Send requires the exact saved route/document, one empty recognized composer, the complete exact prompt and one stable known enabled native Send control. Uncertain/partial cases stay manual. Same-video/prompt/destination requests are blocked for the browser session after any Send request, even if opening or sending failed. Check the conversation before any manual retry; a notice confirms the click request, not server acceptance.
 
 ## Collect two or three videos
 
-Open **Collection** above the task choices. On each individual captioned video,
-choose **Add current video**. The basket survives popup closure and tab changes.
+Use the Collection strip above the task choices. On each individual captioned
+video, choose the immediately visible **Add current video**. The basket survives popup closure and tab changes.
 Add opens/sends nothing. Review titles, links and tracks; reorder, Remove or Clear.
 Missing captions, duplicate IDs and oversized additions preserve existing entries.
 
-After two or three captures, choose **Use collection**. The same task group now
-includes **Compare & synthesize** (default): integrated takeaways, agreements,
+After two or three captures, choose **Use collection**. A compact **Collection intent** selector
+now offers **Compare & synthesize** (default): integrated takeaways, agreements,
 disagreements and support for each view, without treating repetition as independent
-corroboration. **Summarize** makes a faithful combined digest; **Analyze** critically
+corroboration. **Summarize** makes a faithful combined digest; **Analyze**, retained under focused evidence review, critically
 assesses claims/evidence; **Apply to Project** uses the destination's available
 goals/constraints. Each keeps source labels, full titles/links and available
-source-specific timestamps. Add an optional question. Back to single video restores
+source-specific timestamps. Disclose the optional “What are you trying to decide?” question only if useful. Back to single video restores
 the previous preset or Custom draft; Collection tasks do not overwrite that preference.
 Preview, Copy and Open use the same complete selected prompt. Collection Send stays manual.
 
 The prior **60,000-character cap was a local trial bound, not a provider limit**.
-v0.1.19 allows complete prompts up to 250,000 JavaScript characters (UTF-16 units)
+v0.1.20 keeps complete prompts up to 250,000 JavaScript characters (UTF-16 units)
 for Preview, Copy and **Save prompt .txt**, subject to the unchanged 512 KiB session
-basket guard. Nothing is truncated or split silently. Collection Open above 60,000
-copies the full text and opens the chosen destination **without autofill**. Save
-`.txt` and attach it yourself if your chosen assistant supports it, then type
-“Follow the instructions in the attached file.” Check the attachment before sending;
+basket guard. Nothing is truncated or split silently. Above 60,000 the primary action is **Download .txt**. The alternative Open
+copies the full text and opens the chosen destination **without autofill**.
+Attach the downloaded `.txt` yourself if your chosen assistant supports it, then type
+“Follow the instructions in the attached file.” Do not also paste the whole copied prompt. Check the attachment before sending;
 provider file/context limits still apply. Bridge does not attach files automatically.
 Below the local autofill bound, normal guarded insertion remains available.
 

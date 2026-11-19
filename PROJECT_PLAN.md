@@ -56,12 +56,56 @@ its own acceptance and fixture results do not establish live behavior.
 | --- | --- |
 | Accepted baseline | v0.1.10 is merged in [PR #3](https://github.com/PatrikFAS/youtube-chatgpt-project-intake/pull/3). Patrik confirmed the Chrome/Edge workflow, provider UI and automatic Claude insertion in his tested case. The precise Claude route/browser version was not recorded. |
 | Delivered versions | v0.1.14 added Custom; v0.1.15 removed its compulsory TL;DR conflict. All 18 preset payloads stayed byte-identical to v0.1.14, and 24 native task/provider/destination cases passed. Patrik tested v0.1.15 and reported no Claude insertion. Its supplied control-shape report now replaces the missing structural evidence; no repeat diagnostic is needed. |
-| Current candidates | v0.1.19 refines the existing v0.1.18 Collection and explicit Send after Patrik's reported refusal and 78,817-character case; see the current refinement below. The work remains on `codex/custom-output-contract` / [draft PR #5](https://github.com/PatrikFAS/youtube-chatgpt-project-intake/pull/5), stacked on PR #4. Separate v0.1.17 ZIP permits independent Send testing; v0.1.16 ZIP remains the accepted fallback. Required tests, 24 native popup combinations plus full Collection/Send interactions, 45 native Send cases and 68 Claude cases pass. New live acceptance remains open. |
+| Current candidates | v0.1.20 adds the footer/compact-selector correction and narrower composer refusal codes; v0.1.19 remains the delivered rollback. v0.1.19 refines the existing v0.1.18 Collection and explicit Send after Patrik's reported refusal and 78,817-character case; see the current refinement below. The work remains on `codex/custom-output-contract` / [draft PR #5](https://github.com/PatrikFAS/youtube-chatgpt-project-intake/pull/5), stacked on PR #4. Separate v0.1.17 ZIP permits independent Send testing; v0.1.16 ZIP remains the accepted fallback. Required tests, 24 native popup combinations plus full Collection/Send interactions, 45 native Send cases and 68 Claude cases pass. New live acceptance remains open. |
 | Claude acceptance | Patrik confirmed v0.1.16 autofill in his selected real-browser journey after the report-grounded fix. This does not establish all layouts or Sarah acceptance. New Collection handoffs and explicit ChatGPT Send have separate user checks; no personal browser or live messages are controlled by Codex. |
 | Browser and safety | The authorized free window reached DevTools but produced no usable DOM report. No Claude draft/message text, cookies or profile files were read/changed and no AI message was sent. Visible control stopped when Patrik returned. Do not repeat OS input workarounds or take over the browser; use supplied structural evidence or supported inspection. Unknown controls keep fallback. |
 | Mode report and demand | Earlier Summarize/Analyze mismatch was not reproduced; later click snapshots/visible mode and retention fixtures pass. No original cause is claimed. The Space records Patrik's 19 November acceptance of ChatGPT and Custom in v0.1.15. Sarah's own journey, independent reuse and willingness to pay remain unrecorded. |
 
 The original v0.1.14 checkout stays untouched. The existing worktree/PR stack owns v0.1.17 and v0.1.18. Update the same loaded unpacked folder in place; no automatic installation, merge or publication.
+
+## Current owner evidence and candidate — v0.1.20
+
+**Patrik:** Collection worked in his v0.1.19 browser. No particular intent,
+attachment format or lifecycle is established. Separately, his ChatGPT Send
+refused with COMPOSER_UNSAFE; Claude was not tested in that report. The original
+full generic warning is now narrowed to a post-insertion guard, not a known DOM.
+
+**Codex:** exact v0.1.19 ZIP hash/CRC checked; six synthetic post-insertion shapes
+reproduce that code. Candidate commit `3b8fc6e` splits blocked-parent, writable
+field count, node-wrapper and non-editable-node reasons without relaxing any
+predicate. Known attachments still yield UPLOAD_OR_ACTIVITY; exact text is still
+mandatory. 53 native Send fixtures pass against shipped and candidate assets.
+OpenAI documents conversion of long pastes to attachments, but Bridge's insertText
+path and Patrik's actual DOM have not been live verified. No live sends/browser use.
+
+A separate exact-ZIP 400x600 fixture measured the main button below the viewport
+(y=651..694) with the earlier opt-in remembered. The UI correction keeps context
+and one primary action in a footer while the body scrolls. Add current video
+is visible at zero/one/ready entries; source review and uncommon alternatives
+are disclosed. Small/narrow native fixtures include long titles/baskets, keyboard
+selection/Tab, hit targets, no overlap or whole-popup overflow and inherited
+preferences. Large Collections use Download .txt first, with explicit manual
+Open/upload; file/clipboard/provider copies have separate lifetimes.
+
+**Short decision:** Compare-plus-question is smallest but makes a faithful digest
+of three long talks or project decisions depend on the user inventing instructions.
+Cards expose intent but compete for space. The compact selector earns its place:
+Summarize gives a faithful digest/watch moments, Compare weighs conflicting views
+and useful integrated takeaways, Apply uses available project goals. Analyze stays
+an explicit focused evidence-review option in that selector, without silent intent
+migration. A decision question remains optional/disclosed. No single preset changes.
+
+**Next owner: Patrik — exactly two outcomes.** Check installed footer/intent/file
+clarity and reachability with one manual Collection handoff; separately, if desired,
+one harmless deliberate ChatGPT Send should succeed once or return the more
+specific code. Do not retry uncertain sends or share draft/prompt/account data.
+Keep the already delivered v0.1.19 ZIP intact and v0.1.16 as the earlier accepted
+fallback. Sarah's own journey and actual sidebar naming remain separate.
+
+**After acceptance:** one unaided private beta using a real task and the existing
+feedback template is more valuable than another feature. Measure the actual
+decision/usefulness and setup effort; keep optional compact Custom experiments
+available. No invitations, merge, store/public release, costs or payment setup.
 
 ## Current feedback refinement — v0.1.19
 

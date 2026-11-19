@@ -107,6 +107,8 @@ try {
     };
     const waitFor = async (expression) => evaluate(`new Promise((resolve, reject) => { let tries = 0; const check = () => { if (${expression}) resolve(true); else if (++tries > 200) reject(new Error('Popup wait failed')); else setTimeout(check, 10); }; check(); })`);
     const click = async (selector) => {
+      const closed=await evaluate(`(()=>{const el=document.querySelector(${JSON.stringify(selector)}),d=el?.closest('details:not([open])');return d&&!d.querySelector('summary')?.contains(el)?d.id:null;})()`);
+      if(closed)await click('#'+closed+' > summary');
       const point = await evaluate(`(() => { const element = document.querySelector(${JSON.stringify(selector)}); element.scrollIntoView({block:'nearest'}); const r = element.getBoundingClientRect(); return { x:r.x + r.width/2, y:r.y + r.height/2 }; })()`);
       await call('Input.dispatchMouseEvent', { type: 'mousePressed', button: 'left', clickCount: 1, ...point }, sessionId);
       await call('Input.dispatchMouseEvent', { type: 'mouseReleased', button: 'left', clickCount: 1, ...point }, sessionId);
@@ -114,6 +116,15 @@ try {
     await call('Page.navigate', { url: pathToFileURL(path.join(root, 'popup/popup.html')).href }, sessionId);
     await waitFor(`document.getElementById('youtubeView') && !document.getElementById('youtubeView').classList.contains('hidden')`);
     return { sessionId, evaluate, waitFor, click, async close() { await call('Target.closeTarget', { targetId }); } };
+  }
+  async function chooseCollectionIntent(ui,mode){
+    const index=await ui.evaluate(`Array.from(document.getElementById('collectionModeSelect').options).findIndex(o=>o.value===${JSON.stringify(mode)})`);
+    assert.ok(index>=0);await ui.click('#collectionModeSelect');
+    for(const key of ['Home',...Array(index).fill('ArrowDown'),'Enter']){
+      await call('Input.dispatchKeyEvent',{type:'keyDown',key},ui.sessionId);
+      await call('Input.dispatchKeyEvent',{type:'keyUp',key},ui.sessionId);
+    }
+    await ui.waitFor(`document.getElementById('collectionModeSelect').value===${JSON.stringify(mode)}`);
   }
   let cases = 0;
   for (const destination of destinations) {
@@ -283,7 +294,7 @@ try {
   await visit(1);await basket.click('#addToCollection');await basket.waitFor('document.getElementById("collectionCount").textContent.includes("2/3")');
   await visit(2);await basket.click('#addToCollection');await basket.waitFor('document.getElementById("collectionCount").textContent.includes("3/3")');
   assert.equal(await basket.evaluate('document.querySelectorAll(".collection-item img").length'),0,'source titles render as text');
-  await visit(3);await basket.click('#addToCollection');await basket.waitFor('document.getElementById("error").textContent.includes("three videos")');assert.equal((await state()).items.length,3);
+  await visit(3);assert.equal(await basket.evaluate('document.getElementById("addToCollection").disabled'),true,'full basket offers review/removal rather than another Add');assert.equal((await state()).items.length,3);
   await basket.click('.collection-item:nth-child(2) button:first-child');
   await basket.waitFor('fixture.data.__session.collection_v1.items[0].videoId === "fixture2"');
   await basket.click('#useCollection');await basket.click('#collectionQuestion');await call('Input.insertText',{text:'What do these sources disagree about?'},basket.sessionId);
@@ -316,14 +327,14 @@ try {
   await basket.evaluate(`fixture.data.__session.collection_v1={version:1,revision:0,generation:0,items:[1,2].map(n=>({videoId:'fixture'+n,title:'Large fixture '+n+' \\u2014 caf\\u00e9 \\ud83d\\ude00',url:'https://www.youtube.com/watch?v=fixture'+n,channel:'Fixture',publishDate:'',capturedAt:0,transcript:{text:'source '+n,segments:[],track:{name:'English'}}}))};fixture.data.lastMode='custom';fixture.data.customInstructions='Keep my saved task';window.name=JSON.stringify(fixture.data);location.reload()`);
   await basket.waitFor('document.getElementById("customInstructions")?.value === "Keep my saved task"');
   await basket.click('#collectionPanel summary');await basket.click('#useCollection');
-  assert.equal(await basket.evaluate(`document.querySelector('input[name="mode"]:checked').value`),'compare','Collection defaults to Compare & synthesize');
+  assert.equal(await basket.evaluate(`document.getElementById('collectionModeSelect').value`),'compare','Collection defaults to Compare & synthesize');
   for(const [mode,marker] of [['compare','Compare and synthesize the included sources'],['summarize','Synthesize the included sources'],['analyze','Compare the evidence and reasoning'],['apply','Apply the included sources']]){
-    await basket.click(`.mode-card:has(input[value="${mode}"])`);
+    await chooseCollectionIntent(basket,mode);
     await basket.click('#previewPrompt');await basket.waitFor('document.getElementById("promptPreview").textContent.length>0');
     const prompt=await basket.evaluate('document.getElementById("promptPreview").textContent');assert.ok(prompt.includes(marker));
     await basket.click('#copyPrompt');assert.equal(await basket.evaluate('fixture.copied'),prompt);
     assert.equal(await basket.evaluate('fixture.data.lastMode'),'custom');
-    if(mode==='analyze'){await basket.click('#transcriptTools summary');await basket.click('#retryButton');await basket.waitFor(`!document.getElementById('youtubeView').classList.contains('hidden')`);assert.equal(await basket.evaluate(`document.querySelector('input[name="mode"]:checked').value`),'analyze','Retry keeps Collection task');}
+    if(mode==='analyze'){await basket.click('#transcriptTools summary');await basket.click('#retryButton');await basket.waitFor(`!document.getElementById('youtubeView').classList.contains('hidden')`);assert.equal(await basket.evaluate(`document.getElementById('collectionModeSelect').value`),'analyze','Retry keeps Collection task');}
   }
   await basket.click('#useCollection');assert.equal(await basket.evaluate(`document.querySelector('input[name="mode"]:checked').value`),'custom');
   // Construct exactly the reported complete prompt size; real content stays private.
@@ -336,17 +347,61 @@ try {
   await basket.click('#copyPrompt');assert.equal(await basket.evaluate('fixture.copied'),longPrompt);
   await call('Browser.setDownloadBehavior',{behavior:'allow',downloadPath:profile});
   await basket.evaluate(`fixture.copied='Keep clipboard unchanged during export'`);
-  await basket.click('#downloadPrompt');
+  assert.equal(await basket.evaluate('document.getElementById("sendButton").textContent'),'Download .txt');
+  await basket.click('#sendButton');
   const downloaded=path.join(profile,'youtube-ai-bridge-collection.txt');
   for(let attempt=0;attempt<100&&!fs.existsSync(downloaded);attempt++)await new Promise(r=>setTimeout(r,30));
   assert.ok(fs.existsSync(downloaded),'native .txt download completes');assert.equal(fs.readFileSync(downloaded,'utf8'),longPrompt,'download equals complete Preview/Copy');
   assert.equal(await basket.evaluate('fixture.copied'),'Keep clipboard unchanged during export','file saving does not copy');
   assert.equal(await basket.evaluate('fixture.messages.length'),0,'download opens no assistant and never sends');
-  await basket.click('#sendButton');await basket.waitFor('fixture.messages.length===1');
+  await basket.click('#openManually');await basket.waitFor('fixture.messages.length===1');
   assert.equal(await basket.evaluate('fixture.messages[0].payload'),longPrompt);assert.equal(await basket.evaluate('fixture.messages[0].manualOnly'),true);assert.equal(await basket.evaluate('fixture.messages[0].type'),'OPEN_DESTINATION_WITH_PAYLOAD');
   console.log('PASS: four native Collection task selections/restoration and exact 78,817-character Preview/Copy/.txt/Open-only export.');
   await basket.close();
   console.log('PASS: native three-video Collection Add/reopen/reorder/remove/clear, missing/oversized/duplicate/write/late-capture failures, source timestamps and manual provider handoffs; Preview = Copy = Open.');
+  // Geometry/accessibility uses only synthetic settings, titles and sources.
+  const compact=await page('gpt-project');
+  await compact.evaluate(`fixture.data.chatgptExplicitSendEnabled=true;fixture.data.lastMode='summarize';fixture.data.lastDestinationId='gpt-project';fixture.data.customInstructions='Saved instruction from previous beta';fixture.data.destinations.find(d=>d.id==='gpt-project').name='Existing saved project '+('long name '.repeat(18));window.name=JSON.stringify(fixture.data);location.reload()`);
+  await compact.waitFor('document.getElementById("explicitSendOptIn")?.checked');
+  assert.equal(await compact.evaluate('document.getElementById("sendButton").textContent'),'Send to ChatGPT','remembered opt-in is visible and labelled after update');
+  assert.equal(await compact.evaluate('fixture.data.customInstructions'),'Saved instruction from previous beta');
+  assert.equal(await compact.evaluate('fixture.data.lastMode'),'summarize');
+  assert.equal(await compact.evaluate('fixture.data.lastDestinationId'),'gpt-project');
+  async function footerVisible(ui,label){
+    const r=await ui.evaluate(`(()=>{const b=document.getElementById('sendButton'),r=b.getBoundingClientRect(),f=document.getElementById('handoffFooter').getBoundingClientRect(),c=document.getElementById('contentScroll').getBoundingClientRect(),hit=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);return {w:innerWidth,h:innerHeight,docW:document.documentElement.scrollWidth,docH:document.documentElement.scrollHeight,bodyH:document.body.scrollHeight,windowY:scrollY,top:r.top,bottom:r.bottom,right:r.right,left:r.left,footerTop:f.top,contentBottom:c.bottom,hit:hit===b||b.contains(hit)};})()`);
+    assert.ok(r.top>=0&&r.bottom<=r.h&&r.left>=0&&r.right<=r.w,label+': action in viewport '+JSON.stringify(r));
+    assert.ok(r.contentBottom<=r.footerTop+1,label+': body cannot overlap footer');
+    assert.ok(r.docW<=r.w&&r.docH<=r.h&&r.bodyH<=r.h&&r.windowY===0,label+': only body region scrolls '+JSON.stringify(r));
+    assert.equal(r.hit,true,label+': native action hit target');
+    return r;
+  }
+  for(const [width,height] of [[400,600],[360,480]]){
+    await call('Emulation.setDeviceMetricsOverride',{width,height,deviceScaleFactor:1,mobile:false},compact.sessionId);
+    await compact.evaluate(`videoContext.title='A full source title '+('long title '.repeat(70));renderVideoContext();document.getElementById('contentScroll').scrollTop=0`);
+    await footerVisible(compact,'inherited Send '+width+'x'+height);
+    assert.equal(await compact.evaluate(`(()=>{const b=document.getElementById('addToCollection'),r=b.getBoundingClientRect(),c=document.getElementById('contentScroll').getBoundingClientRect();return r.top>=c.top&&r.bottom<=c.bottom&&document.elementFromPoint(r.x+r.width/2,r.y+r.height/2)===b;})()`),true,'first-use Add is immediately visible with long title');
+    await compact.evaluate(`document.getElementById('contentScroll').scrollTop=100000`);await footerVisible(compact,'scrolled body '+width+'x'+height);
+  }
+  await compact.evaluate(`fixture.data.__session.collection_v1={version:1,revision:0,generation:0,items:[1,2,3].map(n=>({videoId:'layout'+n,title:'Long source '+n+' '+('source title '.repeat(80)),url:'https://www.youtube.com/watch?v=layout'+n,channel:'Fixture',publishDate:'',capturedAt:0,transcript:{text:'x'.repeat(26000),segments:[],track:{name:'English'}}}))}`);
+  await compact.evaluate('refreshCollection()');await compact.click('#useCollection');
+  assert.equal(await compact.evaluate('document.getElementById("sendButton").textContent'),'Download .txt');
+  assert.equal(await compact.evaluate('document.getElementById("explicitSendPanel").classList.contains("hidden")'),true,'remembered opt-in never enables Collection Send');
+  await compact.click('#collectionPanel summary');
+  await footerVisible(compact,'long expanded three-source basket');
+  await chooseCollectionIntent(compact,'analyze');assert.equal(await compact.evaluate('getSelectedMode()'),'analyze','Analyze remains explicitly available with no migration');
+  await compact.click('#handoffAlternatives summary');await footerVisible(compact,'expanded alternatives');
+  await compact.evaluate(`document.getElementById('openOptionsTop').focus()`);
+  let keyboardReached=false;
+  for(let i=0;i<80;i++){
+    await call('Input.dispatchKeyEvent',{type:'keyDown',key:'Tab',code:'Tab',windowsVirtualKeyCode:9},compact.sessionId);
+    await call('Input.dispatchKeyEvent',{type:'keyUp',key:'Tab',code:'Tab',windowsVirtualKeyCode:9},compact.sessionId);
+    if(await compact.evaluate('document.activeElement.id === "sendButton"')){keyboardReached=true;break;}
+  }
+  assert.ok(keyboardReached,'primary action is keyboard reachable without a pointer');await footerVisible(compact,'keyboard focused primary action');
+  const layoutShot=await call('Page.captureScreenshot',{format:'png'},compact.sessionId);fs.writeFileSync(path.join(profile,'compact-footer-keyboard.png'),Buffer.from(layoutShot.data,'base64'));
+  assert.equal(await compact.evaluate('fixture.messages.length'),0,'layout/keyboard QA never hands off or sends');
+  await compact.close();
+  console.log('PASS: inherited settings and 400x600/360x480 footer visibility, long titles/basket, native hit targets, body-only scrolling, keyboard intent/primary access and no Collection Send.');
   assert.equal(errors.length, 0, `No runtime exceptions: ${JSON.stringify(errors)}`);
   console.log(`PASS: ${cases} native popup task/destination cases${hasPromptReview ? ' with preview = copy = Open, no extra tabs, safe text and stale-preview checks' : ''}, reload retention${hasProviderSwitch ? ' and provider switching' : ' (baseline popup)'}${hasCustomInstructions ? ', explicit local Custom save/forget and one-off clearing' : ''} on ${version.product}.`);
   if (hasProviderSwitch) console.log(`Synthetic UI screenshots: ${profile}`);

@@ -17,6 +17,7 @@
       <button id="openOptionsTop" class="icon-button" title="Manage destinations" aria-label="Manage destinations">⚙</button>
     </header>
 
+    <div id="contentScroll" class="content-scroll">
     <section id="loadingView" class="card centered">
       <div class="spinner" aria-hidden="true"></div>
       <p>Reading this page…</p>
@@ -24,10 +25,15 @@
 
     <section id="youtubeView" class="hidden">
       <div class="video-card">
-        <div class="source-label">CURRENT VIDEO</div>
-        <div id="videoTitle" class="video-title">YouTube video</div>
-        <div id="videoMeta" class="video-meta"></div>
-        <div id="transcriptStatus" class="status-line"></div>
+        <div class="source-heading">
+          <span class="source-label">CURRENT VIDEO</span>
+          <button id="addToCollection" class="secondary small">Add current video</button>
+        </div>
+        <details class="video-details">
+          <summary><div id="videoTitle" class="video-title">YouTube video</div></summary>
+          <div id="videoMeta" class="video-meta"></div>
+          <div id="transcriptStatus" class="status-line"></div>
+        </details>
       </div>
 
       <details class="source-details">
@@ -61,30 +67,38 @@
         <p id="destinationHelp" class="field-help"></p>
       </div>
 
-      <details id="collectionPanel" class="collection-panel">
-        <summary id="collectionCount">Collection (0/3)</summary>
-        <p class="field-help">Add videos individually while open. Captions stay in this browser session only: lost on browser restart or extension reload, update or disable. No background capture.</p>
-        <p id="collectionStatus" class="field-help" aria-live="polite"></p>
-        <button id="addToCollection" class="secondary wide">Add current video</button>
-        <div id="collectionItems"></div>
-        <div class="custom-actions">
-          <button id="useCollection" class="secondary small" disabled>Use collection</button>
-          <button id="clearCollection" class="link-button" disabled>Clear collection</button>
+      <section class="collection-panel" aria-label="Collect individual videos">
+        <div class="collection-heading">
+          <strong id="collectionCount">Collection (0/3)</strong>
         </div>
-        <div id="collectionQuestionWrap" class="field hidden">
-          <label for="collectionQuestion">Collection question <span class="optional-label">Optional question</span></label>
-          <textarea id="collectionQuestion" rows="2" placeholder="What do these sources collectively change for my project?"></textarea>
-          <p class="field-help">Choose the Collection task below. Full source titles, links and timestamps stay paired. Collection always uses manual Send; large prompts can be saved as .txt for manual upload.</p>
+        <p id="collectionStatus" class="field-help" aria-live="polite"></p>
+        <button id="useCollection" class="link-button" disabled>Use collection</button>
+        <details id="collectionPanel" class="source-details">
+          <summary>Review sources &amp; session details</summary>
+          <p class="field-help">Added individually. Captions stay for this browser session only: lost on restart or extension reload, update or disable. Clear removes only the basket, not copied/saved/website material.</p>
+          <div id="collectionItems"></div>
+          <button id="clearCollection" class="link-button" disabled>Clear collection</button>
+        </details>
+      </section>
+      <div id="collectionTaskField" class="field hidden">
+        <label for="collectionModeSelect">Collection intent</label>
+        <select id="collectionModeSelect">
+          <option value="compare">Compare &amp; synthesize</option>
+          <option value="summarize">Summarize</option>
+          <option value="apply">Apply to Project</option>
+          <optgroup label="Focused evidence review"><option value="analyze">Analyze</option></optgroup>
+        </select>
+      </div>
+      <details id="collectionQuestionWrap" class="question-details hidden">
+        <summary>What are you trying to decide? <span class="optional-label">Optional</span></summary>
+        <div class="field">
+          <label for="collectionQuestion">Your question</label>
+          <textarea id="collectionQuestion" rows="2" placeholder="A question to focus this intent, if useful."></textarea>
         </div>
       </details>
 
       <fieldset class="mode-group">
         <legend>Make it useful</legend>
-        <label class="mode-card collection-choice hidden">
-          <input type="radio" name="mode" value="compare">
-          <span><strong>Compare &amp; synthesize</strong><small>Find shared and conflicting insights</small></span>
-        </label>
-
         <label class="mode-card">
           <input type="radio" name="mode" value="apply">
           <span>
@@ -132,25 +146,8 @@
         </div>
       </details>
 
-      <div id="warning" class="warning hidden"></div>
-      <div id="error" class="error hidden"></div>
-
-      <div id="explicitSendPanel" class="send-choice">
-        <label class="toggle-label"><input id="explicitSendOptIn" type="checkbox" role="switch"> Auto-send to ChatGPT <span class="optional-label">Optional beta</span></label>
-        <p class="field-help">Off by default · remembered here. Copy and Preview never send.</p>
-        <p id="explicitSendDestination" class="url-preview hidden"></p>
-      </div>
-      <p id="actionSummary" class="action-summary" aria-live="polite"></p>
-      <div class="handoff-actions">
-        <button id="sendButton" class="primary wide">Open in ChatGPT</button>
-        <button id="copyPrompt" class="secondary" title="Copy the full prepared prompt without opening a tab">Copy prompt</button>
-      </div>
-      <p id="handoffHelp" class="muted" aria-live="polite"></p>
-      <div class="utility-row">
-        <button id="downloadPrompt" class="link-button">Save prompt .txt</button>
-        <span aria-hidden="true">&middot;</span>
-        <button id="previewPrompt" class="link-button" aria-controls="promptPanel" aria-expanded="false">Preview prompt</button>
-      </div>
+      <div id="warning" role="status" class="warning hidden"></div>
+      <div id="error" role="alert" class="error hidden"></div>
 
       <details id="transcriptTools" class="question-details">
         <summary>Transcript &amp; title tools</summary>
@@ -210,6 +207,26 @@
       </div>
     </section>
 
+    </div>
+    <section id="handoffFooter" class="handoff-footer hidden" aria-label="Selected context and destination action">
+      <p id="actionSummary" class="action-summary" aria-live="polite"></p>
+      <div id="explicitSendPanel" class="send-choice">
+        <label class="toggle-label"><input id="explicitSendOptIn" type="checkbox" role="switch"> Auto-send to ChatGPT <span class="optional-label">Optional</span></label>
+        <p class="field-help">Remembered here. Turn off for manual Open; off by default.</p>
+        <p id="explicitSendDestination" class="url-preview hidden"></p>
+      </div>
+      <button id="sendButton" class="primary wide">Open in ChatGPT</button>
+      <p id="handoffHelp" class="muted" aria-live="polite"></p>
+      <details id="handoffAlternatives" class="handoff-alternatives">
+        <summary>Preview, copy or other options</summary>
+        <div class="utility-row">
+          <button id="previewPrompt" class="link-button" aria-controls="promptPanel" aria-expanded="false">Preview prompt</button>
+          <button id="copyPrompt" class="link-button">Copy prompt</button>
+          <button id="downloadPrompt" class="link-button">Save prompt .txt</button>
+          <button id="openManually" class="link-button hidden">Open in ChatGPT</button>
+        </div>
+      </details>
+    </section>
     <footer class="footer">Local extraction <span>·</span> No API keys <span>·</span> You choose when to send <span id="buildVersion"></span></footer>
   </main>
 

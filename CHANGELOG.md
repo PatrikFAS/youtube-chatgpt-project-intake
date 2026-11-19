@@ -1,9 +1,12 @@
 # Changelog
 
-## 0.1.20 candidate
+## 0.1.20
 
 - Splits the user-reported post-insertion COMPOSER_UNSAFE refusal into allowlisted parent-state, writable-field-count, node-wrapper and non-editable-element codes. Keeps every safety predicate and exact-payload check; no automatic attachment or broader editor recognition. The affected live shape remains unknown.
 - Replays 53 native Send cases against both exact v0.1.19 ZIP assets and the candidate, including long insertText, added helper fields, changed parents and marked/unmarked synthetic attachment conversion. Those fixtures establish branch diagnosis and unchanged no-send behavior, not live ChatGPT markup or Send acceptance.
+- Keeps one labelled main action in a persistent footer with selected provider/destination and task/count; only the body scrolls. Moves alternatives/source review behind disclosures, keeps Add current video visible, and replaces Collection cards with a compact intent selector. Compare remains default; Summarize/Apply are common intents and Analyze remains explicitly available under focused evidence review. Single presets/Custom and settings remain unchanged.
+- For a Collection above the local autofill bound, the primary action becomes Download .txt; manual Open remains an alternative. File export neither copies nor opens/sends, and uploads remain the user's action. Full 78,817-unit Preview/Copy/file/manual-Open equality remains tested. No automatic attachments or Collection Send.
+- Records Patrik's exact acceptance: Collection worked in his v0.1.19 browser; no specific mode, upload format or new Send acceptance is inferred. Native 400x600/360x480 fixtures verify long-basket/title geometry, body-only scrolling, keyboard access, native hit targets, inherited opt-in/destinations/Custom, and no Collection Send. Keeps the exact v0.1.19 ZIP as rollback.
 
 ## 0.1.19
 
