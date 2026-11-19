@@ -90,6 +90,7 @@ try{
  await run('literal indentation and extra paragraph breaks',{send:true,payload:'Unicode café\n\n\n\n  Indented text\nFinal line.'});
  await run('ordinary Open',{manual:true,auth:0,notice:'Review it, then press Send'});
  await run('actual Collection payload stays manual',{manual:true,payload:collectionPayload,auth:0,notice:'Review it, then press Send'});
+ await run('restored draft on newly reopened destination',{draft:'Previous unsent source',payload:'Fresh selected source prompt',manual:true,text:'Previous unsent source',edits:0,auth:0,notice:'ChatGPT already has a draft'});
  await run('existing draft',{draft:'Keep my draft',text:'Keep my draft',edits:0,auth:0});
  await run('whitespace draft',{draft:'   ',edits:0,auth:0});
  await run('rich draft',{rich:true,edits:0,auth:0});

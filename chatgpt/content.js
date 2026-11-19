@@ -33,8 +33,12 @@
       if (problem) return failVisible(problem);
       const composer = findComposer();
       if (composer) {
-        if (hasDraft(composer) || (pending.explicitSendKey && unsafeForSend(composer, true))) {
-          return failVisible('Your existing draft was left untouched. Review it before pasting the copied prompt.', false);
+        if (hasDraft(composer)) {
+          showToast('YouTube AI Bridge: ChatGPT already has a draft. Bridge did not insert or send the new prompt. It is copied; keep the existing draft or clear it yourself before pasting.', false);
+          await clearPending();return;
+        }
+        if (pending.explicitSendKey && unsafeForSend(composer, true)) {
+          return failVisible('This message box is not safe for automatic Send. Nothing was inserted or sent. Review manually.', false);
         }
         let claimed;
         try {

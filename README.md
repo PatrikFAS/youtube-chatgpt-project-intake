@@ -2,33 +2,26 @@
 
 A lightweight Chrome/Edge browser extension that extracts YouTube transcripts and routes them to ChatGPT or Claude for summarization, critical analysis, or project-specific application.
 
-**Beta candidate v0.1.21 — action-popup startup correction**
+**Beta candidate v0.1.22 — native Video / Collection workspace**
 
-Do not use v0.1.20: its root viewport caps caused the real toolbar popup to
-collapse to a 25x25 green square. v0.1.21 gives Chrome a stable intrinsic preferred
-size and fits the pinned-footer shell to the granted viewport. The exact v0.1.19
-ZIP remains the prior working fallback. Previous fixed-size page fixtures missed
-this startup failure; a separate real action-surface test now covers it.
+Click the toolbar icon to use the native side panel where supported. Current video,
+**Add to collection**, count and **Video / Collection (N)** navigation stay visible;
+the selected intent/destination sit beside a pinned scoped action. Only the body
+scrolls. There is no extra Use collection step. The same interface provides a
+bounded toolbar popup fallback when side-panel setup is unavailable.
 
-The selected task/count and destination stay beside one main action in a fixed
-footer; only source/task/review content scrolls. Add current video stays visible
-in the Collection strip. Source management and Preview/Copy/file alternatives
-are disclosed when useful. The same three single-video presets and Custom remain.
+With **Auto-send to ChatGPT** off (default), **Open video in ChatGPT/Claude**
+leaves Send to you. A prior opt-in stays remembered after an in-place update:
+turn it off for the panel check. **Send video to ChatGPT** is the deliberate
+single-video attempt when opted in. Claude and all Collections remain manual;
+load, Add, Preview, Copy, export and Refresh never send. Uncertainty never retries.
 
-With **Auto-send to ChatGPT** off (default), the main button says **Open in
-ChatGPT** and leaves Send to you. A prior opt-in remains remembered across an
-in-place update: set it off for a manual check. When on, **Send to ChatGPT** and
-the exact destination URL identify each deliberate one-time attempt. Claude and
-all Collections remain manual; no automatic sending on load, Copy, Preview,
-export or Retry. Uncertain attempts never retry.
-
-Patrik confirmed **Collection worked in his v0.1.19 browser**, without specifying
-a mode or attachment format. His separate ChatGPT Send refusal now identifies
-COMPOSER_UNSAFE. v0.1.20/21 split its possible post-insertion branches into specific
-allowlisted codes; no safety predicate is relaxed and his affected shape is
-still unknown. Earlier v0.1.16 Claude/v0.1.15 Custom passes remain separate. Keep
-the exact v0.1.19 ZIP as rollback; v0.1.20 has the confirmed startup bug.
-Installed v0.1.21 startup/flow and live Send acceptance remain separate checks.
+Patrik confirmed v0.1.21 opens again and real multi-video synthesis worked. This
+is owner Collection success, not Auto-send or every intent/file-format acceptance.
+His separate `COMPOSER_NONEDITABLE_NODE` refusal remains conservative and unresolved.
+Keep the exact v0.1.21 ZIP as working rollback. v0.1.20 has the confirmed startup
+bug and should not be used. Earlier selected Claude/Custom passes, Sarah's journey,
+new installed-panel acceptance and real Auto-send are separate checks.
 
 YouTube AI Bridge is Patrik's chosen working name, used in forthcoming beta interfaces and documentation. This is the same extension: update the existing installation in place to retain its identity and saved settings. The name is provisional; no trademark/name clearance or store publication is implied.
 
@@ -52,7 +45,7 @@ Choose your own task without changing the presets. Enter nonempty instructions, 
 
 After the required source header, Custom follows your requested answer structure. It does not demand an extra TL;DR, verdict or next step unless you request one. For a compact response experiment, explicitly ask for the brief opening you want.
 
-Text is **one-off by default** and cleared when the popup closes. **Save locally** explicitly remembers one instruction on this browser, available under both assistants and retained across restarts/in-place updates. Later edits are one-off until you save again. **Forget saved instructions** clears it. Nothing is synced or uploaded by the extension. Unsaved Custom restores the last preset when you reopen; Retry keeps your current text.
+Text is **one-off by default** and cleared when this Bridge view closes. **Save locally** explicitly remembers one instruction on this browser, available under both assistants and retained across restarts/in-place updates. Later edits are one-off until you save again. **Forget saved instructions** clears it. Nothing is synced or uploaded by the extension. Unsaved Custom restores the last preset when you reopen; Retry keeps your current text.
 
 For an optional skip/skim/watch/apply response experiment, see the [draft Custom prompt and comparison plan](PROJECT_PLAN.md#draft-custom-response-experiment). It uses existing Custom instructions; the preset/default prompts are unchanged.
 
@@ -60,21 +53,35 @@ The [optional compact-triage example](examples/compact-triage.txt) works in the 
 
 The raw transcript is a separate utility. The selected task appears above the action button and as SELECTED MODE in the copied prompt, so task choices remain easy to distinguish.
 
-## Update an existing installation to v0.1.21
+## Update an existing installation to v0.1.22
 
-1. Extract the versioned ZIP and overwrite its files in the **same unpacked extension folder** you originally loaded. Keep that folder's location. You can back it up first.
-2. Open `edge://extensions/` or `chrome://extensions/` and click **Reload** on the existing extension entry. Do not uninstall it; updating in place retains saved destinations and preferences.
-3. Refresh relevant tabs without clearing drafts and confirm **YouTube AI Bridge / v0.1.21**. No new permissions. Keep the working v0.1.16 ZIP as a fallback; destinations/preferences remain. Reload/update clears any session Collection and Send attempt records.
-4. For the new action, use [the v0.1.21 startup check](TESTING.md#v0121-startup-check). Send requires the exact saved route/document, one empty recognized composer, the complete exact prompt and one stable known enabled native Send control. Uncertain/partial cases stay manual. Same-video/prompt/destination requests are blocked for the browser session after any Send request, even if opening or sending failed. Check the conversation before any manual retry; a notice confirms the click request, not server acceptance.
+1. Back up the working v0.1.21 folder/ZIP. Extract v0.1.22 over the **same unpacked extension folder** originally loaded. Keep its location; do not uninstall or load a duplicate.
+2. At `edge://extensions/` or `chrome://extensions/`, **Reload** the existing entry. This version adds only the **sidePanel** permission for the native browser workspace; host permissions are unchanged. Browser permission/reload prompts vary; review the new permission in the browser. No installed extension or permission prompt was changed by Codex.
+3. Safely refresh relevant YouTube/provider tabs without clearing drafts. Confirm **v0.1.22**. Saved destinations, modes, Custom and the previous Auto-send opt-in remain; reload/update clears temporary Collection and Send records. Turn **Auto-send off** for the panel test.
+4. Click the Bridge toolbar icon. Supported browsers open their native side panel. The browser controls its side/width and close control. If the side-panel API is unavailable or setup fails, Bridge keeps the toolbar popup fallback. [Native panel checks and limitations](TESTING.md#v0122-native-workspace).
+
+## Video and Collection workspaces
+
+The current tab, **Add to collection**, count, **Video / Collection (N)** workspace
+switch and scoped main action are visible without scrolling. Only the body scrolls.
+Assistant, saved destination and intent are ordinary workspace controls; optional
+questions and secondary tools remain disclosed. On a nonvideo tab, the collection
+stays accessible and the source hint tells you where to add another video.
+
+Selecting **Collection (N)** both shows its sources and chooses them for the main
+action; there is no separate Use collection step. Add increments the count without
+changing workspace, opening a destination or sending. Selecting **Video** restores
+its preset/Custom draft. A zero/one-video collection explains that two are needed.
+The panel follows active tabs and YouTube navigation in its own window; a changed
+source cancels work in progress rather than falling back to the previous video.
 
 ## Collect two or three videos
 
-Use the Collection strip above the task choices. On each individual captioned
-video, choose the immediately visible **Add current video**. The basket survives popup closure and tab changes.
+On each individual captioned video, choose the immediately visible **Add to collection**. The basket survives popup closure and tab changes.
 Add opens/sends nothing. Review titles, links and tracks; reorder, Remove or Clear.
 Missing captions, duplicate IDs and oversized additions preserve existing entries.
 
-After two or three captures, choose **Use collection**. A compact **Collection intent** selector
+After two or three captures, select the **Collection (N)** workspace. A compact **Collection intent** selector
 now offers **Compare & synthesize** (default): integrated takeaways, agreements,
 disagreements and support for each view, without treating repetition as independent
 corroboration. **Summarize** makes a faithful combined digest; **Analyze**, retained under focused evidence review, critically
@@ -85,14 +92,14 @@ the previous preset or Custom draft; Collection tasks do not overwrite that pref
 Preview, Copy and Open use the same complete selected prompt. Collection Send stays manual.
 
 The prior **60,000-character cap was a local trial bound, not a provider limit**.
-v0.1.21 keeps complete prompts up to 250,000 JavaScript characters (UTF-16 units)
+v0.1.22 keeps complete prompts up to 250,000 JavaScript characters (UTF-16 units)
 for Preview, Copy and **Save prompt .txt**, subject to the unchanged 512 KiB session
-basket guard. Nothing is truncated or split silently. Above 60,000 the primary action is **Download .txt**. The alternative Open
+basket guard. Nothing is truncated or split silently. Above 60,000 the primary action is **Download collection .txt**. With a current YouTube source, the alternative Open
 copies the full text and opens the chosen destination **without autofill**.
 Attach the downloaded `.txt` yourself if your chosen assistant supports it, then type
 “Follow the instructions in the attached file.” Do not also paste the whole copied prompt. Check the attachment before sending;
 provider file/context limits still apply. Bridge does not attach files automatically.
-Below the local autofill bound, normal guarded insertion remains available.
+Below the local autofill bound, normal guarded insertion remains available. On a nonvideo tab the main action copies the collection instead of opening beside a stale source; full .txt export remains available. Switch to a YouTube video for source-adjacent Open.
 
 Caption baskets use extension session storage only: browser restart or extension
 reload/update/disable loses them. Clear Collection affects only that basket, not
@@ -205,11 +212,12 @@ This preserves the judgement step before changing Hermes skills/workflows.
 
 ## Permissions
 
-v0.1 requests:
+v0.1.22 requests:
 
 - `activeTab`
 - `storage`
 - `clipboardWrite`
+- `sidePanel` to show the shared local workspace in the native browser panel
 - narrow host access to YouTube, ChatGPT and https://claude.ai/* (Claude access enables its local content script)
 
 It does **not** request `<all_urls>`, browsing history, downloads, cookies, or debugger access.
@@ -266,3 +274,12 @@ python3 scripts/package.py /path/outside/repository/youtube-chatgpt-project-inta
 The archive contains the committed runtime files and product documentation, with version and exact commit in `BUILD.txt`. No dependencies or developer tests are needed to load it unpacked.
 
 Claude automation status: at Patrik's explicit request this beta enables a narrowly recognized insertion attempt for his browser test, despite the isolated tool browser being blocked by security verification. Source-reported markers and a reconstructed DOM are tested. Patrik subsequently confirmed automatic insertion in his signed-in browser; this is user-reported acceptance, not tool-observed verification of every guard or route. Clipboard fallback stays available. Run the optional native editing checks with npm run test:claude-browser -- /absolute/path/to/chromium.
+
+### ChatGPT already has a draft
+
+Bridge leaves it untouched and does not send or insert the new prompt. The new
+prompt is copied. Keep the existing draft, or clear it yourself before pasting
+into the intended destination. A closed/reopened destination may show an old
+draft; provider restoration is not an established cause. Bridge never clears it
+or retries an uncertain Send. `COMPOSER_NONEDITABLE_NODE` remains a separate,
+conservative post-insertion refusal; it does not establish an attachment cause.

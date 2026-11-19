@@ -2,12 +2,13 @@
   "manifest_version": 3,
   "name": "YouTube AI Bridge",
   "short_name": "YT AI Bridge",
-  "version": "0.1.21",
+  "version": "0.1.22",
   "description": "Route YouTube transcripts to ChatGPT or Claude for summary, analysis, or project application. Review and send yourself.",
   "permissions": [
     "activeTab",
     "storage",
-    "clipboardWrite"
+    "clipboardWrite",
+    "sidePanel"
   ],
   "host_permissions": [
     "https://www.youtube.com/*",
@@ -80,5 +81,8 @@
         "https://m.youtube.com/*"
       ]
     }
-  ]
+  ],
+  "side_panel": {
+    "default_path": "popup/popup.html?surface=panel"
+  }
 }

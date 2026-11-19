@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.22 — native Video / Collection workspace
+
+- Open the shared UI in the supported browser side panel, with toolbar popup fallback. Add only sidePanel permission; preserve identity, URLs, settings and temporary Collection semantics.
+- Make current source/Add/count, Video/Collection selection and scoped footer action clear. Add never switches workspace. Keep Collection sources/intent available on nonvideo tabs with safe copy/export.
+- Bind persistent panel operations to its window/current source, cancel stale async captions and verify active source again in the worker. Preserve all composer and one-time Send safeguards.
+- Explain an existing ChatGPT draft as an informational manual recovery. Do not overwrite, clear or send it. COMPOSER_NONEDITABLE_NODE remains unresolved and conservative.
+- Verify native Chrome panel/popup separately from DOM fixtures; installed Edge and owner panel acceptance remain pending. No merge/store release; keep v0.1.21 rollback unchanged.
+
 ## 0.1.21
 
 - Fixes v0.1.20's 25x25 action-popup startup regression. Root preferred size no longer depends on the viewport being auto-calculated. A fixed shell fits Chrome's actual granted viewport, retaining the scrolling body and reachable footer. No prompt, Send/insertion logic, permissions, identity or storage keys change. v0.1.20 is withdrawn from testing; previous ZIPs stay unchanged.

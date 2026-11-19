@@ -56,12 +56,67 @@ its own acceptance and fixture results do not establish live behavior.
 | --- | --- |
 | Accepted baseline | v0.1.10 is merged in [PR #3](https://github.com/PatrikFAS/youtube-chatgpt-project-intake/pull/3). Patrik confirmed the Chrome/Edge workflow, provider UI and automatic Claude insertion in his tested case. The precise Claude route/browser version was not recorded. |
 | Delivered versions | v0.1.14 added Custom; v0.1.15 removed its compulsory TL;DR conflict. All 18 preset payloads stayed byte-identical to v0.1.14, and 24 native task/provider/destination cases passed. Patrik tested v0.1.15 and reported no Claude insertion. Its supplied control-shape report now replaces the missing structural evidence; no repeat diagnostic is needed. |
-| Current candidates | v0.1.21 corrects the confirmed v0.1.20 action-startup regression. v0.1.20 is withdrawn; v0.1.19 remains the prior working fallback. Historical v0.1.20 adds the footer/compact-selector correction and narrower composer refusal codes; v0.1.19 remains the delivered rollback. v0.1.19 refines the existing v0.1.18 Collection and explicit Send after Patrik's reported refusal and 78,817-character case; see the current refinement below. The work remains on `codex/custom-output-contract` / [draft PR #5](https://github.com/PatrikFAS/youtube-chatgpt-project-intake/pull/5), stacked on PR #4. Separate v0.1.17 ZIP permits independent Send testing; v0.1.16 ZIP remains the accepted fallback. Required tests, 24 native popup combinations plus full Collection/Send interactions, 45 native Send cases and 68 Claude cases pass. New live acceptance remains open. |
+| Current candidates | v0.1.22 is the native-workspace candidate; v0.1.21 is the owner-confirmed popup/Collection rollback. v0.1.21 corrects the confirmed v0.1.20 action-startup regression. v0.1.20 is withdrawn; v0.1.19 remains the prior working fallback. Historical v0.1.20 adds the footer/compact-selector correction and narrower composer refusal codes; v0.1.19 remains the delivered rollback. v0.1.19 refines the existing v0.1.18 Collection and explicit Send after Patrik's reported refusal and 78,817-character case; see the current refinement below. The work remains on `codex/custom-output-contract` / [draft PR #5](https://github.com/PatrikFAS/youtube-chatgpt-project-intake/pull/5), stacked on PR #4. Separate v0.1.17 ZIP permits independent Send testing; v0.1.16 ZIP remains the accepted fallback. Required tests, 24 native popup combinations plus full Collection/Send interactions, 45 native Send cases and 68 Claude cases pass. New live acceptance remains open. |
 | Claude acceptance | Patrik confirmed v0.1.16 autofill in his selected real-browser journey after the report-grounded fix. This does not establish all layouts or Sarah acceptance. New Collection handoffs and explicit ChatGPT Send have separate user checks; no personal browser or live messages are controlled by Codex. |
 | Browser and safety | The authorized free window reached DevTools but produced no usable DOM report. No Claude draft/message text, cookies or profile files were read/changed and no AI message was sent. Visible control stopped when Patrik returned. Do not repeat OS input workarounds or take over the browser; use supplied structural evidence or supported inspection. Unknown controls keep fallback. |
 | Mode report and demand | Earlier Summarize/Analyze mismatch was not reproduced; later click snapshots/visible mode and retention fixtures pass. No original cause is claimed. The Space records Patrik's 19 November acceptance of ChatGPT and Custom in v0.1.15. Sarah's own journey, independent reuse and willingness to pay remain unrecorded. |
 
 The original v0.1.14 checkout stays untouched. The existing worktree/PR stack owns v0.1.17 and v0.1.18. Update the same loaded unpacked folder in place; no automatic installation, merge or publication.
+
+## Current milestone — native workspace, v0.1.22
+
+**Owner evidence (Patrik):** v0.1.21 opens again and real multi-video synthesis
+worked. This is Collection acceptance of his selected journey, not an Auto-send
+pass, a particular intent/file format, Sarah acceptance or universal browser proof.
+He finds the small popup/hierarchy clunky and explicitly chose a full-height
+browser panel and direct Video / Collection workspaces.
+
+**Implemented by Codex:** the same UI runs in the native Chrome/Edge side-panel
+API where available, with toolbar popup fallback on setup failure. Only the narrow
+`sidePanel` permission is added; identity, storage keys and host permissions stay.
+Browser-owned width/side, comfortable panel spacing, visible current video/Add/count,
+scannable collection, visible assistant/destination/intent and a pinned scoped main
+action replace the extra Use collection step. Add never changes workspace or sends.
+Zero/one entries explain the next Add; nonvideo tabs retain Collection and offer
+copy/export rather than opening beside a stale video. Analyze stays explicit and
+all existing prompt meanings remain.
+
+**Reliability:** a panel is bound to its own window. Tab/URL/load/SPA changes
+invalidate the source immediately, clear previews/cache and cancel stale jobs.
+Click snapshots plus source checks before external effects and worker-side active
+source/window checks protect Add/Copy/Preview/Open/Send. Collection revision checks
+reject concurrent changes. Unsaved Custom/questions remain one-off in the open view,
+never auto-saved; captions retain the existing session-only policy.
+
+**Separate Send/draft evidence:** Patrik reported `COMPOSER_NONEDITABLE_NODE` on
+v0.1.21. It is the post-insertion check for a noneditable descendant, not proof of
+an attachment or harmless formatting. Its predicate and exact-route/full-payload/
+unique-native-Send/idempotency/no-retry guards remain unchanged. No live Send was
+performed or fix claimed. If pursued later, the smallest optional diagnostic is
+allowlisted structural counts/flags only (phase, known attachment/node markers,
+noneditable tag categories, recognized editor/Send counts, exact-match boolean),
+with no text, HTML, arbitrary attributes, URLs, IDs or account data; no such new
+capture is shipped here. Owner/next decision: Patrik can keep using manual Open
+while the actual structure remains unknown.
+
+A new destination showing an existing draft is preserved. The new informational
+notice says nothing was inserted/sent and the new prompt is copied; keep the old
+draft or clear it yourself before pasting. Provider restoration is a hypothesis,
+not a diagnosis. Separate reopening/payload and restored-draft fixtures check the
+fresh prompt and zero edits/sends.
+
+**Verification owner: Codex.** Required checks, 24 popup task/provider cases, 54 Send and 68 Claude fixtures,
+native Chrome/Edge panels and a real 400x500 Chrome fallback action
+are recorded in TESTING.md. Native Chrome proof uses disposable profiles and
+intercepted synthetic captions/pages, not Patrik's browser. Disposable Chrome and Edge both passed the native panel. Installed-owner
+panel acceptance remains open; no personal browser or permission prompt was driven. The original v0.1.21 ZIP stays unchanged as usable rollback.
+
+**Next owner: Patrik.** Update the same folder/Reload, review the `sidePanel`
+permission, turn retained Auto-send off, then check the normal toolbar panel,
+two Add clicks across videos without an extra activation step, Video/Collection
+switching and one manual handoff to the intended destination. Check in installed
+Edge/Chrome as used; browser controls width/side. Sarah/unaided beta and provider
+sidebar naming remain separate gates. No merge or store/public release.
 
 ## Priority startup correction — v0.1.21
 
@@ -82,7 +137,7 @@ fresh profile. Caption Add, collapsed/unsupported/destination/Collection states
 and the footer are checked without any real handoff or Send. Tiny viewport and
 24-flow/export/keyboard regressions remain separate forced page fixtures.
 
-**Next owner: Patrik.** After the verified v0.1.21 artifact is delivered, update
+**Historical startup test (now owner-confirmed opening and Collection synthesis):** after the verified v0.1.21 artifact was delivered, update
 the same folder and Reload; confirm the popup opens, local settings remain and
 one manual/Collection path is usable. Set remembered Auto-send off for this test.
 Do not use v0.1.20; preserve that ZIP for regression evidence and v0.1.19 as the

@@ -14,7 +14,24 @@ function serializeExplicitSend(work) {
   return result;
 }
 
+const POPUP_PATH='popup/popup.html';
+const PANEL_PATH=POPUP_PATH+'?surface=panel';
+function isBridgeUI(sender){return !sender.tab && [chrome.runtime.getURL(POPUP_PATH),chrome.runtime.getURL(PANEL_PATH)].includes(sender.url);}
+async function configureEntry(){
+  try{
+    if(!chrome.sidePanel?.open||!chrome.sidePanel?.setPanelBehavior)throw Error('Side panel unsupported');
+    await chrome.sidePanel.setPanelBehavior({openPanelOnActionClick:true});
+    await chrome.action.setPopup({popup:''});
+  }catch{
+    try{await chrome.sidePanel?.setPanelBehavior?.({openPanelOnActionClick:false});}catch{}
+    try{await chrome.action?.setPopup?.({popup:POPUP_PATH});}catch{}
+  }
+}
+configureEntry();
+chrome.runtime.onStartup?.addListener(configureEntry);
+
 chrome.runtime.onInstalled.addListener(async () => {
+  await configureEntry();
   const current = await chrome.storage.local.get(['destinations', 'lastMode', 'lastDestinationId']);
   const destinations = YT2GPTDestination.withBuiltIns(current.destinations);
 
@@ -46,7 +63,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 
   if (message.type === 'OPEN_DESTINATION_WITH_PAYLOAD' || message.type === 'OPEN_CHATGPT_WITH_PAYLOAD') {
-    handleOpenDestination({ ...message, explicitSendKey: null })
+    handleOpenDestination({ ...message, explicitSendKey: null },sender)
       .then(sendResponse)
       .catch((error) => sendResponse({ ok: false, error: String(error?.message || error) }));
     return true;
@@ -74,7 +91,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 });
 
-async function handleOpenDestination(message) {
+async function handleOpenDestination(message,sender={}) {
   const payload = typeof message.payload === 'string' ? message.payload : '';
   const destinationUrl = YT2GPTDestination.normalize(message.destinationUrl);
 
@@ -94,6 +111,8 @@ async function handleOpenDestination(message) {
   if (source?.id !== message.sourceTabId || !Number.isInteger(source.windowId) || !Number.isInteger(source.index)) {
     throw new Error('Could not locate the originating YouTube tab. The prompt can be pasted into the intended destination.');
   }
+
+  await verifySourceBinding(message,source,sender);
 
   let tab;
   try {
@@ -177,7 +196,7 @@ async function claimPendingForSender(sender) {
 }
 
 async function prepareExplicitSend(message, sender) {
-  if (sender.url !== chrome.runtime.getURL('popup/popup.html') || sender.tab || message.collection === true) {
+  if (!isBridgeUI(sender) || message.collection === true) {
     throw new Error('Send must be chosen explicitly in the YouTube popup. Use Open for manual review.');
   }
   const destinationUrl = YT2GPTDestination.normalize(message.destinationUrl);
@@ -195,13 +214,13 @@ async function prepareExplicitSend(message, sender) {
   // session end; never silently retry a send or evict a deduplication record.
   const record = { state:'reserved', destinationUrl, createdAt:Date.now() };
   await chrome.storage.session.set({ [key]:record });
-  const opened = await handleOpenDestination({ ...message, destinationUrl, explicitSendKey:key });
+  const opened = await handleOpenDestination({ ...message, destinationUrl, explicitSendKey:key },sender);
   await chrome.storage.session.set({ [key]: { ...record, state:'prepared', tabId:opened.tabId } });
   return opened;
 }
 
 async function handleCollection(message,sender) {
-  if (sender.url !== chrome.runtime.getURL('popup/popup.html') || sender.tab) throw Error('Open Collection from the extension popup.');
+  if (!isBridgeUI(sender)) throw Error('Open Collection from the extension popup.');
   if (!chrome.storage.session) throw Error('Session storage is unavailable. Single-video handoff remains available.');
   const key=YT2GPTCollection.KEY, saved=(await chrome.storage.session.get(key))[key];
   const state=saved || YT2GPTCollection.empty();
@@ -210,6 +229,7 @@ async function handleCollection(message,sender) {
   if(message.type==='COLLECTION_GET')return {ok:true,state};
   if(message.type==='COLLECTION_ADD') {
     const source=await chrome.tabs.get(message.sourceTabId);
+    await verifySourceBinding(message,source,sender);
     if(YT2GPTCollection.videoId(source.url)!==message.item?.videoId) throw Error('The source video changed. Nothing was added.');
   }
   const next=YT2GPTCollection.mutate(state,message);
@@ -236,4 +256,12 @@ async function clearPendingForSender(sender) {
   const tabId = sender?.tab?.id;
   if (!Number.isInteger(tabId) || tabId < 0 || (sender.frameId ?? 0) !== 0) return;
   await chrome.storage.session.remove(`${PENDING_PREFIX}${tabId}`);
+}
+
+async function verifySourceBinding(message,source,sender){
+  const b=message.sourceContext;
+  if(!b){if(sender.url===chrome.runtime.getURL(PANEL_PATH))throw Error('The panel source could not be confirmed. Review the active video.');return;}
+  if(!isBridgeUI(sender)||b.tabId!==message.sourceTabId||!Number.isInteger(b.windowId)||source.windowId!==b.windowId||!b.videoId||YT2GPTCollection.videoId(source.url)!==b.videoId)throw Error('The source tab, video or window changed. Nothing was opened.');
+  const tabs=await chrome.tabs.query({active:true,windowId:b.windowId});
+  if(tabs[0]?.id!==b.tabId||tabs[0]?.windowId!==b.windowId||YT2GPTCollection.videoId(tabs[0]?.url)!==b.videoId)throw Error('The active source tab changed. Review the current video.');
 }

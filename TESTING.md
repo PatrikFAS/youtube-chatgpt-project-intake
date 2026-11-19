@@ -1,5 +1,74 @@
 # Manual and regression testing
 
+## v0.1.22 native workspace
+
+Patrik confirmed v0.1.21 opens and multi-video synthesis worked. Auto-send remains
+separate: COMPOSER_NONEDITABLE_NODE is a conservative post-insertion check and
+has not been loosened or diagnosed as an attachment.
+
+Run `npm run verify` and `npm test`. `npm run test:browser -- CHROMIUM` uses a
+real DOM/page with mocked browser APIs; it covers 24 task/destination combinations,
+all Collection intents, 78,817-character full export equality, settings, Custom,
+keyboard and 400x600/360x480/320x400 geometry. It is not native action proof.
+`npm run test:send-browser -- CHROMIUM` and `npm run test:claude-browser -- CHROMIUM`
+exercise synthetic composers, never authenticated provider behavior. The restored
+draft fixture preserves its old text with zero edits, authorizations or sends;
+a separate reopened-popup fixture proves the new source is copied, not reused.
+
+`npm run test:panel-browser -- CHROMIUM CANDIDATE [EXACT_V021]` loads unpacked assets
+into disposable profiles. Native toolbar activation uses CDP Extensions.triggerAction
+on a browser tab target when supported; otherwise the report explicitly identifies
+native sidePanel.open with a synthetic user gesture. No emulated viewport creates
+the normal panel. Report JSON identifies the route actually used. Real window/tab,
+storage, worker and caption content scripts are exercised; HTTPS responses are
+intercepted synthetic pages/captions, with a test-only clipboard sink. The harness
+checks no source/cancelled Preview/Copy/Add/Open, own-window isolation, SPA mismatch,
+0/1/2/3 Collection states, Add preserving workspace, nonvideo retention, source/title
+integrity, long content, footer hit targets, lower browser height and keyboard.
+Optional EXACT_V021 seeds prior settings in the same folder/profile before a
+browser restart plus CDP Extensions.loadUnpacked of that same disposable path.
+This preserves the extension ID/preferences and reloads its service worker;
+restarting alone can retain old unpacked worker code. The extensions-page Reload
+button itself is not clicked.
+
+`npm run test:action-browser -- CHROMIUM CANDIDATE` checks the fresh native fallback.
+The optional full command `npm run test:action-browser -- CHROMIUM OLD19 OLD20 CANDIDATE` also checks real
+popup startup and the historical 25x25 regression. For this candidate only, the
+fixture explicitly forces popup fallback via extension APIs in its disposable
+profile. That is real toolbar-popup sizing, not proof the panel API is absent.
+A worker fixture separately proves setup rejection restores the popup. Entry APIs
+and source bindings are tested independently of composer Send controls.
+
+**Installed-browser test, owner Patrik:** overwrite the same unpacked folder,
+Reload, review the one new sidePanel permission and confirm v0.1.22. Keep Auto-send
+off (the old opt-in persists). Click Bridge: check the native full-height workspace,
+visible Add/count, two-video collection, direct Collection/Video switching and one
+manual Open. Change active tabs, including a nonvideo tab, and check source title
+and collection are correct. Collection never sends; long prompts offer a complete
+.txt for manual upload if supported. Preserve drafts; if one exists, keep it or
+clear it yourself before pasting. No automatic retries. Update clears the temporary
+basket; panel closure alone does not. Browser controls panel side/width.
+
+The native panel passed in disposable Chrome and Edge; their networks/captions
+were synthetic. Installed-owner acceptance and extension-entry permission/reload
+UI remain unperformed; native fallback proof is separately identified. Earlier accepted browser workflows,
+Sarah acceptance and real Auto-send stay distinct. Keep the exact v0.1.21 rollback.
+
+
+**Candidate QA evidence (19 November):** native Chrome 149 panel 360x702 and
+Edge 157 panel 382x708 opened through the actual toolbar command, with no emulated
+panel sizing. Both passed source/window/SPA/cancelled-job, 0/1/2/3-source, Add/no
+workspace switch, nonvideo, keyboard and footer checks. Chrome retained exact
+saved settings across v0.1.21 → v0.1.22 in the same folder/profile using explicit
+CDP unpacked reload; restarting alone kept old worker code and is not the upgrade
+procedure. A fresh real Chrome fallback action passed six states at 400x500,
+forced only in the disposable test profile; no outer scrollbar or pending Send
+record. Required suites, 24 popup combinations/complete Collection exports, 54
+Send composer fixtures (including a restored draft), and 68 Claude fixtures pass.
+Reports/screenshots stay in task-local Temp QA folders; exact packaged bytes are
+replayed separately before delivery. None of this proves authenticated provider
+markup, model quality, server message acceptance or Patrik's installed panel.
+
 ## v0.1.21 startup check
 
 **Confirmed regression:** Patrik installed v0.1.20 and got only a small green

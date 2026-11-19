@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>YouTube AI Bridge</title>
+  <script src="surface.js"></script>
   <link rel="stylesheet" href="popup.css">
 </head>
 <body>
@@ -17,6 +18,17 @@
       <button id="openOptionsTop" class="icon-button" title="Manage destinations" aria-label="Manage destinations">⚙</button>
     </header>
 
+    <section id="sourceBar" class="source-bar" aria-label="Current source">
+      <div class="source-heading"><span class="source-label">CURRENT TAB</span><button id="retryButton" class="link-button small">Refresh source</button></div>
+      <div id="videoTitle" class="video-title">Reading this page…</div>
+      <div class="source-heading"><button id="addToCollection" class="secondary" disabled>Add to collection</button><span id="collectionCount" class="collection-badge">0 / 3 collected</span></div>
+      <p id="sourceHint" class="field-help" aria-live="polite"></p>
+    </section>
+    <nav class="workspace-switch" aria-label="Source workspace">
+      <button id="workspaceVideo" class="workspace-tab" aria-pressed="true">Video</button>
+      <button id="useCollection" class="workspace-tab" aria-pressed="false">Collection (0)</button>
+    </nav>
+
     <div id="contentScroll" class="content-scroll">
     <section id="loadingView" class="card centered">
       <div class="spinner" aria-hidden="true"></div>
@@ -24,19 +36,8 @@
     </section>
 
     <section id="youtubeView" class="hidden">
-      <div class="video-card">
-        <div class="source-heading">
-          <span class="source-label">CURRENT VIDEO</span>
-          <button id="addToCollection" class="secondary small">Add current video</button>
-        </div>
-        <details class="video-details">
-          <summary><div id="videoTitle" class="video-title">YouTube video</div></summary>
-          <div id="videoMeta" class="video-meta"></div>
-          <div id="transcriptStatus" class="status-line"></div>
-        </details>
-      </div>
-
-      <details class="source-details">
+      <div id="videoDetails" class="video-context"><span id="videoMeta" class="video-meta"></span><span id="transcriptStatus" class="status-line"></span></div>
+      <details id="captionDetails" class="source-details">
         <summary>Caption language</summary>
         <div class="field">
         <label for="trackSelect">Transcript track</label>
@@ -66,20 +67,13 @@
         </div>
         <p id="destinationHelp" class="field-help"></p>
       </div>
+      <div id="explicitSendPanel" class="send-choice">
+        <label class="toggle-label"><input id="explicitSendOptIn" type="checkbox" role="switch"> Auto-send to ChatGPT <span class="optional-label">Optional</span></label>
+        <p class="field-help">Remembered here. Turn off for manual Open; off by default.</p>
+        <p id="explicitSendDestination" class="url-preview hidden"></p>
+      </div>
 
-      <section class="collection-panel" aria-label="Collect individual videos">
-        <div class="collection-heading">
-          <strong id="collectionCount">Collection (0/3)</strong>
-        </div>
-        <p id="collectionStatus" class="field-help" aria-live="polite"></p>
-        <button id="useCollection" class="link-button" disabled>Use collection</button>
-        <details id="collectionPanel" class="source-details">
-          <summary>Review sources &amp; session details</summary>
-          <p class="field-help">Added individually. Captions stay for this browser session only: lost on restart or extension reload, update or disable. Clear removes only the basket, not copied/saved/website material.</p>
-          <div id="collectionItems"></div>
-          <button id="clearCollection" class="link-button" disabled>Clear collection</button>
-        </details>
-      </section>
+
       <div id="collectionTaskField" class="field hidden">
         <label for="collectionModeSelect">Collection intent</label>
         <select id="collectionModeSelect">
@@ -97,6 +91,12 @@
         </div>
       </details>
 
+      <section id="collectionPanel" class="collection-panel hidden" aria-label="Collection sources">
+        <p id="collectionStatus" class="field-help" aria-live="polite"></p>
+        <div id="collectionItems"></div>
+        <button id="clearCollection" class="link-button" disabled>Clear collection</button>
+        <details class="source-details"><summary>Session storage</summary><p class="field-help">Added individually. Captions stay for this browser session only: lost on restart or extension reload, update or disable. Clear removes only the basket, not copied/saved/website material.</p></details>
+      </section>
       <fieldset class="mode-group">
         <legend>Make it useful</legend>
         <label class="mode-card">
@@ -158,7 +158,7 @@
         <span>·</span>
         <button id="copyChatTitle" class="link-button">Copy title</button>
         <span>·</span>
-        <button id="retryButton" class="link-button">Retry</button>
+
         </div>
       </details>
 
@@ -210,11 +210,6 @@
     </div>
     <section id="handoffFooter" class="handoff-footer hidden" aria-label="Selected context and destination action">
       <p id="actionSummary" class="action-summary" aria-live="polite"></p>
-      <div id="explicitSendPanel" class="send-choice">
-        <label class="toggle-label"><input id="explicitSendOptIn" type="checkbox" role="switch"> Auto-send to ChatGPT <span class="optional-label">Optional</span></label>
-        <p class="field-help">Remembered here. Turn off for manual Open; off by default.</p>
-        <p id="explicitSendDestination" class="url-preview hidden"></p>
-      </div>
       <button id="sendButton" class="primary wide">Open in ChatGPT</button>
       <p id="handoffHelp" class="muted" aria-live="polite"></p>
       <details id="handoffAlternatives" class="handoff-alternatives">
@@ -232,6 +227,7 @@
 
   <script src="../shared/destination.js"></script>
   <script src="../shared/collection.js"></script>
+  <script src="panel.js"></script>
   <script src="popup.js"></script>
   <script src="collection.js"></script>
 </body>

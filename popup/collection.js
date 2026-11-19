@@ -2,13 +2,15 @@
 let collectionState = null;
 let collectionActive = false;
 let collectionMode = 'compare';
+let collectionCaptureProblem='';
 function wireCollectionEvents() {
   els.addToCollection.addEventListener('click',addCurrentToCollection);
   els.useCollection.addEventListener('click',()=>{
     if(busy||sending)return;
-    collectionActive=!collectionActive;
+    collectionActive=true;
     invalidatePromptPreview();renderCollection();updateCustomUI();updateHandoffHelp();
   });
+  els.workspaceVideo.addEventListener('click',()=>{if(busy||sending)return;collectionActive=false;invalidatePromptPreview();renderCollection();updateCustomUI();updateHandoffHelp();});
   els.collectionModeSelect.addEventListener('change',()=>{if(busy||sending)return;collectionMode=els.collectionModeSelect.value;invalidatePromptPreview();updateHandoffHelp();});
   els.clearCollection.addEventListener('click',()=>changeCollection('COLLECTION_CLEAR'));
   els.collectionQuestion.addEventListener('input',()=>{invalidatePromptPreview();updateHandoffHelp();});
@@ -23,11 +25,16 @@ async function refreshCollection() {
 }
 function renderCollection() {
   const items=collectionState?.items||[];
-  if(items.length<2)collectionActive=false;
+  const blocked=busy||sending||(panel.enabled&&!panel.ready);
+  els.useCollection.setAttribute('aria-pressed',String(collectionActive));
+  els.workspaceVideo.setAttribute('aria-pressed',String(!collectionActive));
+  els.collectionPanel.classList.toggle('hidden',!collectionActive);
+  for(const id of ['videoDetails','captionDetails','transcriptTools'])els[id].classList.toggle('hidden',collectionActive||!videoContext);
   document.body.dataset.collection=String(collectionActive);
   for(const button of [els.viewTranscript,els.copyTranscript,els.copyChatTitle])button.classList.toggle('hidden',collectionActive);
   if(collectionActive)hide(els.transcriptPanel);
-  els.collectionCount.textContent=`Collection (${items.length}/3)${collectionActive?' · In use':''}`;
+  els.collectionCount.textContent=`${items.length} / 3 collected`;
+  els.useCollection.textContent=`Collection (${items.length})`;
   els.collectionItems.replaceChildren();
   for(const [index,item] of items.entries()) {
     const row=document.createElement('div');row.className='collection-item';
@@ -36,43 +43,46 @@ function renderCollection() {
     const link=document.createElement('p');link.className='field-help';link.textContent=item.url;
     const actions=document.createElement('div');actions.className='custom-actions';
     for(const [label,type,offset,disabled] of [['Up','COLLECTION_MOVE',-1,index===0],['Down','COLLECTION_MOVE',1,index===items.length-1],['Remove','COLLECTION_REMOVE',0,false]]){
-      const button=document.createElement('button');button.className='secondary small';button.textContent=label;button.disabled=busy||sending||disabled;
+      const button=document.createElement('button');button.className='secondary small';button.textContent=label;button.disabled=blocked||disabled;
       button.setAttribute('aria-label',`${label}: ${item.title}`);
       button.addEventListener('click',()=>changeCollection(type,item.videoId,offset));actions.append(button);
     }
     row.append(title,meta,link,actions);els.collectionItems.append(row);
   }
-  if(collectionState)els.collectionStatus.textContent=items.length>1?'Ready to use. Review sources when needed.':items.length?'Add another captioned video to use the collection.':'Add this video, then visit another to collect more.';
-  els.addToCollection.disabled=busy||sending||!collectionState||!videoContext||items.length>=YT2GPTCollection.MAX_ITEMS;
-  els.useCollection.disabled=busy||sending||items.length<2;
-  els.useCollection.textContent=collectionActive?'Back to single video':'Use collection';
-  els.clearCollection.disabled=busy||sending||!items.length;
-  els.collectionQuestion.disabled=busy||sending;
-  document.querySelector('.mode-group')?.classList.toggle('hidden',collectionActive);
+  if(collectionState)els.collectionStatus.textContent=items.length>1?'Review these sources, choose an intent and open them together. You send manually.':items.length?'One video collected. Visit another captioned YouTube video and choose Add to collection.':'No videos collected yet. On a YouTube video, choose Add to collection, then visit another.';
+  els.addToCollection.disabled=blocked||!collectionState||!videoContext||items.length>=YT2GPTCollection.MAX_ITEMS;
+  els.useCollection.disabled=blocked;els.workspaceVideo.disabled=blocked;
+  els.clearCollection.disabled=blocked||!items.length;
+  els.collectionQuestion.disabled=blocked;
+  els.sourceHint.textContent=blocked?'Updating or working… wait before choosing another action.':!videoContext?'Switch to a captioned YouTube video to add it. Your collection stays available here.':!collectionState?'Session collection unavailable. Retry or use Video.':items.length>=YT2GPTCollection.MAX_ITEMS?'Collection full (3 videos). Choose Collection to review or remove a source.':collectionCaptureProblem?collectionCaptureProblem:items.some(i=>i.videoId===videoContext.videoId)?'This video is already collected. Visit another video to add more.':items.length===0?'Add this video, then visit another. Nothing is sent when adding.':`${items.length} collected. Add this video or choose Collection to review.`;
+  document.querySelector('.mode-group')?.classList.toggle('hidden',collectionActive||!videoContext);
   els.collectionTaskField.classList.toggle('hidden',!collectionActive);
-  els.collectionModeSelect.value=collectionMode;
-  els.collectionModeSelect.disabled=busy||sending;
+  els.collectionModeSelect.value=collectionMode;els.collectionModeSelect.disabled=blocked;
   els.collectionQuestionWrap.classList.toggle('hidden',!collectionActive);
   els.copyPrompt.textContent=collectionActive?'Copy collection':'Copy prompt';
 }
 async function addCurrentToCollection() {
   if(busy||sending||!collectionState||!videoContext)return;
-  const context=JSON.parse(JSON.stringify(videoContext));
+  collectionCaptureProblem='';
+  const choice=capturePromptChoice();choice.collection=false;
+  const context=choice.sourceVideo;
   const revision=collectionState.revision,generation=collectionState.generation;
   if(collectionState.items.some(i=>i.videoId===context.videoId))return showError('Already added. Remove it explicitly before choosing another caption track.');
   if(collectionState.items.length>=YT2GPTCollection.MAX_ITEMS)return showError('This beta holds up to three videos. Remove one before adding another.');
-  sending=true;clearMessages();
+  sending=true;setInteractionBusy(false);clearMessages();
   try {
-    const transcript=await getSelectedTranscript(context.videoId);
+    await panel.validate(choice.binding,true);
+    const transcript=await getSelectedTranscript(context.videoId,choice);
     setBusy(true,'Adding current video.');
-    const checked=await chrome.tabs.sendMessage(sourceTabId,{type:'YT2GPT_GET_CONTEXT'});
+    await panel.validate(choice.binding,true);
+    const checked=await chrome.tabs.sendMessage(choice.sourceTabId,{type:'YT2GPT_GET_CONTEXT',strictIdentity:panel.enabled});
     if(!checked?.ok||checked.data?.videoId!==context.videoId)throw Error('The source video changed. Nothing was added.');
-    const response=await chrome.runtime.sendMessage({type:'COLLECTION_ADD',sourceTabId,revision,generation,item:{...context,transcript}});
+    const response=await chrome.runtime.sendMessage({type:'COLLECTION_ADD',sourceTabId:choice.sourceTabId,...sourceBindingPacket(choice),revision,generation,item:{...context,transcript}});
     if(!response?.ok)throw Error(response?.error||'Could not save the collection. Previous items were kept.');
     collectionState=response.state;invalidatePromptPreview();
-    showWarning('Added to this browser session only. Nothing was opened or sent.');
-  }catch(error){showError(friendlyError(error));await refreshCollection();}
-  finally{sending=false;setBusy(false);renderCollection();}
+    showWarning(`Added. ${collectionState.items.length} of 3 videos collected. Choose Collection to review; your workspace was kept. Nothing was opened or sent.`);
+  }catch(error){collectionCaptureProblem=friendlyError(error);showError(collectionCaptureProblem);await refreshCollection();}
+  finally{sending=false;setBusy(false);renderCollection();updateHandoffHelp();}
 }
 async function changeCollection(type,videoId,offset) {
   if(busy||sending||!collectionState)return;

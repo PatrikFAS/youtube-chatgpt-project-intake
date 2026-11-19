@@ -276,8 +276,8 @@ try {
   console.log('PASS: native remembered opt-in, visible Send destination and explicit per-video action; Preview/Copy remain manual.');
   const basket=await page('general');
   const state=()=>basket.evaluate('fixture.data.__session.collection_v1');
-  async function visit(index){await basket.evaluate(`fixture.data.__video=${index};window.name=JSON.stringify(fixture.data);location.reload()`);await basket.waitFor(`document.getElementById('youtubeView')&&!document.getElementById('youtubeView').classList.contains('hidden')`);await basket.click('#collectionPanel summary');}
-  await basket.click('#collectionPanel summary');
+  async function visit(index){await basket.evaluate(`fixture.data.__video=${index};window.name=JSON.stringify(fixture.data);location.reload()`);await basket.waitFor(`document.getElementById('youtubeView')&&!document.getElementById('youtubeView').classList.contains('hidden')`);}
+
   await basket.evaluate('fixture.missingCaptions=true');await basket.click('#addToCollection');
   await basket.waitFor('document.getElementById("error").textContent.includes("unavailable")');
   assert.equal((await state())?.items?.length||0,0);
@@ -288,16 +288,16 @@ try {
   await basket.waitFor('document.getElementById("error").textContent.includes("250,000")');
   assert.equal((await state())?.items?.length||0,0);
   await basket.evaluate('fixture.largeCaptions=false');await basket.click('#addToCollection');
-  await basket.waitFor('document.getElementById("collectionCount").textContent.includes("1/3")');
+  await basket.waitFor('document.getElementById("collectionCount").textContent.includes("1 / 3")');
   await basket.click('#addToCollection');await basket.waitFor('document.getElementById("error").textContent.includes("Already added")');
   assert.equal((await state()).items.length,1);
-  await visit(1);await basket.click('#addToCollection');await basket.waitFor('document.getElementById("collectionCount").textContent.includes("2/3")');
-  await visit(2);await basket.click('#addToCollection');await basket.waitFor('document.getElementById("collectionCount").textContent.includes("3/3")');
+  await visit(1);await basket.click('#addToCollection');await basket.waitFor('document.getElementById("collectionCount").textContent.includes("2 / 3")');
+  await visit(2);await basket.click('#addToCollection');await basket.waitFor('document.getElementById("collectionCount").textContent.includes("3 / 3")');
   assert.equal(await basket.evaluate('document.querySelectorAll(".collection-item img").length'),0,'source titles render as text');
-  await visit(3);assert.equal(await basket.evaluate('document.getElementById("addToCollection").disabled'),true,'full basket offers review/removal rather than another Add');assert.equal((await state()).items.length,3);
+  await visit(3);await basket.click('#useCollection');assert.equal(await basket.evaluate('document.getElementById("addToCollection").disabled'),true,'full basket offers review/removal rather than another Add');assert.equal((await state()).items.length,3);
   await basket.click('.collection-item:nth-child(2) button:first-child');
   await basket.waitFor('fixture.data.__session.collection_v1.items[0].videoId === "fixture2"');
-  await basket.click('#useCollection');await basket.click('#collectionQuestion');await call('Input.insertText',{text:'What do these sources disagree about?'},basket.sessionId);
+  await basket.click('#useCollection');await basket.click('#collectionQuestionWrap summary');await basket.click('#collectionQuestion');await call('Input.insertText',{text:'What do these sources disagree about?'},basket.sessionId);
   assert.equal(await basket.evaluate('document.getElementById("explicitSendPanel").classList.contains("hidden")'),true,'Collection has no explicit Send');
   await basket.click('#previewPrompt');await basket.waitFor('document.getElementById("promptPreview").textContent.startsWith("COLLECTION TASK")');
   let comparison=await basket.evaluate('document.getElementById("promptPreview").textContent');
@@ -316,7 +316,7 @@ try {
   await basket.click('#previewPrompt');await basket.waitFor('document.getElementById("promptPreview").textContent.startsWith("COLLECTION TASK")');
   const claudeCollection=await basket.evaluate('document.getElementById("promptPreview").textContent');await basket.click('#sendButton');await basket.waitFor('fixture.messages.length===1');
   assert.equal(await basket.evaluate('fixture.messages[0].payload'),claudeCollection);assert.equal(await basket.evaluate('fixture.messages[0].type'),'OPEN_DESTINATION_WITH_PAYLOAD');assert.equal(await basket.evaluate('fixture.messages[0].destinationUrl'),'https://claude.ai/new');
-  await visit(2);await basket.click('.collection-item:first-child button:last-child');await basket.waitFor('fixture.data.__session.collection_v1.items.length===2');
+  await visit(2);await basket.click('#useCollection');await basket.click('.collection-item:first-child button:last-child');await basket.waitFor('fixture.data.__session.collection_v1.items.length===2');
   await basket.click('#clearCollection');await basket.waitFor('fixture.data.__session.collection_v1.items.length===0');
   // A late capture cannot resurrect a basket cleared by another popup/worker action.
   await basket.evaluate('fixture.holdCapture=true');await basket.click('#addToCollection');await basket.waitFor('fixture.awaitingCapture===true');
@@ -326,7 +326,7 @@ try {
   // Four distinct collection tasks restore single-video Custom unchanged.
   await basket.evaluate(`fixture.data.__session.collection_v1={version:1,revision:0,generation:0,items:[1,2].map(n=>({videoId:'fixture'+n,title:'Large fixture '+n+' \\u2014 caf\\u00e9 \\ud83d\\ude00',url:'https://www.youtube.com/watch?v=fixture'+n,channel:'Fixture',publishDate:'',capturedAt:0,transcript:{text:'source '+n,segments:[],track:{name:'English'}}}))};fixture.data.lastMode='custom';fixture.data.customInstructions='Keep my saved task';window.name=JSON.stringify(fixture.data);location.reload()`);
   await basket.waitFor('document.getElementById("customInstructions")?.value === "Keep my saved task"');
-  await basket.click('#collectionPanel summary');await basket.click('#useCollection');
+  await basket.click('#useCollection');
   assert.equal(await basket.evaluate(`document.getElementById('collectionModeSelect').value`),'compare','Collection defaults to Compare & synthesize');
   for(const [mode,marker] of [['compare','Compare and synthesize the included sources'],['summarize','Synthesize the included sources'],['analyze','Compare the evidence and reasoning'],['apply','Apply the included sources']]){
     await chooseCollectionIntent(basket,mode);
@@ -334,20 +334,20 @@ try {
     const prompt=await basket.evaluate('document.getElementById("promptPreview").textContent');assert.ok(prompt.includes(marker));
     await basket.click('#copyPrompt');assert.equal(await basket.evaluate('fixture.copied'),prompt);
     assert.equal(await basket.evaluate('fixture.data.lastMode'),'custom');
-    if(mode==='analyze'){await basket.click('#transcriptTools summary');await basket.click('#retryButton');await basket.waitFor(`!document.getElementById('youtubeView').classList.contains('hidden')`);assert.equal(await basket.evaluate(`document.getElementById('collectionModeSelect').value`),'analyze','Retry keeps Collection task');}
+    if(mode==='analyze'){await basket.click('#retryButton');await basket.waitFor(`!document.getElementById('youtubeView').classList.contains('hidden')`);assert.equal(await basket.evaluate(`document.getElementById('collectionModeSelect').value`),'analyze','Retry keeps Collection task');}
   }
-  await basket.click('#useCollection');assert.equal(await basket.evaluate(`document.querySelector('input[name="mode"]:checked').value`),'custom');
+  await basket.click('#workspaceVideo');assert.equal(await basket.evaluate(`document.querySelector('input[name="mode"]:checked').value`),'custom');
   // Construct exactly the reported complete prompt size; real content stays private.
   await basket.evaluate(`(()=>{const items=fixture.data.__session.collection_v1.items;const base=YT2GPTCollection.build(items,'',false,'compare').length;items[0].transcript.text+='x'.repeat(78817-base);window.name=JSON.stringify(fixture.data);location.reload();})()`);
   await basket.waitFor('document.getElementById("customInstructions")?.value === "Keep my saved task"');
-  await basket.click('#collectionPanel summary');await basket.click('#useCollection');
+  await basket.click('#useCollection');
   await basket.click('#previewPrompt');await basket.waitFor('document.getElementById("promptPreview").textContent.length===78817');
   const longPrompt=await basket.evaluate('document.getElementById("promptPreview").textContent');
   assert.match(await basket.evaluate('document.getElementById("handoffHelp").textContent'),/without autofill/);
   await basket.click('#copyPrompt');assert.equal(await basket.evaluate('fixture.copied'),longPrompt);
   await call('Browser.setDownloadBehavior',{behavior:'allow',downloadPath:profile});
   await basket.evaluate(`fixture.copied='Keep clipboard unchanged during export'`);
-  assert.equal(await basket.evaluate('document.getElementById("sendButton").textContent'),'Download .txt');
+  assert.equal(await basket.evaluate('document.getElementById("sendButton").textContent'),'Download collection .txt');
   await basket.click('#sendButton');
   const downloaded=path.join(profile,'youtube-ai-bridge-collection.txt');
   for(let attempt=0;attempt<100&&!fs.existsSync(downloaded);attempt++)await new Promise(r=>setTimeout(r,30));
@@ -363,7 +363,7 @@ try {
   const compact=await page('gpt-project');
   await compact.evaluate(`fixture.data.chatgptExplicitSendEnabled=true;fixture.data.lastMode='summarize';fixture.data.lastDestinationId='gpt-project';fixture.data.customInstructions='Saved instruction from previous beta';fixture.data.destinations.find(d=>d.id==='gpt-project').name='Existing saved project '+('long name '.repeat(18));window.name=JSON.stringify(fixture.data);location.reload()`);
   await compact.waitFor('document.getElementById("explicitSendOptIn")?.checked');
-  assert.equal(await compact.evaluate('document.getElementById("sendButton").textContent'),'Send to ChatGPT','remembered opt-in is visible and labelled after update');
+  assert.equal(await compact.evaluate('document.getElementById("sendButton").textContent'),'Send video to ChatGPT','remembered opt-in is visible and labelled after update');
   assert.equal(await compact.evaluate('fixture.data.customInstructions'),'Saved instruction from previous beta');
   assert.equal(await compact.evaluate('fixture.data.lastMode'),'summarize');
   assert.equal(await compact.evaluate('fixture.data.lastDestinationId'),'gpt-project');
@@ -381,14 +381,14 @@ try {
     await call('Emulation.setDeviceMetricsOverride',{width,height,deviceScaleFactor:1,mobile:false},compact.sessionId);
     await compact.evaluate(`videoContext.title='A full source title '+('long title '.repeat(70));renderVideoContext();document.getElementById('contentScroll').scrollTop=0`);
     await footerVisible(compact,'inherited Send '+width+'x'+height);
-    assert.equal(await compact.evaluate(`(()=>{const b=document.getElementById('addToCollection'),r=b.getBoundingClientRect(),c=document.getElementById('contentScroll').getBoundingClientRect();return r.top>=c.top&&r.bottom<=c.bottom&&document.elementFromPoint(r.x+r.width/2,r.y+r.height/2)===b;})()`),true,'first-use Add is immediately visible with long title');
+    assert.equal(await compact.evaluate(`(()=>{const b=document.getElementById('addToCollection'),r=b.getBoundingClientRect(),c=document.getElementById('contentScroll').getBoundingClientRect();return r.top>=0&&r.bottom<=innerHeight&&document.elementFromPoint(r.x+r.width/2,r.y+r.height/2)===b;})()`),true,'first-use Add is immediately visible with long title');
     await compact.evaluate(`document.getElementById('contentScroll').scrollTop=100000`);await footerVisible(compact,'scrolled body '+width+'x'+height);
   }
   await compact.evaluate(`fixture.data.__session.collection_v1={version:1,revision:0,generation:0,items:[1,2,3].map(n=>({videoId:'layout'+n,title:'Long source '+n+' '+('source title '.repeat(80)),url:'https://www.youtube.com/watch?v=layout'+n,channel:'Fixture',publishDate:'',capturedAt:0,transcript:{text:'x'.repeat(26000),segments:[],track:{name:'English'}}}))}`);
   await compact.evaluate('refreshCollection()');await compact.click('#useCollection');
-  assert.equal(await compact.evaluate('document.getElementById("sendButton").textContent'),'Download .txt');
+  assert.equal(await compact.evaluate('document.getElementById("sendButton").textContent'),'Download collection .txt');
   assert.equal(await compact.evaluate('document.getElementById("explicitSendPanel").classList.contains("hidden")'),true,'remembered opt-in never enables Collection Send');
-  await compact.click('#collectionPanel summary');
+
   await footerVisible(compact,'long expanded three-source basket');
   await chooseCollectionIntent(compact,'analyze');assert.equal(await compact.evaluate('getSelectedMode()'),'analyze','Analyze remains explicitly available with no migration');
   await compact.click('#handoffAlternatives summary');await footerVisible(compact,'expanded alternatives');

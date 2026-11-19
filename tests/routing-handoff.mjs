@@ -22,7 +22,7 @@ function deferred() {
   return { promise, resolve };
 }
 
-function createBackground({ source = { id: 11, windowId: 4, index: 2 }, nextTabId = 90, failGet = false, failCreate = false, failStorageSet = false, initialPending = {}, localData = {} } = {}) {
+function createBackground({ source = { id: 11, windowId: 4, index: 2 }, nextTabId = 90, failGet = false, failCreate = false, failStorageSet = false, initialPending = {}, localData = {}, activeSource = null } = {}) {
   let listener;
   let installed;
   const pending = new Map(Object.entries(initialPending));
@@ -35,7 +35,7 @@ function createBackground({ source = { id: 11, windowId: 4, index: 2 }, nextTabI
     tabs: {
       async get(id) { gets.push(id); if (failGet) throw new Error('closed'); return { ...source, id }; },
       async create(options) { creates.push(options); if (failCreate) throw new Error('create failed'); return { id: nextTabId }; },
-      async query() { queried = true; return [{ id: 999, windowId: 99, index: 0 }]; }
+      async query() { queried = true; return [activeSource || { id: 999, windowId: 99, index: 0 }]; }
     },
     storage: { session: {
       async set(values) {
@@ -64,10 +64,29 @@ function createBackground({ source = { id: 11, windowId: 4, index: 2 }, nextTabI
   };
 }
 
+async function testPanelBoundary() {
+  const source={id:11,windowId:4,index:2,url:'https://www.youtube.com/watch?v=fixture01'};
+  const sender={url:'chrome-extension://fixture/popup/popup.html?surface=panel'};
+  const message={type:'OPEN_DESTINATION_WITH_PAYLOAD',payload:'Fresh selected source prompt',destinationUrl:'https://chatgpt.com/',sourceTabId:11,sourceContext:{tabId:11,windowId:4,videoId:'fixture01'}};
+  const correct=createBackground({source,activeSource:source});
+  assert.equal((await correct.message(message,sender)).ok,true);assert.equal(correct.creates[0].windowId,4);assert.equal(correct.creates[0].openerTabId,11);
+  for(const [label,change,active]of [
+    ['wrong window',{sourceContext:{...message.sourceContext,windowId:8}},source],
+    ['wrong video',{sourceContext:{...message.sourceContext,videoId:'old'}},source],
+    ['missing panel binding',{sourceContext:undefined},source],
+    ['inactive source',{}, {...source,id:12}]
+  ]){const bg=createBackground({source,activeSource:active});assert.equal((await bg.message({...message,...change},sender)).ok,false,label);assert.equal(bg.creates.length,0);}
+  // Feature-detection failure must leave a functional toolbar popup, not blank action.
+  const popups=[],behaviors=[];
+  const context=vm.createContext({URL,Date,Set,crypto:globalThis.crypto,TextEncoder,chrome:{runtime:{getURL:p=>'chrome-extension://fixture/'+p,onInstalled:{addListener(){}},onMessage:{addListener(){}}},action:{async setPopup(value){popups.push(value.popup);}},storage:{},sidePanel:{async open(){},async setPanelBehavior(value){behaviors.push(value.openPanelOnActionClick);throw Error('Unavailable');}}},importScripts(name){vm.runInContext(read(name),context);}});
+  vm.runInContext(backgroundSource,context);await vm.runInContext('configureEntry()',context);assert.ok(popups.includes('popup/popup.html'));assert.ok(behaviors.includes(false));
+  console.log('PASS: panel worker rejects missing/stale/inactive/wrong-window bindings; supported source remains adjacent, unavailable sidePanel falls back to popup.');
+}
+
 async function testBackground() {
   const destination = loadDestination();
   const manifest = JSON.parse(read('manifest.json'));
-  assert.deepEqual(manifest.permissions, ['activeTab', 'storage', 'clipboardWrite']);
+  assert.deepEqual(manifest.permissions, ['activeTab', 'storage', 'clipboardWrite', 'sidePanel']);
   assert.deepEqual(manifest.host_permissions, ['https://www.youtube.com/*', 'https://youtube.com/*', 'https://m.youtube.com/*', 'https://chatgpt.com/*', 'https://claude.ai/*'], 'Claude insertion adds only its exact HTTPS host');
   const claudeScript = manifest.content_scripts.find((script) => script.matches.includes('https://claude.ai/*'));
   assert.deepEqual(claudeScript.js, ['shared/destination.js', 'claude/content.js']);
@@ -699,12 +718,12 @@ async function testInjector() {
   await settle();
   assert.equal(draft.composer.innerText, 'my existing draft');
   assert.equal(draft.page.claimCount, 0, 'draft should be checked before consuming a handoff');
-  assert.match(draft.page.toasts.join(' '), /existing draft was left untouched/);
+  assert.match(draft.page.toasts.join(' '), /ChatGPT already has a draft/);
 
   const attachmentDraft = makePage({ attachment: true });
   await settle();
   assert.equal(attachmentDraft.composer.replaceCount || 0, 0, 'existing attachment must count as a draft');
-  assert.match(attachmentDraft.page.toasts.join(' '), /existing draft was left untouched/);
+  assert.match(attachmentDraft.page.toasts.join(' '), /ChatGPT already has a draft/);
 
   const readonly = makePage({ readOnly: true });
   await settle();
@@ -748,6 +767,7 @@ async function testInjector() {
   assert.match(changedMode.page.toasts.join(' '), /page or draft changed/);
 }
 
+await testPanelBoundary();
 await testBackground();
 async function testExplicitSend() {
   const source={id:11,windowId:4,index:2,url:'https://www.youtube.com/watch?v=fixture-video'};

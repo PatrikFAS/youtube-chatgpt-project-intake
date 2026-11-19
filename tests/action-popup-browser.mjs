@@ -2,7 +2,7 @@
 // intercepted synthetic content; real Chrome APIs/storage and action sizing.
 import assert from 'node:assert/strict';
 import fs from 'node:fs';import os from 'node:os';import path from 'node:path';import {spawn} from 'node:child_process';
-const [executable,prior19,prior20,candidate]=process.argv.slice(2);
+const args=process.argv.slice(2);const executable=args[0],candidate=args.at(-1),prior19=args[1],prior20=args.length>2?args[2]:candidate;
 assert.ok(executable&&prior19&&prior20&&candidate,'Pass Chromium and extracted exact v0.1.19/v0.1.20/candidate directories');
 const candidateVersion=JSON.parse(fs.readFileSync(path.join(candidate,'manifest.json'),'utf8')).version;
 const work=fs.mkdtempSync(path.join(os.tmpdir(),'yt-bridge-action-native-'));
@@ -11,10 +11,10 @@ const delay=ms=>new Promise(r=>setTimeout(r,ms));
 const report={surface:'chrome.action.openPopup; real extension popup view; no Emulation commands',work,rows:[],errors:[]};
 async function exercise(label,start,mode,group=label){
  const installed=path.join(work,group,'unpacked'),profile=path.join(work,group,'profile');install(start,installed);
- const browser=spawn(executable,['--headless=new','--disable-gpu','--disable-background-networking','--no-first-run','--no-default-browser-check','--remote-debugging-port=0','--window-size=1000,850',`--user-data-dir=${profile}`,`--disable-extensions-except=${installed}`,`--load-extension=${installed}`,'about:blank'],{stdio:['ignore','ignore','pipe'],windowsHide:true});
+ const browser=spawn(executable,['--headless=new','--disable-background-mode','--enable-unsafe-extension-debugging','--disable-gpu','--disable-background-networking','--no-first-run','--no-default-browser-check','--remote-debugging-port=0','--window-size=1000,850',`--user-data-dir=${profile}`,`--disable-extensions-except=${installed}`,`--load-extension=${installed}`,'about:blank'],{stdio:['ignore','ignore','pipe'],windowsHide:true});
  let ws,seq=0,controlSession,extensionId;const pending=new Map(),errors=[];
  try{
-  const endpoint=await new Promise((resolve,reject)=>{let out='';const timer=setTimeout(()=>reject(Error('No CDP endpoint')),12000);browser.once('error',reject);browser.stderr.on('data',d=>{out+=d;const m=out.match(/DevTools listening on (ws:\/\/[^\s]+)/);if(m){clearTimeout(timer);resolve(m[1]);}});});
+  const endpoint=await new Promise((resolve,reject)=>{let out='';const timer=setTimeout(()=>reject(Error('No CDP endpoint: '+out.slice(-1200))),25000);browser.once('error',reject);browser.once('exit',code=>{clearTimeout(timer);reject(Error('Disposable browser exited before CDP: '+code+' '+out.slice(-1200)));});browser.stderr.on('data',d=>{out+=d;const m=out.match(/DevTools listening on (ws:\/\/[^\s]+)/);if(m){clearTimeout(timer);resolve(m[1]);}});});
   ws=new WebSocket(endpoint);await new Promise((r,j)=>{ws.addEventListener('open',r,{once:true});ws.addEventListener('error',j,{once:true});});
   function call(method,params={},sessionId){const id=++seq;return new Promise((resolve,reject)=>{const timer=setTimeout(()=>{pending.delete(id);reject(Error(method+' timed out on '+(sessionId||'browser')));},15000);pending.set(id,{resolve,reject,timer});ws.send(JSON.stringify({id,method,params,...(sessionId?{sessionId}:{})}));});}
   const player={videoDetails:{videoId:'fixture01',title:'Synthetic source for actual popup sizing',author:'Fixture only',lengthSeconds:'30'},captions:{playerCaptionsTracklistRenderer:{captionTracks:[{baseUrl:'https://www.youtube.com/api/timedtext?v=fixture01',languageCode:'en',name:{simpleText:'English'}}]}}};
@@ -28,7 +28,9 @@ async function exercise(label,start,mode,group=label){
   async function wait(fn,name){for(let i=0;i<150;i++){const result=await fn();if(result)return result;await delay(80);}throw Error('Wait failed: '+name);}
   // Use the extension's own options page as the control context. This avoids
   // attaching a debugger to the worker during cold startup; APIs stay native.
-  const info=await wait(async()=> (await call('Target.getTargets')).targetInfos.find(t=>t.type==='service_worker'&&t.url.endsWith('/background.js')),'stock extension registration');
+  const entries=(await call('Extensions.getExtensions')).extensions;
+  const bridge=entries.find(e=>e.name==='YouTube AI Bridge');assert.ok(bridge,'Bridge registered in disposable browser');
+  const info=await wait(async()=> (await call('Target.getTargets')).targetInfos.find(t=>t.type==='service_worker'&&t.url.includes('://'+bridge.id+'/')&&t.url.endsWith('/background.js')),'Bridge extension registration');
   extensionId=new URL(info.url).hostname;
   const control=await call('Target.createTarget',{url:'about:blank'}),controlAttach=await call('Target.attachToTarget',{targetId:control.targetId,flatten:true});
   controlSession=controlAttach.sessionId;await call('Page.enable',{},controlSession);await call('Runtime.enable',{},controlSession);
@@ -36,6 +38,7 @@ async function exercise(label,start,mode,group=label){
   await wait(()=>evaluate(`document.readyState==='complete'&&Boolean(chrome.runtime?.id)`),'native extension control page');
   assert.equal(await evaluate('chrome.runtime.getManifest().name'),'YouTube AI Bridge');
   async function popup(state,expectSmall=false){
+   if(mode==='candidate')await evaluate(`(async()=>{await chrome.sidePanel?.setPanelBehavior({openPanelOnActionClick:false});await chrome.action.setPopup({popup:'popup/popup.html'});})()`);
    await evaluate('chrome.action.openPopup().then(()=>true)');
    const target=await wait(async()=>(await call('Target.getTargets')).targetInfos.find(t=>t.url===`chrome-extension://${extensionId}/popup/popup.html`),'real action popup');
    const s=await call('Target.attachToTarget',{targetId:target.targetId,flatten:true});await call('Runtime.enable',{},s.sessionId);await call('Log.enable',{},s.sessionId);
@@ -59,26 +62,26 @@ async function exercise(label,start,mode,group=label){
   const youtube=await tab('https://www.youtube.com/watch?v=fixture01');
   const youtubeId=await evaluate('chrome.tabs.query({active:true,currentWindow:true}).then(t=>t[0].id)');
   await wait(()=>evaluate(`chrome.tabs.sendMessage(${youtubeId},{type:'YT2GPT_GET_CONTEXT'}).then(r=>r?.ok).catch(()=>false)`),'actual caption content script');
-  p=await popup('YouTube, collapsed disclosures and retained Claude destination');assert.deepEqual(p.metrics.views,['youtubeView']);assert.equal(p.metrics.label,'Open in Claude');assert.equal(await p.eval('document.getElementById("videoTitle").textContent'),'Synthetic source for actual popup sizing');
-  assert.equal(await p.eval('document.getElementById("destinationSelect").value'),'qa-claude');assert.equal(await p.eval('document.getElementById("collectionPanel").open'),false);assert.equal(await p.eval('document.getElementById("handoffAlternatives").open'),false);
-  await p.eval('document.getElementById("addToCollection").click()');await wait(()=>p.eval('document.getElementById("collectionCount").textContent.includes("1/3")'),'real API caption Add');
+  p=await popup('YouTube, collapsed disclosures and retained Claude destination');assert.deepEqual(p.metrics.views,['youtubeView']);assert.equal(p.metrics.label,'Open video in Claude');assert.equal(await p.eval('document.getElementById("videoTitle").textContent'),'Synthetic source for actual popup sizing');
+  assert.equal(await p.eval('document.getElementById("destinationSelect").value'),'qa-claude');assert.equal(await p.eval('document.getElementById("collectionPanel").classList.contains("hidden")'),true);assert.equal(await p.eval('document.getElementById("handoffAlternatives").open'),false);
+  await p.eval('document.getElementById("addToCollection").click()');await wait(()=>p.eval('document.getElementById("collectionCount").textContent.includes("1 / 3")'),'real API caption Add');
   const captured=await evaluate('chrome.storage.session.get("collection_v1").then(s=>s.collection_v1.items[0])');assert.equal(captured.videoId,'fixture01');assert.ok(captured.transcript.text.includes('Synthetic captions only.'));
   const shot=await call('Page.captureScreenshot',{format:'png'},p.sessionId);fs.writeFileSync(path.join(work,label+'-actual-action.png'),Buffer.from(shot.data,'base64'));
   await p.close();
   const items=[1,2,3].map(n=>({videoId:'fixture'+n,title:'Synthetic source '+n+' '+('long title '.repeat(40)),url:'https://www.youtube.com/watch?v=fixture'+n,channel:'Fixture',publishDate:'',capturedAt:1,transcript:{text:'x'.repeat(26000),segments:[],track:{name:'English',languageCode:'en',isAutoGenerated:false}}}));
   await evaluate('chrome.storage.session.set('+JSON.stringify({collection_v1:{version:1,revision:0,generation:0,items}})+')');
-  p=await popup('ready large basket before choosing Collection');await p.eval('document.getElementById("useCollection").click()');assert.equal(await p.eval('document.getElementById("sendButton").textContent'),'Download .txt');assert.equal(await p.eval('document.getElementById("explicitSendPanel").classList.contains("hidden")'),true);await p.eval('document.getElementById("collectionPanel").open=true; document.getElementById("handoffAlternatives").open=true; document.getElementById("contentScroll").scrollTop=100000');
+  p=await popup('ready large basket before choosing Collection');await p.eval('document.getElementById("useCollection").click()');assert.equal(await p.eval('document.getElementById("sendButton").textContent'),'Download collection .txt');assert.equal(await p.eval('document.getElementById("explicitSendPanel").classList.contains("hidden")'),true);await p.eval('document.getElementById("collectionPanel").open=true; document.getElementById("handoffAlternatives").open=true; document.getElementById("contentScroll").scrollTop=100000');
   const b=await p.eval('(()=>{const r=document.getElementById("sendButton").getBoundingClientRect();return {top:r.top,bottom:r.bottom,h:innerHeight};})()');assert.ok(b.top>=0&&b.bottom<=b.h);await p.close();
   await evaluate('chrome.storage.local.set({lastProvider:"chatgpt",lastDestinationId:"qa-gpt"})');
-  p=await popup('retained ChatGPT opt-in, no automatic action on open');assert.equal(p.metrics.label,'Send to ChatGPT');await p.close();
-  const target=await tab('https://chatgpt.com/g/g-p-fixture/project?view=saved#notes');p=await popup('saved destination page');assert.deepEqual(p.metrics.views,['chatgptView']);await p.close();
+  p=await popup('retained ChatGPT opt-in, no automatic action on open');assert.equal(p.metrics.label,'Send video to ChatGPT');await p.close();
+  const target=await tab('https://chatgpt.com/g/g-p-fixture/project?view=saved#notes');p=await popup('saved destination page');assert.deepEqual(p.metrics.views,['youtubeView','chatgptView']);await p.close();
   const pendingKeys=await evaluate('chrome.storage.session.get(null).then(s=>Object.keys(s).filter(k=>k.startsWith("pending_")||k.startsWith("explicit_send_")))');assert.deepEqual(pendingKeys,[],'QA never requests insertion or Send');
   assert.deepEqual(errors,[],'no startup/runtime errors in stock assets');report.errors.push(...errors);
   console.log('PASS real action '+label+': '+report.rows.filter(r=>r.profile===label).map(r=>`${r.version} ${r.state}=${r.innerWidth}x${r.innerHeight}`).join('; '));
- }finally{if(ws?.readyState===WebSocket.OPEN){ws.send(JSON.stringify({id:++seq,method:'Browser.close'}));await new Promise(r=>{const t=setTimeout(r,1500);browser.once('exit',()=>{clearTimeout(t);r();});});}ws?.close();browser.kill();browser.stderr.destroy();browser.unref();for(const p of pending.values()){clearTimeout(p.timer);p.reject(Error('Closed'));}}
+ }finally{if(ws?.readyState===WebSocket.OPEN){ws.send(JSON.stringify({id:++seq,method:'Browser.close'}));await new Promise(r=>{const t=setTimeout(r,4000);browser.once('exit',()=>{clearTimeout(t);r();});});}ws?.close();browser.kill();browser.stderr.destroy();browser.unref();for(const p of pending.values()){clearTimeout(p.timer);p.reject(Error('Closed'));}}
 }
-await exercise('baseline-019',prior19,'baseline','same-folder-update');
+if(args.length>2){await exercise('baseline-019',prior19,'baseline','same-folder-update');
 await exercise('regression-020',prior20,'regression','same-folder-update');
-await exercise('updated-candidate',candidate,'candidate','same-folder-update');
+await exercise('updated-candidate',candidate,'candidate','same-folder-update');}
 await exercise('fresh-candidate',candidate,'candidate');
 fs.writeFileSync(path.join(work,'report.json'),JSON.stringify(report,null,2));console.log('Actual action report '+path.join(work,'report.json'));

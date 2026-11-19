@@ -156,7 +156,7 @@ for(const destinationUrl of ['https://chatgpt.com/','https://claude.ai/new']){
   assert.equal(ui.storageData.customInstructions,undefined,'one-off example never auto-saves');
 }
 assert.equal(popup.els.explicitSendOptIn.checked,false,'Send is off by default');
-assert.equal(popup.els.sendButton.textContent,'Open in ChatGPT');
+assert.equal(popup.els.sendButton.textContent,'Open video in ChatGPT');
 assert.ok(!popupHtml.includes('id="explicitSendButton"'),'one primary destination action');
 await vm.runInContext('sendToChatGPT(true)',popup.context);
 assert.equal(popup.events.message,undefined,'no send before opt-in');
@@ -171,7 +171,7 @@ assert.match(popup.events.clipboard, /Transcript contents\./);
 assert.match(popup.els.error.textContent, /Simulated opening failure\..*complete prompt is already on your clipboard/);
 assert.equal(popup.closed(), false, 'failed open leaves the popup available');
 const opted=await makePopup({storedSettings:{chatgptExplicitSendEnabled:true},runtimeOk:true});
-assert.equal(opted.els.sendButton.textContent,'Send to ChatGPT');
+assert.equal(opted.els.sendButton.textContent,'Send video to ChatGPT');
 assert.match(opted.els.explicitSendDestination.textContent,/https:\/\/chatgpt.com/);
 await vm.runInContext('preparePromptAction(false)',opted.context);
 assert.equal(opted.events.message,undefined,'Preview cannot send after opt-in');
@@ -298,7 +298,7 @@ assert.equal(JSON.stringify(popupSave.storageData.destinations), destinationsBef
 for (const destinationUrl of ['https://claude.ai/new', 'https://claude.ai/chat/fixture-chat?view=saved#notes', 'https://claude.ai/project/fixture-project']) {
   for (const mode of ['apply', 'analyze', 'summarize']) {
     const claude = await makePopup({ runtimeOk: true, destinationUrl, mode });
-    assert.equal(claude.els.sendButton.textContent, 'Open in Claude');
+    assert.equal(claude.els.sendButton.textContent, 'Open video in Claude');
     assert.match(claude.els.handoffHelp.textContent, /paste \(Ctrl\+V\).*Existing drafts are left untouched/);
     await vm.runInContext('sendToChatGPT()', claude.context);
     assert.ok(claude.events.indexOf('clipboard') < claude.events.indexOf('open'));
@@ -344,10 +344,10 @@ assert.equal(legacy.storageData.lastMode, 'summarize');
 assert.equal(legacy.storageData.destinations[0].url, 'https://chatgpt.com/g/g-p-existing/project');
 assert.equal(legacy.storageData.destinations.filter((d) => d.id === 'claude-general').length, 1);
 await legacy.els.providerClaude.listeners.change();
-assert.equal(legacy.els.sendButton.textContent, 'Open in Claude');
+assert.equal(legacy.els.sendButton.textContent, 'Open video in Claude');
 assert.equal(legacy.storageData.lastDestinationId, 'claude-general');
 await legacy.els.providerChatGPT.listeners.change();
-assert.equal(legacy.els.sendButton.textContent, 'Open in ChatGPT');
+assert.equal(legacy.els.sendButton.textContent, 'Open video in ChatGPT');
 
 const claudeSave = await makePopup({ activeUrl: 'https://claude.ai/project/fixture-project?view=saved#notes' });
 assert.equal(claudeSave.els.chatgptView.classList.contains('hidden'), false, 'popup recognizes Claude without a content script or host access');
@@ -598,3 +598,11 @@ await chooseCustom(legacyPresetPreference,'One-off task.');
 await vm.runInContext('sendToChatGPT()',legacyPresetPreference.context);
 assert.equal(legacyPresetPreference.storageData.lastMode,'summarize','the selected legacy preset wins over a stale auxiliary preference');
 console.log('PASS: popup/options preserve workflow and preferences; Preview/Copy/Open match in 24 preset/custom destination combinations, with explicit local reuse, one-off clearing and snapshot/stale-preview protection.');
+
+// A new popup/job never reuses the previous closed destination's source payload.
+const earlierDraft=await makePopup({runtimeOk:true,videoTitle:'Earlier unsent source'});
+await vm.runInContext('sendToChatGPT()',earlierDraft.context);assert.equal(earlierDraft.closed(),true);
+const nextDraft=await makePopup({runtimeOk:true,videoTitle:'Fresh selected source'});
+await vm.runInContext('sendToChatGPT()',nextDraft.context);assert.match(nextDraft.events.clipboard,/Fresh selected source/);assert.doesNotMatch(nextDraft.events.clipboard,/Earlier unsent source/);
+assert.equal(nextDraft.events.message.payload,nextDraft.events.clipboard);assert.equal(nextDraft.events.message.type,'OPEN_DESTINATION_WITH_PAYLOAD');
+console.log('PASS: reopened-job fixture copies the fresh selected source; restored provider draft protection is separately tested without sending.');
