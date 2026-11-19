@@ -8,6 +8,7 @@ const source = fs.readFileSync(path.join(here, '..', 'youtube', 'content.js'), '
 
 let messageListener = null;
 let ccActive = false;
+let changeVideoOnFetch = false;
 const resources = [];
 
 const ccButton = {
@@ -76,6 +77,7 @@ const performanceMock = {
 };
 
 async function fetchMock(input) {
+  if (changeVideoOnFetch) windowObj.location.href='https://www.youtube.com/watch?v=other123';
   const url = String(input);
   const hasPot = new URL(url).searchParams.get('pot') === 'TESTPOT';
   const fmt = new URL(url).searchParams.get('fmt') || '';
@@ -142,3 +144,9 @@ if (!result.data?.text?.includes('poToken fallback passed.')) {
 if (ccActive !== false) throw new Error('CC state was not restored after poToken harvesting.');
 
 console.log('PASS: empty direct caption responses recovered via local poToken fallback.');
+const early = await new Promise(resolve=>messageListener({type:'YT2GPT_GET_TRANSCRIPT',track,expectedVideoId:'wrong123'}, {},resolve));
+if(early.ok || !early.error.includes('source video changed'))throw Error('Wrong-source capture was not rejected.');
+changeVideoOnFetch=true;
+const late=await new Promise(resolve=>messageListener({type:'YT2GPT_GET_TRANSCRIPT',track,expectedVideoId:'test123'}, {},resolve));
+if(late.ok || !late.error.includes('source video changed'))throw Error('Late source navigation was not rejected.');
+console.log('PASS: Collection caption capture rejects source identity changes before and during extraction.');

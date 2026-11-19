@@ -1,0 +1,176 @@
+# Collection implementation and acceptance
+
+## v0.1.20 usability refinement
+
+Owner evidence: **Patrik said Collection worked in his v0.1.19 browser.** No
+specific mode or attachment format is inferred. He asked for a less clunky
+popup with the primary action reachable without scrolling. The shipped ZIP is
+unchanged as rollback.
+
+We compared a default comparison plus question, a compact intent selector and
+separate cards. A general digest of long talks, conflicting advice and a current
+Project each need a meaningfully different task, so use one compact selector.
+Compare & synthesize remains default; Summarize requests a faithful digest and
+conditional watch moments; Apply uses real available context. Analyze is kept
+under focused evidence review in the same menu for existing users, with its
+prompt intact. There is no silent migration or compulsory decision question.
+
+Add current video stays visible for zero/one/ready entries, and the basket/status
+explain when a second source is needed. Review/remove/reorder/clear and session
+lifetime stay behind source details. The footer shows intent/count/destination
+and the correct main action while only the body scrolls. Above 60,000 local
+UTF-16 units it says Download .txt; manual Open is an alternative. Attach the
+complete file yourself if supported and use a short instruction rather than also
+pasting the entire prompt. No automatic attachments or Collection Send.
+
+Native fixtures validate the 78,817-unit complete-file route, four keyboard
+intent choices, single-video restoration, 400x600/360x480 long-title/basket
+geometry, footer hit targets and Tab access. In-place setting reads retain
+legacy destinations, saved Custom and the Send opt-in; a remembered opt-in is
+visible and should be turned off for manual tests. Actual installed geometry,
+provider upload/context limits, output quality and Sarah acceptance remain user
+gates. No new retention, capture or provider API behavior is introduced.
+
+
+## v0.1.19 refinement from real feedback
+
+Patrik hit a serialized Collection of 78,817 characters. v0.1.18's 60,000-unit
+bound came from the offline three-sample experiment below; it was a conservative
+application trial budget, with no evidence of a provider limit or maximum safe
+DOM insertion length. It blocked Add/review as well as handoff, causing avoidable
+loss of usefulness. Preserve the v0.1.18 history below as history.
+
+The candidate separates full review/copy/local .txt export (250,000 UTF-16 units)
+from guarded web-composer insertion (60,000 units). The 512 KiB encoded-state
+budget and three-source count stay unchanged. The larger bound is a bounded
+local memory/export choice, not measured model capacity. Native fixtures cover
+exactly 78,817 units with identical Preview, Copy, downloaded UTF-8 file and Open
+payload. The worker independently opens oversized Collections without a pending
+insertion record, preserving exact destination/tab placement and manual Send.
+Manual attachment depends on the assistant/account's actual capabilities; Bridge
+neither attaches files nor assumes an attachment API. No silent truncation.
+
+v0.1.18's Collection builder ignored the individual mode selection and always
+requested comparison/synthesis. v0.1.19 exposes **Compare & synthesize** as the
+Collection default in the same task selector; it integrates takeaways and weighs
+agreement/disagreement/support without counting repetition as corroboration.
+Summarize makes a faithful digest; Analyze critically assesses claims/evidence;
+Apply uses actually available destination/project goals. They share source/header
+and timestamp safety, with one optional question. Collection selection stays
+one-off; exiting restores the previous single-video mode and Custom draft.
+
+All new behavior is fixture-verified only. Next owner Patrik: replay his large
+Collection, choose an intent and inspect complete source attribution/file; one
+manual provider handoff is enough. Keep real output quality, upload/context
+limits, storage lifecycle and Sarah's acceptance separate. Downloaded files live
+outside extension storage and require their own deletion; Clear erases only the
+basket. No expansion to persistence, playlist scraping or Collection Auto-send.
+
+
+Updated 19 November 2026. Patrik explicitly authorized this bounded milestone
+after accepting his v0.1.16 Claude autofill journey and v0.1.15 Custom. v0.1.18
+implements Collection in the existing repository/PR stack, retaining the
+independently testable v0.1.17 Send-only artifact and accepted v0.1.16 ZIP.
+The [Product and Launch Space](https://chatgpt.com/space/page_6afdceb7f4b88191911b88bf7f55952e)
+keeps strategy/feedback; [PROJECT_PLAN.md](PROJECT_PLAN.md) owns milestones.
+No merge, publication or agent live AI messages are authorized.
+
+## Current bounded behavior
+
+Visit each standard YouTube video manually, expand Collection below the usual
+handoff actions and Add current video. Reuse current caption tracks, parser and
+fallbacks. A source must still match before/after extraction, during the popup
+recheck and when the worker acknowledges Add. Only successful complete captures
+count; no background capture or playlist/tab enumeration.
+
+The session basket holds up to three unique video IDs. Review full titles,
+links, caption tracks and character counts; reorder with Up/Down, Remove or
+Clear. Explicit removal is required before recapturing a different track.
+Failed/missing/duplicate/oversized/stale writes preserve existing entries.
+Two or three sources enable Use collection; one is retained while collecting.
+
+Use collection hides the individual-video presets and transcript/title copy
+utilities, displays Compare N videos and offers one optional comparison
+question. Back to single video restores the existing selected preset/Custom
+without rewriting its instructions. Existing provider/destination preferences
+are shared. Preview/Copy/Open use one immutable source/order/question snapshot
+and the same combined builder. Preview is plain text, Copy opens no tab, and
+input/review changes clear stale previews.
+
+Collection is ALWAYS manual Send, including when the ChatGPT individual-video
+Send opt-in is remembered. Open copies first and uses the existing adjacent-tab,
+exact-provider/destination, one-time insertion, draft and clipboard safeguards.
+The basket is not silently cleared after handoff. No API/backend/analytics or
+new permission. Unknown/redirected/ambiguous composers keep manual fallback.
+
+## Source and prompt integrity
+
+Every captured record keeps video ID, full title, canonical captured video URL,
+available channel/date, capture time, caption track and complete text/segments.
+Caption text must match supplied timestamp segments when present. Each source
+gets its own S1/S2/S3 label, full title/link and source-specific start links.
+Reordering relabels only within the new coherent snapshot; metadata and captions
+never switch sources. Channel names are not featured participants.
+
+One Collection instruction layer replaces concatenation of three single-video
+prompts, which would repeat competing headers/tasks. The answer identifies all
+included sources, compares unique contributions/agreement/contradictions and
+cites source labels. Repetition is not independent corroboration; unavailable
+material was not read and must not be ranked. Source metadata/captions are
+untrusted JSON data; model compliance is not established by serialization.
+No invented timestamps, segment ends, visuals, participants or project context.
+
+## Retention and write rules
+
+Use only `chrome.storage.session`, key `collection_v1`; no local/sync fallback
+or unlimitedStorage. Visible wording states: popup closure/tab changes retain
+the basket, but browser restart or extension reload/update/disable loses it.
+This is a temporary basket, not a permanent library. Remove/Clear affects only
+Collection state, never pending handoffs or explicit Send reservations.
+
+Worker writes are serialized, revision-checked and acknowledged only after a
+successful single-key write. Clear also advances a generation; a late capture
+cannot revive the old basket. Read/quota/write failures report an error rather
+than a false success. Malformed saved data is left unchanged; the single-video
+workflow remains available. Chrome describes the session area's memory-backed
+lifetime and restricted default content-script access in its
+[storage documentation](https://developer.chrome.com/docs/extensions/reference/api/storage).
+Real browser lifecycle/quota behavior still needs user acceptance; fixtures
+use mocked extension storage APIs.
+
+## Measured trial bounds
+
+The prior offline three-fixture experiment passed 39 assertions with no network
+or model calls. Three padded 18,000-unit transcripts fit at 58,648 serialized
+units; three 20,000-unit transcripts refused at 64,648. Those numbers describe
+the experiment's wrapper, not the current wrapper or provider capacity.
+
+Current code independently counts the entire actual serialized prompt, including
+instructions, metadata, escaping and the optional question. It refuses above
+60,000 UTF-16 code units, never truncates/splits silently, and preserves the
+basket. Storage also has a 512 KiB encoded-state application guard. Neither
+bound is token accounting or Chrome quota accounting; provider capacity remains
+unknown. Larger sets, chunking and staged AI synthesis are separate work.
+
+## Verified and remaining gates
+
+- Required verify/test suites: caption fallback/source-navigation guards,
+  unique identities, text/segment pairing, complete prompt boundaries, missing
+  captions, duplicates, source mismatch, quota/write failure, serialized updates,
+  stale revisions, clear/capture races and preservation of preferences/handoffs.
+- Native popup fixtures use actual assets and worker logic with mocked extension
+  APIs: Add three videos across popup reopenings, safe full-title rendering,
+  source-specific hour-long times, reorder/remove/clear, missing/oversized/
+  duplicate/write failures, late capture after Clear, stale previews and manual
+  provider handoffs with Preview = Copy = Open. All 24 single-video cases remain.
+- Existing native guarded injectors are exercised separately; those fixtures do
+  not establish authenticated provider insertion, server acceptance, good model
+  citations, useful synthesis, demand or real session-storage lifecycle.
+
+**Next owner: Patrik.** Follow [TESTING.md](TESTING.md) with three short related
+videos and his own destination. Check complete unsent handoff first; any actual
+comparison is his manual choice. Record one useful cross-source decision and
+attribution errors, then compare against separate processing. Sarah's own
+acceptance and independent reuse remain later gates. Do not expand retention,
+item count, playlist scraping, automatic Send or paid infrastructure on assumed
+demand. The existing product/customer/marketing strategy remains intact.

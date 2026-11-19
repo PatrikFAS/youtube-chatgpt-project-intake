@@ -1,6 +1,594 @@
 # Manual and regression testing
 
+## v0.1.22 native workspace
+
+Patrik confirmed v0.1.21 opens and multi-video synthesis worked. Auto-send remains
+separate: COMPOSER_NONEDITABLE_NODE is a conservative post-insertion check and
+has not been loosened or diagnosed as an attachment.
+
+Run `npm run verify` and `npm test`. `npm run test:browser -- CHROMIUM` uses a
+real DOM/page with mocked browser APIs; it covers 24 task/destination combinations,
+all Collection intents, 78,817-character full export equality, settings, Custom,
+keyboard and 400x600/360x480/320x400 geometry. It is not native action proof.
+`npm run test:send-browser -- CHROMIUM` and `npm run test:claude-browser -- CHROMIUM`
+exercise synthetic composers, never authenticated provider behavior. The restored
+draft fixture preserves its old text with zero edits, authorizations or sends;
+a separate reopened-popup fixture proves the new source is copied, not reused.
+
+`npm run test:panel-browser -- CHROMIUM CANDIDATE [EXACT_V021]` loads unpacked assets
+into disposable profiles. Native toolbar activation uses CDP Extensions.triggerAction
+on a browser tab target when supported; otherwise the report explicitly identifies
+native sidePanel.open with a synthetic user gesture. No emulated viewport creates
+the normal panel. Report JSON identifies the route actually used. Real window/tab,
+storage, worker and caption content scripts are exercised; HTTPS responses are
+intercepted synthetic pages/captions, with a test-only clipboard sink. The harness
+checks no source/cancelled Preview/Copy/Add/Open, own-window isolation, SPA mismatch,
+0/1/2/3 Collection states, Add preserving workspace, nonvideo retention, source/title
+integrity, long content, footer hit targets, lower browser height and keyboard.
+Optional EXACT_V021 seeds prior settings in the same folder/profile before a
+browser restart plus CDP Extensions.loadUnpacked of that same disposable path.
+This preserves the extension ID/preferences and reloads its service worker;
+restarting alone can retain old unpacked worker code. The extensions-page Reload
+button itself is not clicked.
+
+`npm run test:action-browser -- CHROMIUM CANDIDATE` checks the fresh native fallback.
+The optional full command `npm run test:action-browser -- CHROMIUM OLD19 OLD20 CANDIDATE` also checks real
+popup startup and the historical 25x25 regression. For this candidate only, the
+fixture explicitly forces popup fallback via extension APIs in its disposable
+profile. That is real toolbar-popup sizing, not proof the panel API is absent.
+A worker fixture separately proves setup rejection restores the popup. Entry APIs
+and source bindings are tested independently of composer Send controls.
+
+**Installed-browser test, owner Patrik:** overwrite the same unpacked folder,
+Reload, review the one new sidePanel permission and confirm v0.1.22. Keep Auto-send
+off (the old opt-in persists). Click Bridge: check the native full-height workspace,
+visible Add/count, two-video collection, direct Collection/Video switching and one
+manual Open. Change active tabs, including a nonvideo tab, and check source title
+and collection are correct. Collection never sends; long prompts offer a complete
+.txt for manual upload if supported. Preserve drafts; if one exists, keep it or
+clear it yourself before pasting. No automatic retries. Update clears the temporary
+basket; panel closure alone does not. Browser controls panel side/width.
+
+The native panel passed in disposable Chrome and Edge; their networks/captions
+were synthetic. Installed-owner acceptance and extension-entry permission/reload
+UI remain unperformed; native fallback proof is separately identified. Earlier accepted browser workflows,
+Sarah acceptance and real Auto-send stay distinct. Keep the exact v0.1.21 rollback.
+
+
+**Candidate QA evidence (19 November):** native Chrome 149 panel 360x702 and
+Edge 157 panel 382x708 opened through the actual toolbar command, with no emulated
+panel sizing. Both passed source/window/SPA/cancelled-job, 0/1/2/3-source, Add/no
+workspace switch, nonvideo, keyboard and footer checks. Chrome retained exact
+saved settings across v0.1.21 → v0.1.22 in the same folder/profile using explicit
+CDP unpacked reload; restarting alone kept old worker code and is not the upgrade
+procedure. A fresh real Chrome fallback action passed six states at 400x500,
+forced only in the disposable test profile; no outer scrollbar or pending Send
+record. Required suites, 24 popup combinations/complete Collection exports, 54
+Send composer fixtures (including a restored draft), and 68 Claude fixtures pass.
+Reports/screenshots stay in task-local Temp QA folders; exact packaged bytes are
+replayed separately before delivery. None of this proves authenticated provider
+markup, model quality, server message acceptance or Patrik's installed panel.
+
+## v0.1.21 startup check
+
+**Confirmed regression:** Patrik installed v0.1.20 and got only a small green
+square. The exact shipped ZIP reproduces a 25x25 **real action popup** with
+startup complete and the manifest loaded. v0.1.19 opens normally. The root's
+max-width:100vw / max-height:100vh formed a loop with Chromium's initial action
+auto-sizing. Fixed viewport tests hid that loop. v0.1.21 changes only root/shell
+layout and version metadata; permissions, preferences, prompts and Send guards
+are unchanged. Keep v0.1.20 for regression evidence, not as the working fallback.
+
+**Actual action test:** run `npm run test:action-browser -- CHROMIUM OLD19 OLD20 CANDIDATE`
+with the existing Chromium executable and extracted exact ZIP directories. It
+loads an unpacked extension into disposable profiles and opens chrome.action.openPopup
+through its own options-page control context. No Emulation/device-metrics command
+sets the popup size. Each action is a native popup view, not a normal extension
+tab (getViews popup count=1, tabs.getCurrent=null). Its API/worker/storage are real;
+YouTube/provider HTTP responses and captions are intercepted synthetic fixtures.
+It checks unsupported/no-source content, collapsed controls, actual caption Add,
+ready Collection/manual file action, retained ChatGPT opt-in and saved destination
+view. No primary handoff/Send is activated and no pending/Send records appear.
+
+The same unpacked path/profile is updated 19 -> 20 -> candidate **between browser
+restarts**; this verifies local settings and URL/query/fragment retention through
+that update path. The browser extension-entry Reload button itself is not driven.
+A separate fresh candidate profile runs the same states. In this headless Chromium
+setup the candidate's actual viewport is 400x500, constrained by its
+display/work area; the footer fits the actual height. Do not claim every browser
+will grant those exact dimensions. The root's preferred 400x500 is independent
+of the initial viewport, and the fixed shell fits the available viewport.
+
+**Separate page fixtures:** `npm run test:browser -- CHROMIUM` still forces
+400x600, 360x480 and 320x400 to test keyboard/hit targets, long source/basket
+scrolling and footer access. Those page/API fixtures validate 24 task/provider
+cases plus Collection and exact 78,817-unit Preview/Copy/download/manual-Open
+equality. They supplement real action startup coverage; they do not establish
+intrinsic action sizing or authenticated ChatGPT/Claude behavior.
+
+The supplied PNG's metadata/caption was accessible, but its transfer helper
+failed on Windows extended-attribute support before leaving readable local bytes.
+User pixels were not inspected. The independently reproduced native green square
+was captured and viewed locally; no personal browser/draft was accessed.
+
+**Smallest owner test after receiving the verified v0.1.21 ZIP:** overwrite the
+SAME unpacked folder, Reload the existing extension, then refresh relevant tabs
+safely. Do not uninstall/load a duplicate. Click Bridge and confirm v0.1.21 opens
+normally. Set Auto-send off first: a prior opt-in remains remembered. Check saved
+destinations/Custom and one ordinary manual/Collection handoff. Session baskets
+clear on reload; downloaded/clipboard/provider copies have separate lifetimes.
+If Send is tested later, use one harmless sample and report only its code if
+withheld; never retry an uncertain send. The prior COMPOSER_UNSAFE investigation
+is preserved, and this CSS fix makes no new live Send claim.
+
+
+## v0.1.20 focused UI check
+
+Patrik confirmed **Collection worked in his v0.1.19 browser**. The report does
+not identify a specific mode or attachment format. He reported the popup was
+clunky and separately supplied the Send code discussed below. Keep those
+outcomes separate; v0.1.19 is retained as rollback.
+
+A read-only native check of the exact shipped ZIP at 400x600, with the prior
+Send opt-in remembered, placed the primary action at y=651..694, below the
+viewport; no message was opened/sent. The candidate fixes that measured layout
+issue with a bounded body scroller and a separate footer. Local fixtures pass
+400x600 and 360x480 with long titles/baskets, open alternatives, native hit targets,
+no horizontal/whole-popup scrolling, keyboard intent selection and Tab access
+to the primary action. These are geometry/fixture checks, not personal-browser
+inspection or a real install/update lifecycle test.
+
+1. Review any earlier uncertain conversation result before changing builds.
+   Overwrite the SAME unpacked folder with v0.1.20, Reload its existing entry,
+   refresh tabs safely and check the version. No uninstall/duplicate entry.
+   Session baskets/attempt records clear on reload; local settings survive.
+2. **Set Auto-send off** for the manual check. A prior opt-in stays remembered;
+   updating does not reset it. The visible main label must be Open in ChatGPT
+   or Open in Claude. Confirm the footer remains reachable while scrolling the
+   body, opening source review and using the keyboard.
+3. With zero/one Collection entries, Add current video stays visible; one entry
+   asks for another. At two/three, choose Use collection. Its compact selector
+   defaults to Compare & synthesize; Summarize/Apply have distinct purposes,
+   and Analyze remains an explicit focused evidence-review option. No saved
+   Analyze setting is silently remapped; Collection intent is still one-off.
+   The optional decision question is disclosed, not required. Back to single
+   video restores its preset/Custom draft. Collections never auto-send.
+4. A Collection above our local 60,000-unit autofill bound shows **Download .txt**
+   as its primary action. Check the file's complete last source/end marker;
+   Preview/Copy are under Other options. Use the alternative Open in the chosen
+   assistant, attach the file yourself if supported, and type only “Follow the
+   instructions in the attached file.” Do not also paste the whole copied
+   prompt. Check destination and any pre-existing draft; Send stays manual.
+   Provider file/context limits remain separate and unverified.
+5. Optional Send diagnosis: follow the separate harmless-sample check below once.
+   Report only the bracketed code if withheld; never retry an uncertain Send.
+
+**Two live outcomes still needed:** (a) footer/intent/file flow is understandable
+and reachable in Patrik's installed popup, with one complete manual Collection
+handoff; (b) one controlled ChatGPT Send succeeds once or identifies the remaining
+guard through the new code. Claude's selected v0.1.16 acceptance remains separate.
+After acceptance, the highest-value next step is one independent unaided beta
+using an actual task and the existing feedback guide, not another feature sprint.
+
+
+## v0.1.20 Send diagnosis candidate
+
+**User evidence:** Patrik received COMPOSER_UNSAFE in v0.1.19. That code is
+produced only in checkSend, after the initial insertion verification. No Send
+is requested on that path. Since destination, recognized editor and known
+attachment/activity checks precede it, the remaining ordinary reachable branches
+are a blocked ancestor, unexpected writable-field count, or a node wrapper /
+non-editable child. An offscreen textarea with layout dimensions is conservatively
+counted by the existing predicate. Own read-only state or a missing form normally
+fails the preceding recognized-editor check instead. These are reachable cases,
+not a diagnosis of his unseen DOM.
+
+The exact shipped v0.1.19 ZIP reproduces COMPOSER_UNSAFE for six injected local
+shapes; the candidate distinguishes COMPOSER_ANCESTOR_BLOCKED,
+COMPOSER_EDITOR_COUNT, COMPOSER_NODE_VIEW and COMPOSER_NONEDITABLE_NODE. Marked
+synthetic attachment conversion yields UPLOAD_OR_ACTIVITY; plain unsupported
+formatting still fails exact payload verification. A long native insertText
+remains plain in the local fixture. All 53 Send cases pass against both asset
+sets, with the same click/no-click results. No recognition or safety condition
+is relaxed; no unknown rich node is assumed harmless.
+
+[OpenAI release notes](https://help.openai.com/en/articles/6825453-chatgpt-release-notes)
+describe large pastes over 10,000 characters converting to attachments, and rich
+paste retaining formatting. Bridge uses insertText rather than a paste handler;
+the documentation does not establish its result or Patrik's affected DOM.
+
+**Smallest next Send test, owner Patrik:** after reviewing any earlier uncertain
+conversation result, choose one harmless short captioned sample and the intended
+empty destination. Check the exact URL, deliberately enable Auto-send and choose
+Send to ChatGPT once. Report only the bracketed code if withheld. Do not provide
+transcript, draft, HTML, Project URL, account IDs or credentials. Do not repeat an
+uncertain Send; review manually. No extra diagnostic-copy step is required and
+the full copied prompt is preserved. Keep the v0.1.19 ZIP unchanged as rollback.
+
+
+## v0.1.19 focused user check
+
+**Actual report:** Patrik's v0.1.18 ChatGPT attempt displayed the generic
+“automatic Send was withheld” warning. This proves the post-insertion Send
+routine ended without a native click; it does not identify whether route,
+composer, exact serialization, Send-control readiness or authorization failed.
+Claude was not tested in that report. No personal browser/draft was inspected.
+
+1. Update the SAME unpacked folder to v0.1.19, Reload the existing extension,
+   refresh relevant tabs safely and confirm the version. Reload loses any basket.
+   Do not uninstall or load a duplicate. Keep old ZIPs unchanged.
+2. Normal manual task: leave Auto-send off, choose the provider/destination and
+   mode, Preview, then Open. Inspect source, exact destination and full unsent
+   draft. Existing drafts must remain untouched. Claude stays manual.
+3. Optional ChatGPT Send: choose one harmless short sample and an empty intended
+   composer; turn Auto-send on. Check the displayed URL and main button labelled
+   Send to ChatGPT, then click ONCE. Record one sent message or only the bracketed
+   code and public notice. Never share the prompt, draft, Project URL or credentials.
+   Do not retry an uncertain attempt; check the conversation first. Disable the
+   toggle afterward if unwanted. Codex performs no live third-party sends.
+4. Collection: Add two/three captioned sources, review and Use collection. Confirm
+   Compare & synthesize is selected. Try Summarize, Analyze and Apply via Preview:
+   SELECTED MODE and the task instructions must differ. Back to single video must
+   restore the prior task/Custom draft. Collections always use manual Send.
+5. For a large Collection, Preview and Copy retain all sources. Save prompt .txt,
+   open the file locally and check the last source/end marker. Above the local
+   60,000-unit autofill bound, Open copies and opens only. Attach the file yourself
+   if supported and ask “Follow the instructions in the attached file.” This is
+   not automatic attachment or a provider-size guarantee. Delete local files and
+   clear clipboard/provider copies separately when appropriate.
+
+**Fixture evidence:** mandated verify/tests; 24 native single-video popup
+combinations plus opt-in/main-action and Collection journeys; exact 78,817-unit
+Preview = Copy = downloaded UTF-8 .txt = Open payload; no pending worker insertion
+for oversized Collections on either provider; four Collection prompts/defaults and
+single Custom restoration; existing missing/duplicate/quota/race/source guards;
+45 native Send cases with closed reason codes and native one-click/no-send effects;
+68 Claude manual/draft/route cases. No model answers, real installation lifecycle,
+provider upload behavior or live Send success are inferred from these fixtures.
+
+Reason codes identify a conservative guard, not a diagnosis of the provider.
+UPLOAD_OR_ACTIVITY may include an idle upload-shaped control; recognition was
+not broadened without live evidence. PAYLOAD_MISMATCH keeps exact comparison.
+AUTH_* reports one-time worker refusal; no URL/content is echoed or uploaded.
+The original v0.1.18 generic report cannot be assigned a specific code retroactively.
+
+
 ## Current status
+
+**Optional compact example follow-up, no new extension build:**
+examples/compact-triage.txt can be pasted deliberately into existing v0.1.18
+Custom. Forty prepared-prompt comparisons cover useful, weak, off-topic and
+incomplete synthetic captions, both providers, the three unchanged presets,
+ordinary Custom and this example. Full titles/URLs/captions, source safety and
+hour-long timestamps remain intact. Two popup fixture journeys verify matching
+Preview/Copy/Open, no automatic save and manual Open even after Send opt-in.
+No AI answers were generated: the 60-word target, judgments, timestamp choices,
+missing-caption awareness and practical usefulness still need human review.
+The versioned v0.1.18 ZIP and live Send/Collection checklists below are unchanged.
+
+**v0.1.18 Collection milestone:** two or three captioned videos in a manually
+filled session basket. Review/reorder/remove/clear, one comparison question and
+source-labelled Preview/Copy/Open work with both providers; Send remains manual.
+Session data is lost on browser restart or extension reload/update/disable.
+The separate v0.1.17 artifact tests explicit ChatGPT Send independently.
+
+Required verification/test suites pass, including worker revision/generation,
+source/segment pairing, size boundary, duplicate/missing/source/quota failures
+and source navigation before/during extraction. Native popup checks exercise
+the complete three-video Add/reopen/review/copy/open path, source-specific
+hour-long timestamps, safe title rendering, stale previews, write failures and
+late capture after Clear; all 24 single-video combinations and explicit opt-in
+checks pass. The 35 native Send cases and 68 Claude cases remain synthetic.
+
+### v0.1.18 focused Collection check
+
+1. Update the same unpacked folder, Reload and refresh relevant tabs. Confirm
+   v0.1.18; updating loses any earlier session basket. Saved destinations and
+   Custom settings remain. Leave explicit Send off while testing Collection.
+2. On a captioned video expand Collection and Add current video. Repeat on two
+   related videos. Reopen the popup between videos: count/titles/tracks should
+   remain. Add does not copy/open/send. A duplicate/missing/oversized source
+   must not replace previously added items.
+3. Review titles/links/tracks, try Up/Down or Remove, then Use collection. Add
+   a short comparison question and choose the intended provider/destination.
+   Preview/Copy/Open should contain the same sources/question/timestamps, with
+   each timestamp tied to its own video. Current-video Copy title/transcript
+   utilities are hidden while using Collection to avoid mixing sources.
+4. Open, check the intended destination and complete unsent prompt. Existing
+   drafts must remain untouched. There is no Collection Send action. Any actual
+   model comparison is Patrik's manual choice; check usefulness and citations
+   separately from successful handoff.
+5. Clear removes the basket; reload/restart also loses it as disclosed. Keep
+   working v0.1.16 and Send-only v0.1.17 ZIPs for isolated comparisons. No live
+   new-feature acceptance or real browser storage lifecycle was run by Codex;
+   native popup tests use mocked extension APIs and actual DOM interactions.
+
+**v0.1.17 explicit ChatGPT Send milestone:** default off; remembered opt-in only
+reveals a separate Send action and destination URL. Open/Copy/Preview/Retry remain
+manual. Worker fixtures cover duplicate requests, reload/document binding,
+authorization consumption and provider/Collection rejection. Native intercepted
+DOM tests exercise one-click effects and protected failures; these do not
+establish live ChatGPT acceptance.
+
+Verification: required suites, 24 native popup combinations plus the native
+remembered-opt-in/action check, 31 native Send cases and 66 Claude cases pass.
+Send cases include exact paragraph/indentation preservation, known/unknown and
+duplicate controls, drafts/uploads, claim/focus changes, route/control/text
+changes during authorization, denied permission and one-click submit effects.
+
+Patrik confirmed v0.1.16 Claude autofill on his selected real-browser journey and
+v0.1.15 Custom instructions. Keep the v0.1.16 ZIP as the accepted fallback.
+
+### v0.1.17 smallest user test
+
+Update the same unpacked folder, Reload and refresh relevant tabs. On one short,
+harmless captioned sample choose ChatGPT and inspect the visible destination.
+Open Faster sending, enable the remembered opt-in, then click **Send to ChatGPT**
+once. Check that exactly one full prompt appears as a sent message, or that the
+notice withholds Send and leaves manual review. Do not retry an uncertain send;
+check the conversation first. Existing drafts must remain untouched. Claude has
+no Send action. Turn the opt-in off afterward if undesired. Codex does not run
+this live test.
+
+**v0.1.16 addresses the reported Claude pre-insertion refusal.** The supplied
+v0.1.15 report has one recognized chat-input / textbox / tiptap / ProseMirror
+editor with the exact Write your prompt to Claude label, four enabled controls
+at ancestor five and six, and no chat-input-send marker. A redacted matching DOM
+fixture reproduced the old refusal with zero claims/edits. It now accepts native
+manual autofill with full-text stability checks, without identifying Send.
+The report describes control structure, not the failed handoff's timing,
+destination or framework acceptance. No signed-in browser is controlled here.
+
+### v0.1.16 focused Claude acceptance
+
+1. Overwrite the files in the same unpacked extension folder with v0.1.16,
+   Reload the existing extension entry, refresh relevant tabs and confirm the
+   version. Do not uninstall, load a duplicate or clear any existing draft.
+2. From one captioned video, select Summarize and the same affected saved Claude
+   destination. Choose Open. Check the exact intended Project/chat and that the
+   full selected prompt appears. **Do not press Send.**
+3. If there is an existing draft/attachment, the safe result is untouched content
+   plus clipboard fallback. Never delete a draft simply to make the test pass.
+4. Report inserted/not inserted, destination kind and exact notice if any.
+   The supplied diagnostic is sufficient; no repeat is requested. After any
+   uncertain/partial insertion, inspect before pasting to avoid duplication.
+
+Native fixture checks establish text acceptance and guards, not live Send
+readiness. No button, form or Enter submission is triggered. ChatGPT's accepted
+normal-case test and Sarah's independent acceptance remain separate.
+
+**v0.1.16 verification:** `npm run verify` and `npm test` pass. Native Chromium
+passes all 24 popup task/provider/destination cases, including retained choices
+and Preview = Copy = Open, plus 66 Claude cases (42 existing and 24 new). The new
+cases cover the reported layout on all destination kinds, text/whitespace/rich
+drafts, hidden attachments, busy/readonly/dialog states, claim/focus restoration,
+wrong/changed routes, partial/rejected edits, duplicate scripts/composers,
+ambiguous marked controls, missing identity markers and redacted diagnostics.
+All assert zero automatic button clicks, submissions and Enter events.
+
+## Previous candidate history
+
+**v0.1.15 optional candidate: Custom's answer-structure conflict corrected.**
+The shared header used to require a TL;DR even for a Custom task requesting
+questions or another format. The source title/known-people/link header is kept;
+after it, Custom follows USER INSTRUCTIONS without an imposed summary/verdict/
+template/next step unless requested. The three presets are unchanged. Current
+v0.1.14 testing continues in the original checkout; this candidate is in an
+isolated worktree of the same repository. No visible browser or live AI prompt
+was used in this pass. Claude's recognition/Send identity remains unresolved.
+
+### v0.1.15 focused acceptance
+
+1. Finish any in-progress v0.1.14 test first. When ready, overwrite the same
+   unpacked installation folder and Reload its existing extension entry; do
+   not uninstall or load a duplicate. Refresh tabs and confirm v0.1.15.
+2. Choose Custom and enter "After the required source header, give exactly two
+   discussion questions. Do not add a summary." Preview/Copy must retain the
+   task, real source metadata/link, transcript and safety instructions without
+   the old unconditional "its TL;DR follows the header" instruction.
+3. If you explicitly ask for a TL;DR or a 60-word skip/skim/watch/apply opening,
+   that text must remain in the prepared prompt. Save/forget and one-off behavior
+   are unchanged. Preview, Copy and Open must carry the same complete payload.
+4. Optional actual-answer review is Patrik's manual choice in the working
+   ChatGPT path. Confirm the source header then requested structure; do not
+   treat payload tests as proof of model compliance. No agent sends a live test
+   message. The smallest existing Claude check remains separate and needs no
+   new candidate installation simply to obtain the structural report.
+
+Required verify/test suites and all 24 native popup combinations pass. A local
+comparison against delivered v0.1.14 proves 18 preset payloads byte-identical
+and removes the conflicting directive in all six Custom destination cases.
+Both injectors, destination/routing code and permissions are unchanged; the
+previous 42 Claude safety cases remain evidence, not a new live verification.
+
+## Active user test v0.1.14
+
+The engineering plan now follows the shared Product and Launch strategy:
+reliability first, a compact-response experiment through existing Custom, then
+independent-user evidence before expansion. This documentation pass changes no
+runtime, preset/default prompt, version or delivered ZIP. The [smallest Claude
+user check](PROJECT_PLAN.md#smallest-claude-user-check) is one affected handoff
+without Send, followed by the opt-in structural report only if recognition still
+fails. Actual DOM/Send identity is still missing, not just final acceptance.
+The [Custom response experiment](PROJECT_PLAN.md#draft-custom-response-experiment)
+needs human output review; payload fixtures cannot establish good AI judgment.
+
+**v0.1.14 candidate: Custom instructions implemented; live Claude recognition remains unresolved.**
+Signed-in Edge accessibility/DevTools were reachable during Patrik's authorized
+free window, but bounded read-only expression and focus/hit-test attempts did
+not return usable DOM evidence. No Claude composer values, drafts, messages,
+cookies or profile files were read/changed, and no AI message was sent. Temporary
+inspection code was confined to DevTools, not Claude's editor. Browser control
+stopped when Patrik returned. Do not repeat input workarounds or claim this
+establishes raw DOM markers; prefer supported inspection or the opt-in report.
+
+### v0.1.14 focused acceptance
+
+1. Overwrite files in the same unpacked folder, Reload the existing extension
+   entry and refresh tabs. Do not uninstall or load a duplicate. Confirm
+   **YouTube AI Bridge / v0.1.14** and your retained destinations/preset.
+2. On a captioned video, choose Custom instructions and enter "Create five
+   discussion questions with timestamps." Preview the full task, source title/
+   link and transcript; Copy should match without opening a tab. Empty Custom
+   must refuse preparation. Switching presets keeps their original behavior.
+3. Close/reopen without saving: custom text should be gone and your last preset
+   restored. Try again with Save locally: reopen to see the saved instruction.
+   Edit without saving and reopen to recover the original saved text. Forget
+   saved instructions clears it. Retry keeps a current one-off draft.
+4. Use Open with your intended provider/destination, review insertion or fallback
+   and send only yourself. Existing drafts remain untouched. Patrik's accepted
+   ChatGPT path needs only a new-Custom regression, not redundant whole-product
+   acceptance. Claude insertion remains a pending live check.
+5. If Claude still reports an unrecognized message box, optionally Copy
+   troubleshooting details and paste that structural report into the support
+   conversation with the destination kind. It contains no prompt/draft/message
+   text or URLs. This replaces the clipboard prompt; Copy prompt restores it.
+
+Required verify/test suites pass. Native popup tests cover 24 combinations
+(four tasks, both providers, new/saved chat/Project), Preview = Copy = Open,
+explicit local save/forget/reload and one-off clearing. Unit fixtures cover
+Retry, async capture, empty instructions and save/forget failures. The existing
+42 Claude safety/diagnostic native-DOM cases pass separately. These are mocked
+handoffs, not live Claude insertion or Sarah's acceptance. Custom's expanded
+editor scrolls within the popup; the primary action remains visible for the
+standard collapsed-preset fixture.
+
+## Previous candidate v0.1.13
+
+**v0.1.13 candidate: YouTube AI Bridge name and bounded Claude editor support.**
+The signed-in accessibility evidence below supports an exact label plus both
+tiptap/ProseMirror classes. The new candidate requires all three on a
+contenteditable element, while the original Claude Send marker and all route,
+unique-editor, draft/attachment and one-time-claim checks remain mandatory.
+Accessible name can come from different DOM mechanisms; the actual aria-label
+and Send marker have not yet been inspected. Fixtures reconstruct that
+candidate; they do not prove that the real page matches or that the reported
+failure is fixed. Browser control stays paused until a coordinated window.
+
+### v0.1.13 focused acceptance
+
+1. Prefer direct, coordinated inspection of the existing signed-in Claude tab
+   before asking for another installation. If trying the candidate, overwrite
+   the same unpacked folder and Reload its existing entry. Do not uninstall or
+   load a duplicate. Refresh tabs and confirm YouTube AI Bridge / v0.1.13.
+2. Confirm saved destinations, task and caption preferences remain. The name
+   change affects display text, not IDs, storage keys or URL handling. All
+   three modes and Preview/Copy/Open keep their existing prompt wording.
+3. For the affected Claude destination, inspect exact editor/Send controls
+   read-only before any broader change. If the candidate is tested, review
+   insertion or fallback without sending; existing drafts must stay untouched.
+   Do not claim success for an untested route/account/layout.
+4. If it still fails and a self-service report is preferred, use the optional
+   Copy troubleshooting details button as described below. That explicit copy
+   replaces the clipboard prompt; the YouTube popup's Copy prompt restores it.
+
+Required verify/test checks pass. The isolated native popup passes all 18
+task/provider/destination combinations and the longer product name fits the
+reviewed light/dark layouts without horizontal overflow. Claude's native-DOM
+fixture passes 42 cases, including ten cases for the labelled candidate across
+destination kinds and missing-marker/draft/duplicate/focus-race refusal paths.
+The missing-Send case also verifies its opt-in diagnostic identifies the editor
+without permitting insertion. No signed-in insertion or submission is claimed.
+
+## v0.1.12 investigation and diagnostic evidence
+
+**v0.1.12 troubleshooting beta: Claude recognition failure remains unresolved.**
+Patrik confirmed v0.1.11's ChatGPT flow and UI, but Claude waited and reported
+"This Claude message box was not recognized. Your saved destination was kept."
+This identifies the pre-insertion recognition timeout, not a rejected edit or
+wrong-destination notice. Git comparison confirms v0.1.11 changed neither
+injector from v0.1.10; that does not establish why this live case differs.
+
+Read-only isolated navigation to https://claude.ai/new reached security
+verification ("Just a moment...") with zero editors. No browser/computer
+connector or running Edge debugging endpoint is exposed. A later native Windows
+accessibility check found a tab label mentioning Claude, but did not confirm a
+Claude document from that tab; no page content was inspected there. Opening a
+fresh https://claude.ai/new tab in the existing visible Edge session did reach
+a signed-in composer: one enabled, onscreen editor labelled "Write your prompt
+to Claude", with tiptap and ProseMirror classes, and no allowlisted named Send
+button exposed while empty. This is limited live accessibility evidence, not
+raw DOM/data-testid inspection, proof of the reported layout's cause, or a live
+insertion test. AutomationId is not data-testid and must not be conflated with it.
+
+No editor values, message text, draft content, cookies or profile files were
+read/copied. No typing, paste or Send occurred. An attempt to open DevTools
+stopped because the foreground-window check failed; no F12 key was sent.
+Browser control is now paused so Patrik can use Edge normally. Direct DOM
+inspection can continue during a coordinated window; the diagnostic beta is
+an alternative, not a prerequisite. The earlier blanket signed-in-access
+blocker was incomplete: normal signed-in Edge navigation/accessibility works.
+
+### v0.1.12 focused acceptance
+
+First prefer direct, coordinated inspection of the existing signed-in Claude
+tab. If Patrik prefers the diagnostic path, these are the minimal steps:
+
+1. Update the same unpacked folder, Reload its existing extension entry, refresh
+   YouTube and Claude tabs and confirm **v0.1.12** in the popup. Retain saved
+   settings; do not uninstall or load a duplicate entry.
+2. Repeat the affected Claude handoff. Do not send anything. If the same
+   recognition notice appears, click its **Copy troubleshooting details** button.
+   Paste that JSON report into the support conversation, together with whether
+   the destination was New chat, a saved Project or a saved conversation.
+3. This explicit copy replaces the clipboard prompt. **Copy prompt** in the
+   YouTube popup restores the full prompt if needed. Check context and existing
+   draft/partial text before any manual paste. The diagnostic does not edit or
+   focus the Claude composer, invoke Send, or upload anything.
+4. The report contains bounded editor/control counts, fixed marker booleans,
+   allowlisted labels, readiness flags and extension version. Draft/message
+   contents, transcript/prompt, URLs, titles, raw HTML, arbitrary labels and
+   account information are omitted. On clipboard denial, the notice reports
+   failure and leaves the message box untouched.
+
+Native-DOM coverage passes **32 cases**: the existing 28 safety/insertion cases
+plus unmarked-editor details, missing-Send details, private draft/attribute
+redaction and denied diagnostic copy. No failure copies automatically; explicit
+diagnostic clicks never invoke Claude Send or edit a draft. All 18 native popup
+task/provider/destination combinations and required verify/test checks also
+pass. These are synthetic fixtures, not reproduction of Patrik's live markup.
+The four new cases validate evidence collection, not a recognition fix.
+
+## Previous candidate: v0.1.11
+
+**v0.1.11 candidate: prompt preview and copy implemented, user acceptance pending.**
+The accepted v0.1.10 composer/routing behavior is retained. Prompt wording,
+permissions and both injectors are unchanged. Sarah's first-run acceptance
+remains unrecorded; the new actions' usefulness is a hypothesis for beta feedback.
+
+### v0.1.11 focused acceptance
+
+1. Overwrite files in the same unpacked extension folder, Reload its existing
+   entry and refresh open YouTube/assistant tabs. Do not uninstall or load a
+   duplicate. Confirm **v0.1.11** in the footer and retained task/destinations.
+2. On a captioned video, choose a provider, destination and **Summarize**; add a
+   question. Choose **Preview prompt**: check SELECTED MODE, your question,
+   full source title/link and transcript. No assistant tab should open and the
+   clipboard should stay unchanged. Preview is scrollable and read-only.
+3. Choose **Copy prompt** and paste into an empty temporary text document. It
+   should match the full preview, including the question. No new assistant tab
+   should open. Change to Analyze (or change provider/destination/question/track):
+   the old preview must clear; preview again for the current selection.
+4. Choose **Open** when ready. Check the same selected task in the prepared
+   prompt, correct context and existing guarded insertion/fallback. Review and
+   Send yourself. Existing drafts must remain untouched. No need to repeat all
+   of Patrik's accepted normal-case browser checks without a new failure.
+5. Sarah installs using the README with her own account and saves her own
+   destination. Record whether she completes one useful task unaided, any
+   fallback/confusing step and whether she would reuse the tool.
+
+**Automated evidence:** npm run verify and all four npm test suites pass.
+Native clicks on the actual popup assets in an isolated synthetic profile pass
+18 combinations (three tasks, both providers, new chat/saved chat/Project):
+Preview = Copy = Open, no tab opened or popup closed by Preview/Copy, preview
+does not copy, reload retention, safe plain-text rendering and stale previews.
+Failure/snapshot fixtures cover extraction and clipboard failures and choice
+changes during asynchronous preparation. Light/dark and preview screenshots
+were reviewed. These mocked handoffs do not establish authenticated behavior
+or user demand. The v0.1.10 Claude native-DOM results below are retained evidence,
+not a claim of newly inspected live markup.
+
+## Accepted baseline: v0.1.10
 
 **v0.1.10 guarded Claude insertion: user-confirmed working.** On 2026-11-17,
 Patrik explicitly confirmed Claude inserted automatically without manual paste

@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import vm from 'node:vm';
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
@@ -12,9 +13,10 @@ const executable = process.argv[2] || process.env.CHROMIUM_EXECUTABLE;
 assert.ok(executable && fs.existsSync(executable), 'Pass an existing Chromium/Chrome/Edge executable. Nothing is downloaded.');
 const read = (file) => fs.readFileSync(path.join(root, file), 'utf8');
 const html = read('tests/fixtures/claude-composer.html');
+const reportedComposer = read('tests/fixtures/claude-reported-composer.html');
 const destinationSource = read('shared/destination.js');
 const injector = read('claude/content.js');
-const payload = 'Fixture prompt — café\n\n[0:00] Full source transcript.\nSecond paragraph.';
+let payload = 'Fixture prompt — café\n\n[0:00] Full source transcript.\nSecond paragraph.';
 const profile = fs.mkdtempSync(path.join(os.tmpdir(), 'yt-intake-claude-browser-'));
 const browser = spawn(executable, ['--headless', '--disable-gpu', '--no-first-run', '--no-default-browser-check', '--remote-debugging-port=0', `--user-data-dir=${profile}`, 'about:blank'], { stdio:['ignore','ignore','pipe'] });
 let ws;
@@ -59,10 +61,12 @@ try {
       const options=${JSON.stringify(options)};
       const expected=${JSON.stringify(expected)};
       const payload=${JSON.stringify(payload)};
+      if(options.reported){document.getElementById('composer').outerHTML=${JSON.stringify(reportedComposer)};}
       let editor=document.getElementById('editor');
       const scope=document.getElementById('composer');
       let send=document.getElementById('send');
-      globalThis.fixture={claims:0,clears:0,sendClicks:0,submits:0,enters:0,execCalls:0};
+      globalThis.fixture={claims:0,clears:0,sendClicks:0,sendControlClicks:0,submits:0,enters:0,execCalls:0,clipboardCopies:0};
+      Object.defineProperty(navigator,'clipboard',{value:{async writeText(text){if(options.copyFails)throw Error('Denied');fixture.clipboardCopies++;fixture.copiedDetails=text;}},configurable:true});
       let available=true;
       globalThis.chrome={runtime:{async sendMessage(message){
         if(message.type==='GET_PENDING_PAYLOAD')return {ok:true,payload:available?payload:null,destinationUrl:expected};
@@ -78,7 +82,16 @@ try {
       if(options.textarea){const area=document.createElement('textarea');area.id='editor';area.setAttribute('aria-label','Write your prompt to Claude');editor.replaceWith(area);editor=area;}
       if(options.wrapper){editor.removeAttribute('data-testid');const wrapper=document.createElement('div');wrapper.dataset.testid='chat-input';editor.before(wrapper);wrapper.append(editor);}
       if(options.unmarked)editor.removeAttribute('data-testid');
+      // Candidate DOM reconstruction of the label/classes observed through
+      // live accessibility; raw DOM attributes/Send identity are not verified.
+      if(options.labelled){editor.removeAttribute('data-testid');editor.classList.add('tiptap');editor.setAttribute('aria-label',options.wrongLabel?'Different editor':'Write your prompt to Claude');}
+      if(options.noTiptap)editor.classList.remove('tiptap');
+      if(options.noProseMirror)editor.classList.remove('ProseMirror');
+      if(options.noRole)editor.removeAttribute('role');
+      if(options.noControls)scope.querySelectorAll('button').forEach(b=>b.remove());
+      if(options.ambiguousSends)[...scope.querySelectorAll('button')].slice(0,2).forEach(b=>b.dataset.testid='chat-input-send');
       if(options.noSendMarker)send.removeAttribute('data-testid');
+      if(options.privateAttributes){editor.setAttribute('aria-label','PRIVATE ACCOUNT NAME');editor.setAttribute('placeholder','PRIVATE QUESTION');editor.dataset.testid='private-project-id';editor.classList.add('private-title','tiptap');send.setAttribute('aria-label','PRIVATE CONVERSATION TITLE');send.setAttribute('title','PRIVATE URL https://claude.ai/chat/private');const privateWrapper=document.createElement('private-account-name');editor.before(privateWrapper);privateWrapper.append(editor);}
       if(options.readonly)editor.setAttribute('aria-readonly','true');
       if(options.draft){if(options.textarea)editor.value=options.draft;else editor.textContent=options.draft;}
       if(options.attachment){const node=document.createElement('div');node.dataset.testid='attachment-preview';node.textContent='Private attachment';node.hidden=true;scope.append(node);}
@@ -95,7 +108,7 @@ try {
         if(options.replaceSend){const replacement=send.cloneNode(true);send.replaceWith(replacement);send=replacement;}
         if(!options.keepDisabled)send.disabled=false;
       });
-      document.addEventListener('click',event=>{if(event.target.closest('button'))fixture.sendClicks++;});
+      document.addEventListener('click',event=>{if(event.target.closest('button'))fixture.sendClicks++;if(event.target.closest('button')===send)fixture.sendControlClicks++;});
       document.addEventListener('submit',event=>{fixture.submits++;event.preventDefault();});
       document.addEventListener('keydown',event=>{if(event.key==='Enter')fixture.enters++;});
       const nativeExec=document.execCommand.bind(document);
@@ -127,10 +140,66 @@ try {
       assert.equal(result.claims,1,`${name}: consume once`);
     }
     if(options.maxEdits!==undefined)assert.equal(result.execCalls,options.maxEdits,`${name}: bounded edits`);
+    assert.equal(await evaluate('fixture.clipboardCopies'),0,`${name}: failure never replaces clipboard automatically`);
+    if(options.diagnostics){
+      assert.equal(await evaluate('Boolean(document.querySelector("#yt2gpt-claude-toast button"))'),true);
+      const point=await evaluate('(() => { const r=document.querySelector("#yt2gpt-claude-toast button").getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2};})()');
+      await call('Input.dispatchMouseEvent',{type:'mousePressed',button:'left',clickCount:1,...point},sessionId);
+      await call('Input.dispatchMouseEvent',{type:'mouseReleased',button:'left',clickCount:1,...point},sessionId);
+      await evaluate('new Promise(resolve=>setTimeout(resolve,20))');
+      const diagnostic=await evaluate('({...fixture,notice:document.getElementById("yt2gpt-claude-toast").textContent,text:document.getElementById("editor").value ?? document.getElementById("editor").innerText})');
+      assert.equal(diagnostic.sendControlClicks,0,'diagnostic never clicks Claude Send');
+      assert.equal(diagnostic.execCalls,0,'diagnostic never edits');
+      assert.equal(diagnostic.text,result.initialText,'diagnostic leaves draft unchanged');
+      assert.equal(diagnostic.claims,0,'unrecognized composer never claims');
+      if(options.copyFails){assert.equal(diagnostic.clipboardCopies,0);assert.match(diagnostic.notice,/Could not copy details/);}
+      else{
+        assert.equal(diagnostic.clipboardCopies,1,'copy only on explicit native click');
+        const details=JSON.parse(diagnostic.copiedDetails);
+        assert.equal(details.kind,'youtube-intake-claude-composer-v1');
+        assert.equal(details.editors[0].proseMirror,true);
+        assert.equal(details.editors[0].chatInput,!options.unmarked&&!options.privateAttributes&&!options.labelled);
+        if(options.labelled){assert.equal(details.recognizedEditorCount,1);assert.equal(details.editors[0].tiptap,true);assert.equal(details.editors[0].label,'Write your prompt to Claude');}
+        assert.ok(details.editors[0].ancestors.length>0);
+        if(options.reported){
+          assert.equal(details.recognizedEditorCount,1);
+          assert.deepEqual(details.editors[0].ancestors.map(a=>[a.tag,a.editorCount,a.buttonCount]),[
+            ['div',1,0],['div',1,0],['div',1,0],['div',1,0],['div',1,4],['div',1,4]
+          ],'reconstructs the supplied report, including the fifth-ancestor controls');
+          assert.ok(details.editors[0].ancestors[4].controls.every(b=>!b.chatSend&&!b.disabled&&b.visible));
+        }
+        assert.doesNotMatch(diagnostic.copiedDetails,/PRIVATE|private-|https:|Fixture prompt|Full source transcript|Keep this unrelated draft/,'no content, URLs, names, unknown labels/attributes or prompt');
+        assert.match(diagnostic.notice,/Details copied/);
+      }
+    }
     await call('Target.closeTarget',{targetId});
     cases++;
   }
   await run('new chat');
+  await run('reported v0.1.15 layout manual autofill',{reported:true,maxEdits:1});
+  await run('reported saved conversation',{reported:true,expected:'https://claude.ai/chat/fixture?view=saved#notes'});
+  await run('reported exact Project',{reported:true,expected:'https://claude.ai/project/fixture'});
+  await run('reported text draft',{reported:true,draft:'Keep this draft',error:'draft or attachment',maxEdits:0});
+  await run('reported whitespace draft',{reported:true,draft:'   ',error:'draft or attachment',maxEdits:0});
+  await run('reported rich draft',{reported:true,richDraft:true,error:'draft or attachment',maxEdits:0});
+  await run('reported hidden attachment',{reported:true,attachment:true,error:'draft or attachment',maxEdits:0});
+  await run('reported busy scope',{reported:true,busy:true,error:'draft or attachment',maxEdits:0});
+  await run('reported focus-restored draft',{reported:true,focusDraft:true,error:'changed on focus',expectedText:'Restored on focus',claims:1,maxEdits:0});
+  await run('reported claim-restored draft',{reported:true,draftOnClaim:true,error:'page or draft changed',expectedText:'Restored during claim',claims:1,maxEdits:0});
+  await run('reported wrong destination',{reported:true,expected:'https://claude.ai/project/fixture',actual:'https://claude.ai/chat/fixture',error:'does not match',maxEdits:0});
+  await run('reported route changes on input',{reported:true,routeOnInput:'/chat/other',error:'could not be confirmed',expectedText:payload,claims:1,maxEdits:1});
+  await run('reported framework rejects text',{reported:true,rejectEdit:true,error:'could not be confirmed',expectedText:'',claims:1,maxEdits:1});
+  await run('reported partial edit never retried',{reported:true,partial:true,error:'could not be confirmed',expectedText:'Partial',claims:1,maxEdits:1});
+  await run('reported duplicate script',{reported:true,duplicateScript:true,maxEdits:1});
+  await run('reported duplicate composers',{reported:true,duplicate:true,error:'not recognized',maxEdits:0});
+  await run('reported read-only',{reported:true,readonly:true,error:'not recognized',maxEdits:0});
+  await run('reported dialog',{reported:true,dialog:true,error:'dialog or sign-in',maxEdits:0});
+  await run('reported missing input marker',{reported:true,unmarked:true,error:'not recognized',maxEdits:0});
+  await run('reported missing role and bounded diagnostics',{reported:true,noRole:true,error:'not recognized',maxEdits:0,diagnostics:true});
+  await run('reported ambiguous marked Send controls',{reported:true,ambiguousSends:true,error:'not recognized',maxEdits:0});
+  await run('reported missing tiptap',{reported:true,noTiptap:true,error:'not recognized',maxEdits:0});
+  await run('reported missing ProseMirror',{reported:true,noProseMirror:true,error:'not recognized',maxEdits:0});
+  await run('reported missing controls',{reported:true,noControls:true,error:'not recognized',maxEdits:0});
   await run('marked wrapper',{wrapper:true});
   await run('legacy named textarea',{textarea:true,maxEdits:0});
   await run('exact conversation',{expected:'https://claude.ai/chat/fixture?view=saved#notes'});
@@ -158,8 +227,26 @@ try {
   await run('route changes after edit',{routeOnInput:'/chat/other',error:'could not be confirmed',expectedText:payload,claims:1,maxEdits:1});
   await run('framework rejects edit',{rejectEdit:true,error:'could not be confirmed',expectedText:'',claims:1,maxEdits:1});
   await run('framework readiness unconfirmed',{keepDisabled:true,error:'could not be confirmed',expectedText:payload,claims:1,maxEdits:1});
+  await run('unrecognized editor diagnostics',{unmarked:true,error:'not recognized',maxEdits:0,diagnostics:true});
+  await run('missing Send diagnostics',{noSendMarker:true,error:'not recognized',maxEdits:0,diagnostics:true});
+  await run('private draft and attributes redacted',{privateAttributes:true,draft:'PRIVATE DRAFT CONTENT',error:'not recognized',maxEdits:0,diagnostics:true});
+  await run('diagnostic copy denied',{unmarked:true,error:'not recognized',maxEdits:0,diagnostics:true,copyFails:true});
+  await run('exactly labelled tiptap editor',{labelled:true});
+  await run('labelled exact Project',{labelled:true,expected:'https://claude.ai/project/fixture'});
+  await run('labelled exact conversation',{labelled:true,expected:'https://claude.ai/chat/fixture?view=saved#notes'});
+  await run('labelled draft protected',{labelled:true,draft:'Keep this labelled draft',error:'draft or attachment',maxEdits:0});
+  await run('labelled editor still needs Send marker',{labelled:true,noSendMarker:true,error:'not recognized',maxEdits:0,diagnostics:true});
+  await run('different label rejected',{labelled:true,wrongLabel:true,error:'not recognized',maxEdits:0});
+  await run('missing tiptap class rejected',{labelled:true,noTiptap:true,error:'not recognized',maxEdits:0});
+  await run('missing ProseMirror class rejected',{labelled:true,noProseMirror:true,error:'not recognized',maxEdits:0});
+  await run('duplicate labelled editors rejected',{labelled:true,duplicate:true,error:'not recognized',maxEdits:0});
+  await run('labelled focus-restored draft',{labelled:true,focusDraft:true,error:'changed on focus',expectedText:'Restored on focus',claims:1,maxEdits:0});
+  const c=vm.createContext({URL,TextEncoder,Date});vm.runInContext(read('shared/collection.js'),c);
+  payload=c.YT2GPTCollection.build([1,2,3].map(n=>({videoId:'fixture'+n,title:'Collection source '+n,url:'https://www.youtube.com/watch?v=fixture'+n,channel:'Fixture',transcript:{text:'[0:00] Source '+n,segments:[{start:0,text:'Source '+n}],track:{name:'English'}}})));
+  await run('actual Collection payload remains unsent',{reported:true,maxEdits:1});
+  await run('Collection payload protects restored draft',{reported:true,draft:'Keep Collection destination draft',error:'draft or attachment',maxEdits:0});
   assert.equal(errors.length,0,JSON.stringify(errors));
-  console.log(`PASS: ${cases} Claude native-DOM cases: complete insertion, exact routes, draft/attachment guards, framework readiness, no retries and zero automatic sends. Synthetic fixture; authenticated Claude acceptance remains pending.`);
+  console.log(`PASS: ${cases} Claude native-DOM cases: reported-layout manual autofill, exact routes, draft/attachment guards, text acceptance, opt-in redacted diagnostics, no retries and zero automatic sends. Synthetic fixtures; Patrik separately accepted his selected v0.1.16 live journey, not all layouts or Collections.`);
 } finally {
   if(ws?.readyState===WebSocket.OPEN){ws.send(JSON.stringify({id:++sequence,method:'Browser.close'}));await new Promise(resolve=>{const timer=setTimeout(resolve,2000);browser.once('exit',()=>{clearTimeout(timer);resolve();});});}
   ws?.close();browser.kill();browser.stderr.destroy();browser.unref();

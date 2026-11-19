@@ -79,6 +79,10 @@ textarea::placeholder { color: var(--muted); opacity: .8; }
 .small { padding: 7px 10px; font-size: 11px; }
 .wide { width: 100%; margin-top: 8px; }
 #sendButton { padding: 12px; font-size: 13px; margin-top: 3px; }
+.handoff-actions { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: stretch; gap: 7px; }
+.handoff-actions #sendButton { margin-top: 0; }
+#copyPrompt { font-size: 12px; font-weight: 650; padding: 10px; }
+.prompt-help { margin: 9px 10px 0; font-size: 11px; line-height: 1.45; color: var(--muted); }
 .utility-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 5px; margin-top: 9px; color: var(--muted); font-size: 10px; }
 .link-button { border: 0; background: transparent; color: inherit; padding: 3px; text-decoration: underline; text-underline-offset: 3px; }
 .link-button:hover { color: var(--accent); }
@@ -100,3 +104,92 @@ textarea::placeholder { color: var(--muted); opacity: .8; }
 .question-details { margin: 10px 0 9px; color: var(--muted); font-size: 11px; }
 .question-details summary { cursor: pointer; width: fit-content; }
 .question-details .field { margin-bottom: 3px; }
+.custom-choice { grid-column: 1 / -1; padding: 6px 9px; }
+.custom-choice > span { display: flex; align-items: baseline; gap: 8px; }
+.custom-actions { display: flex; align-items: center; gap: 8px; margin-top: 7px; font-size: 10px; }
+.collection-panel { border:1px solid var(--line); border-radius:12px; padding:10px; margin:10px 0; background:var(--panel); }
+.collection-panel > summary { cursor:pointer; color:var(--accent); font-weight:700; }
+.collection-item { padding:10px 0; border-bottom:1px solid var(--line); overflow-wrap:anywhere; }
+.collection-item > strong { font-size:12px; }
+body[data-collection="true"] .utility-row > span { display:none; }
+
+/* Keep one destination action in view; optional detail stays collapsed. */
+.send-choice { margin:10px 0; padding:5px 0; }
+.toggle-label { display:flex; align-items:center; gap:7px; font-size:11px; font-weight:650; cursor:pointer; }
+.toggle-label input { accent-color:var(--accent); width:27px; height:16px; margin:0; }
+.send-choice .field-help { margin-top:5px; font-size:10px; }
+.collection-panel { padding:8px 10px; margin:8px 0; }
+#explicitSendDestination { margin-bottom:0; font-size:10px; }
+
+
+/* Give Chrome an intrinsic preferred size before its viewport exists.
+   Viewport caps on this root collapse an action popup to its 25px minimum.
+   The fixed shell below fits the viewport Chrome actually grants. */
+html { width:400px; height:500px; overflow:hidden; }
+body { width:100%; height:100%; overflow:hidden; }
+.shell { position:fixed; inset:0; width:auto; height:auto; max-height:600px; padding:0; display:flex; flex-direction:column; overflow:hidden; }
+.header { flex:none; padding:12px 16px 0; margin-bottom:10px; }
+.content-scroll { flex:1 1 auto; min-height:0; overflow-y:auto; overscroll-behavior:contain; padding:0 16px 8px; scroll-padding:8px; }
+.handoff-footer { flex:none; border-top:1px solid var(--line); padding:8px 16px; background:var(--panel); box-shadow:0 -3px 14px #00000008; }
+.handoff-footer .action-summary { margin:0 0 5px; }
+.handoff-footer #sendButton { margin:0; }
+.handoff-footer #handoffHelp { margin:6px 0; font-size:10px; line-height:1.35; }
+.handoff-footer .send-choice { margin:0 0 7px; padding:0; }
+.handoff-footer .field-help { margin:3px 0; font-size:10px; }
+.handoff-footer .url-preview { padding:5px; max-height:45px; overflow:auto; margin-top:4px; }
+.handoff-alternatives { font-size:10px; color:var(--muted); }
+.handoff-alternatives summary { cursor:pointer; padding:3px 0; }
+.handoff-alternatives .utility-row { margin:3px 0 0; justify-content:flex-start; gap:12px; }
+.footer { flex:none; padding:5px 16px; margin:0; font-size:8px; }
+.collection-heading { display:flex; align-items:center; justify-content:space-between; gap:8px; font-size:11px; }
+.collection-panel .field-help { margin-top:5px; }
+.collection-panel > .source-details { margin-bottom:0; }
+.collection-panel > #useCollection { margin-top:5px; font-size:11px; color:var(--accent); }
+.collection-item { padding:8px 0; }
+@media (max-height:500px) { .header { padding-top:8px; margin-bottom:6px; } .handoff-footer { padding-top:6px; padding-bottom:6px; } }
+
+.handoff-footer .action-summary { display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+.footer { flex-wrap:wrap; gap:4px; }
+
+.source-heading { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+.source-heading #addToCollection { font-size:10px; padding:5px 8px; }
+.video-details > summary { cursor:pointer; }
+.video-details:not([open]) .video-title { display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+.video-details > summary .video-title { display:inline; }
+.video-details:not([open]) > summary .video-title { display:-webkit-box; }
+
+/* Both surfaces share one workspace. Only the content body scrolls. */
+.source-bar { flex:none; padding:0 16px 10px; border-bottom:1px solid var(--line); }
+.source-bar .video-title { display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; margin:4px 0 9px; }
+.source-heading { display:flex; gap:10px; align-items:center; justify-content:space-between; }
+.source-heading #addToCollection { font-size:12px; padding:8px 12px; font-weight:650; }
+.collection-badge { font-size:11px; color:var(--muted); white-space:nowrap; }
+.source-bar .field-help { margin-top:6px; }
+.workspace-switch { flex:none; display:flex; padding:8px 16px; gap:6px; }
+.workspace-tab { flex:1; padding:9px; border:1px solid var(--line); border-radius:10px; background:var(--panel); color:var(--muted); font-weight:650; }
+.workspace-tab[aria-pressed="true"] { color:var(--accent); border-color:var(--accent); background:var(--soft); }
+.collection-panel { margin:12px 0; padding:10px 12px; }
+.collection-item > strong { font-size:13px; line-height:1.45; }
+.video-context { margin-bottom:10px; }
+html[data-surface="panel"] { width:100%; height:100%; }
+html[data-surface="panel"] .shell { max-height:none; }
+html[data-surface="panel"] body { font-size:14px; }
+html[data-surface="panel"] .header { padding:18px 18px 0; margin-bottom:16px; }
+html[data-surface="panel"] .source-bar { padding:0 18px 14px; }
+html[data-surface="panel"] .source-bar .video-title { font-size:15px; }
+html[data-surface="panel"] .workspace-switch { padding:12px 18px; }
+html[data-surface="panel"] .content-scroll { padding:0 18px 14px; }
+html[data-surface="panel"] .handoff-footer { padding:12px 18px; }
+html[data-surface="panel"] .field { margin:14px 0; }
+html[data-surface="panel"] .field > label, html[data-surface="panel"] legend { font-size:12px; }
+html[data-surface="panel"] .field-help, html[data-surface="panel"] .source-details { font-size:12px; }
+html[data-surface="panel"] .mode-card strong { font-size:12px; }
+html[data-surface="panel"] .mode-card small { font-size:11px; }
+html[data-surface="panel"] #sendButton { font-size:14px; padding:13px; }
+html[data-surface="panel"] .handoff-footer #handoffHelp { font-size:11px; }
+@media (max-height:560px) { html[data-surface="panel"] .header { padding-top:8px; margin-bottom:7px; } html[data-surface="panel"] .source-bar { padding-bottom:8px; } html[data-surface="panel"] .workspace-switch { padding-top:7px; padding-bottom:7px; } html[data-surface="panel"] .handoff-footer { padding-top:7px; padding-bottom:7px; } }
+
+.source-bar .field-help { display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+@media (max-height:500px) { .source-bar { padding-bottom:6px; } .source-bar .video-title { margin-bottom:5px; } .workspace-switch { padding-top:6px; padding-bottom:6px; } .handoff-footer #handoffHelp { display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; } }
+
+@media (max-height:450px) { .source-bar .video-title, .source-bar .field-help, .handoff-footer .action-summary, .handoff-footer #handoffHelp { -webkit-line-clamp:1; } .header { margin-bottom:4px; } .workspace-switch { padding-top:5px; padding-bottom:5px; } .workspace-tab { padding:7px; } }

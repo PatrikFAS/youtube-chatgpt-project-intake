@@ -9,7 +9,7 @@ const manifestPath = path.join(root, 'manifest.json');
 const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
 
 const errors = [];
-const requiredPermissions = new Set(['activeTab', 'storage', 'clipboardWrite']);
+const requiredPermissions = new Set(['activeTab', 'storage', 'clipboardWrite', 'sidePanel']);
 const forbidden = new Set(['<all_urls>', 'history', 'downloads', 'cookies', 'debugger']);
 const allowedHosts = new Set(['https://www.youtube.com/*', 'https://youtube.com/*', 'https://m.youtube.com/*', 'https://chatgpt.com/*', 'https://claude.ai/*']);
 
@@ -18,6 +18,7 @@ const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'))
 if (manifest.version !== pkg.version) errors.push(`manifest version ${manifest.version} does not match package version ${pkg.version}.`);
 
 for (const permission of manifest.permissions || []) {
+  if (!requiredPermissions.has(permission)) errors.push(`Unexpected permission: ${permission}`);
   if (forbidden.has(permission)) errors.push(`Forbidden permission: ${permission}`);
 }
 for (const required of requiredPermissions) {
@@ -32,6 +33,7 @@ const referenced = new Set();
 referenced.add(manifest.background?.service_worker);
 referenced.add(manifest.action?.default_popup);
 referenced.add(manifest.options_page);
+referenced.add(manifest.side_panel?.default_path?.split('?')[0]);
 for (const content of manifest.content_scripts || []) for (const file of content.js || []) referenced.add(file);
 for (const group of manifest.web_accessible_resources || []) for (const file of group.resources || []) referenced.add(file);
 for (const file of Object.values(manifest.icons || {})) referenced.add(file);

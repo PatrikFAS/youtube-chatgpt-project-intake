@@ -61,6 +61,7 @@ def manifest_references(manifest: dict) -> set[str]:
     refs.add(manifest.get("background", {}).get("service_worker"))
     refs.add(manifest.get("action", {}).get("default_popup"))
     refs.add(manifest.get("options_page"))
+    refs.add(manifest.get("side_panel", {}).get("default_path", "").split("?")[0])
     refs.update(manifest.get("icons", {}).values())
     refs.update(manifest.get("action", {}).get("default_icon", {}).values())
     for group in manifest.get("content_scripts", []):

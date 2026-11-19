@@ -5,7 +5,10 @@
   window.__YT2GPT_CLAUDE_INSTALLED__ = true;
 
   const MAX_WAIT_MS = 30000;
-  const EDITOR_SELECTOR = '[data-testid="chat-input"][contenteditable="true"], [data-testid="chat-input"] .ProseMirror[contenteditable="true"], textarea[aria-label="Write your prompt to Claude"]';
+  // Never fall back to generic ProseMirror editors. The stricter manual-only
+  // identity below matches Patrik's 2026-11-19 opt-in structural report.
+  const EDITOR_SELECTOR = '[data-testid="chat-input"][contenteditable="true"], [data-testid="chat-input"] .ProseMirror[contenteditable="true"], textarea[aria-label="Write your prompt to Claude"], .tiptap.ProseMirror[contenteditable="true"][aria-label="Write your prompt to Claude"]';
+  const REPORTED_EDITOR_SELECTOR = 'div[data-testid="chat-input"][role="textbox"].tiptap.ProseMirror[contenteditable="true"][aria-label="Write your prompt to Claude"]';
   const SEND_SELECTOR = 'button[data-testid="chat-input-send"]';
   const ATTACHMENT_SELECTOR = 'img, video, audio, iframe, [data-type="mention"], [data-testid*="attachment"], [data-testid*="file-preview"], [data-testid*="upload-preview"], button[aria-label*="remove" i], button[aria-label*="delete" i], [role="progressbar"], [aria-busy="true"]';
 
@@ -63,13 +66,16 @@
 
         if (inserted) {
           const settling = Date.now();
-          // Confirm both text and the framework's readiness after it processes
-          // native editing events. This loop never writes or presses controls.
+          let stableTextChecks = 0;
+          // Confirm native text acceptance. For the reported manual-only
+          // surface, Send identity/readiness is deliberately not inferred.
+          // This loop never writes or presses controls.
           while (Date.now() - settling < 2500) {
             await sleep(100);
             if (!sameComposer(found, claimed.destinationUrl) || read(found.editor) !== normalize(claimed.payload)) break;
             const send = findComposer()?.send;
-            if (send && !send.disabled && send.getAttribute('aria-disabled') !== 'true') {
+            if ((send && !send.disabled && send.getAttribute('aria-disabled') !== 'true') ||
+                (!found.send && ++stableTextChecks >= 3)) {
               toast('Prompt inserted in Claude. Review it, then press Send yourself.');
               return;
             }
@@ -79,7 +85,8 @@
       }
       await sleep(500);
     }
-    return fail('This Claude message box was not recognized. Your saved destination was kept.');
+    const editorFound = [...document.querySelectorAll(EDITOR_SELECTOR)].filter(editable).length === 1;
+    return fail(`This Claude message box was not recognized.${editorFound ? ' An editor was found, but its supported composer controls could not be confirmed.' : ''} Your saved destination was kept.`, true);
   }
 
   function destinationProblem(expected) {
@@ -96,8 +103,7 @@
     const candidates = [...document.querySelectorAll(EDITOR_SELECTOR)].filter(editable);
     if (candidates.length !== 1) return null;
     const editor = candidates[0];
-    // Require the editor marker AND the specific Claude Send marker in a
-    // nearby scope. A generic ProseMirror or unrelated editor is insufficient.
+    // Retain the existing marked-Send path for previously supported surfaces.
     let scope = editor.parentElement;
     for (let depth = 0; scope && depth < 6 && scope !== document.body && scope !== document.documentElement; depth++, scope = scope.parentElement) {
       const sends = [...scope.querySelectorAll(SEND_SELECTOR)].filter(visible);
@@ -105,6 +111,19 @@
       const editors = [...scope.querySelectorAll('[contenteditable="true"], textarea')].filter(editable);
       if (editors.length !== 1 || editors[0] !== editor) return null;
       return { editor, scope, send: sends[0] };
+    }
+    // The supplied report has this exact, stronger editor identity and four
+    // unknown controls in its fifth ancestor. Manual autofill does not need to
+    // identify a Send button. Use the nearest bounded controls scope to keep
+    // draft/attachment checks intact; never interpret unknown buttons as Send.
+    if (!editor.matches(REPORTED_EDITOR_SELECTOR)) return null;
+    scope = editor.parentElement;
+    for (let depth = 0; scope && depth < 6 && scope !== document.body && scope !== document.documentElement; depth++, scope = scope.parentElement) {
+      if (![...scope.querySelectorAll('button')].some(visible)) continue;
+      if ([...scope.querySelectorAll(SEND_SELECTOR)].some(visible)) return null;
+      const editors = [...scope.querySelectorAll('[contenteditable="true"], textarea')].filter(editable);
+      if (editors.length !== 1 || editors[0] !== editor) return null;
+      return { editor, scope, send: null };
     }
     return null;
   }
@@ -134,19 +153,84 @@
   }
   function normalize(value) { return String(value || '').replace(/\s+/g, ' ').trim(); }
   function read(el) { return normalize(el instanceof HTMLTextAreaElement ? el.value : el.innerText || el.textContent); }
-  async function fail(reason) {
-    toast(`${reason} The complete prompt is on your clipboard. Paste only after checking the intended destination and any existing draft.`, true);
+  async function fail(reason, troubleshoot = false) {
+    toast(`${reason} The complete prompt is on your clipboard. Paste only after checking the intended destination and any existing draft.`, true, troubleshoot);
     try { await chrome.runtime.sendMessage({ type: 'CLEAR_PENDING_PAYLOAD' }); } catch {}
   }
-  function toast(message, error = false) {
+  function toast(message, error = false, troubleshoot = false) {
     document.getElementById('yt2gpt-claude-toast')?.remove();
     const el = document.createElement('div');
     el.id = 'yt2gpt-claude-toast';
     el.setAttribute('role', error ? 'alert' : 'status');
-    el.textContent = `YouTube intake: ${message}`;
+    el.textContent = `YouTube AI Bridge: ${message}`;
     el.style.cssText = `position:fixed;right:18px;bottom:18px;z-index:2147483647;max-width:420px;padding:12px 15px;border-radius:10px;background:${error ? '#5b2424' : '#253b30'};color:white;font:13px/1.45 system-ui;box-shadow:0 6px 24px #0004`;
+    if (troubleshoot) addTroubleshooting(el);
     document.documentElement.appendChild(el);
     if (!error) setTimeout(() => el.remove(), 7000);
+  }
+  function addTroubleshooting(notice) {
+    const help = document.createElement('p');
+    help.textContent = 'To help fix recognition, copy troubleshooting details and share them with the extension developer. This replaces your clipboard prompt; Copy prompt in the YouTube popup restores it.';
+    help.style.cssText = 'margin:10px 0 6px;font-size:12px';
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.textContent = 'Copy troubleshooting details';
+    button.style.cssText = 'font:inherit;color:#252525;background:#fff;border:0;border-radius:6px;padding:7px 10px;cursor:pointer';
+    const status = document.createElement('p');
+    status.setAttribute('role', 'status');
+    status.style.cssText = 'margin:6px 0 0;font-size:12px';
+    button.addEventListener('click', async () => {
+      button.disabled = true;
+      try {
+        const report = JSON.stringify(composerDetails(), null, 2);
+        await navigator.clipboard.writeText(report);
+        status.textContent = 'Details copied. Paste them into your support conversation. No message text, prompt, URLs or account details are included.';
+      } catch {
+        status.textContent = 'Could not copy details. Your message box was left untouched. Use Copy prompt in the YouTube popup for the normal handoff.';
+      } finally { button.disabled = false; }
+    });
+    notice.append(help, button, status);
+  }
+  function composerDetails() {
+    // Read only bounded, allowlisted control shape. Never read text/value,
+    // outerHTML, URLs, arbitrary attributes or account/conversation metadata.
+    const knownTags = new Set(['div', 'span', 'p', 'textarea', 'button', 'form', 'section', 'main', 'article', 'fieldset']);
+    const tag = (element) => knownTags.has(element.tagName.toLowerCase()) ? element.tagName.toLowerCase() : 'other';
+    const knownRoles = new Set(['textbox', 'button', 'group', 'form']);
+    const knownLabels = new Set(['Send message', 'Send Message', 'Send', 'Send prompt', 'Write your prompt to Claude', 'Reply to Claude', 'Message Claude', 'Stop response', 'Stop generating']);
+    const marker = (element) => ({
+      tag: tag(element),
+      role: knownRoles.has(element.getAttribute('role')) ? element.getAttribute('role') : null,
+      contenteditable: element.getAttribute('contenteditable') === 'true',
+      proseMirror: element.classList.contains('ProseMirror'),
+      tiptap: element.classList.contains('tiptap'),
+      chatInput: element.getAttribute('data-testid') === 'chat-input',
+      chatSend: element.getAttribute('data-testid') === 'chat-input-send',
+      hasOtherTestId: Boolean(element.getAttribute('data-testid') && !['chat-input', 'chat-input-send'].includes(element.getAttribute('data-testid'))),
+      label: knownLabels.has(element.getAttribute('aria-label')) ? element.getAttribute('aria-label') : null,
+      hasOtherLabel: Boolean(element.getAttribute('aria-label') && !knownLabels.has(element.getAttribute('aria-label'))),
+      disabled: Boolean(element.disabled || element.getAttribute('aria-disabled') === 'true'),
+      readonly: Boolean(element.readOnly || element.getAttribute('aria-readonly') === 'true'),
+      inert: Boolean(element.closest('[inert], [aria-hidden="true"]')),
+      visible: visible(element)
+    });
+    const editors = [...document.querySelectorAll('[contenteditable="true"], textarea')].filter(visible);
+    return {
+      kind: 'youtube-intake-claude-composer-v1',
+      extensionVersion: chrome.runtime.getManifest?.().version || 'unknown',
+      recognizedEditorCount: [...document.querySelectorAll(EDITOR_SELECTOR)].filter(editable).length,
+      editorCount: editors.length,
+      editors: editors.slice(0, 5).map((editor) => {
+        const ancestors = [];
+        let scope = editor.parentElement;
+        for (let depth = 0; scope && depth < 6 && scope !== document.body && scope !== document.documentElement; depth++, scope = scope.parentElement) {
+          const controls = [...scope.querySelectorAll('button')].filter((control) => visible(control) && !control.closest('#yt2gpt-claude-toast'));
+          ancestors.push({ tag: tag(scope), editorCount: [...scope.querySelectorAll('[contenteditable="true"], textarea')].filter(editable).length,
+            buttonCount: controls.length, controls: controls.slice(0, 12).map(marker) });
+        }
+        return { ...marker(editor), ancestors };
+      })
+    };
   }
   function sleep(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
 })();

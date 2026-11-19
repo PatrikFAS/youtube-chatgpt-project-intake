@@ -13,15 +13,22 @@
   chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     if (!message || typeof message !== 'object') return;
     if (message.type === 'YT2GPT_GET_CONTEXT') {
-      getVideoContext().then(data => sendResponse({ ok: true, data }))
+      getVideoContext(message.strictIdentity === true).then(data => sendResponse({ ok: true, data }))
         .catch(error => sendResponse({ ok: false, error: friendlyError(error) }));
       return true;
     }
     if (message.type === 'YT2GPT_GET_TRANSCRIPT') {
-      getTranscript(message.track).then(data => sendResponse({ ok: true, data }))
+      const matches = () => !message.expectedVideoId || getVideoId(new URL(location.href)) === message.expectedVideoId;
+      if (!matches()) { sendResponse({ok:false,error:'The source video changed. Nothing was added.'}); return; }
+      getTranscript(message.track).then(data => {
+        if(!matches())throw Error('The source video changed. Nothing was added.');
+        sendResponse({ ok: true, data });
+      })
         .catch(async error => {
+          if(!matches())return sendResponse({ok:false,error:'The source video changed. Nothing was added.'});
           try {
             const data = await getDomTranscriptFallback();
+            if(!matches())return sendResponse({ok:false,error:'The source video changed. Nothing was added.'});
             if (data?.segments?.length) return sendResponse({ ok: true, data, fallback: 'dom' });
           } catch {}
           sendResponse({ ok: false, error: friendlyError(error) });
@@ -41,7 +48,7 @@
     script.addEventListener('error', () => script.remove(), { once: true });
   }
 
-  async function getVideoContext() {
+  async function getVideoContext(strictIdentity = false) {
     const url = new URL(location.href);
     const videoId = getVideoId(url);
     if (!videoId) throw new Error('Open a standard YouTube video first.');
@@ -49,6 +56,7 @@
     try { bridge = await requestPlayerInfo(1200); } catch {}
     let player = bridge.playerResponse || null;
     const currentId = player?.videoDetails?.videoId || bridge?.videoData?.video_id || '';
+    if(strictIdentity && currentId && currentId !== videoId)throw Error('The video is still changing. Wait for navigation to finish and retry.');
     if ((currentId && currentId !== videoId) || !captionTracks(player).length) {
       try { player = await fetchPlayerResponse(url.toString()); } catch {}
     }
