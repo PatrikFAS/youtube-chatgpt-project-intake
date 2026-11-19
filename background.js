@@ -5,6 +5,12 @@ importScripts('shared/destination.js');
 const PENDING_PREFIX = 'pending_';
 const PENDING_TTL_MS = 10 * 60 * 1000;
 const claimingTabs = new Set();
+let explicitSendQueue = Promise.resolve();
+function serializeExplicitSend(work) {
+  const result = explicitSendQueue.then(work);
+  explicitSendQueue = result.catch(() => {});
+  return result;
+}
 
 chrome.runtime.onInstalled.addListener(async () => {
   const current = await chrome.storage.local.get(['destinations', 'lastMode', 'lastDestinationId']);
@@ -20,8 +26,19 @@ chrome.runtime.onInstalled.addListener(async () => {
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (!message || typeof message !== 'object') return;
 
+  if (message.type === 'OPEN_CHATGPT_WITH_EXPLICIT_SEND') {
+    serializeExplicitSend(() => prepareExplicitSend(message, sender))
+      .then(sendResponse).catch(error => sendResponse({ ok: false, error: String(error.message || error) }));
+    return true;
+  }
+  if (message.type === 'AUTHORIZE_CHATGPT_SEND_ONCE') {
+    serializeExplicitSend(() => authorizeExplicitSend(message, sender))
+      .then(sendResponse).catch(() => sendResponse({ ok: false }));
+    return true;
+  }
+
   if (message.type === 'OPEN_DESTINATION_WITH_PAYLOAD' || message.type === 'OPEN_CHATGPT_WITH_PAYLOAD') {
-    handleOpenDestination(message)
+    handleOpenDestination({ ...message, explicitSendKey: null })
       .then(sendResponse)
       .catch((error) => sendResponse({ ok: false, error: String(error?.message || error) }));
     return true;
@@ -90,7 +107,8 @@ async function handleOpenDestination(message) {
   const key = `${PENDING_PREFIX}${tab.id}`;
   try {
     await chrome.storage.session.set({
-      [key]: { payload, createdAt: Date.now(), destinationUrl }
+      [key]: { payload, createdAt: Date.now(), destinationUrl,
+        ...(message.explicitSendKey ? { explicitSendKey: message.explicitSendKey } : {}) }
     });
   } catch {
     throw new Error('The destination opened, but automatic insertion could not be prepared. Paste the copied prompt into the intended destination.');
@@ -114,7 +132,8 @@ async function getPendingForSender(sender) {
     return { ok: true, payload: null };
   }
 
-  return { ok: true, payload: pending.payload, createdAt: pending.createdAt, destinationUrl: pending.destinationUrl };
+  return { ok: true, payload: pending.payload, createdAt: pending.createdAt, destinationUrl: pending.destinationUrl,
+    ...(pending.explicitSendKey ? { explicitSendKey: pending.explicitSendKey } : {}) };
 }
 
 async function claimPendingForSender(sender) {
@@ -129,10 +148,59 @@ async function claimPendingForSender(sender) {
     }
     // Consume before editing so a reload or second document cannot insert twice.
     await clearPendingForSender(sender);
+    if (pending.explicitSendKey) {
+      const result = await serializeExplicitSend(async () => {
+        const key = pending.explicitSendKey;
+        const record = (await chrome.storage.session.get(key))[key];
+        if (!sender.documentId || sender.frameId !== 0 || !record || record.state !== 'prepared' || record.tabId !== tabId ||
+            YT2GPTDestination.normalize(sender.url) !== record.destinationUrl) return false;
+        await chrome.storage.session.set({ [key]: { ...record, state: 'claimed', documentId: sender.documentId } });
+        return true;
+      });
+      if (!result) { delete pending.explicitSendKey; pending.sendSuppressed = true; }
+    }
     return pending;
   } finally {
     claimingTabs.delete(tabId);
   }
+}
+
+async function prepareExplicitSend(message, sender) {
+  if (sender.url !== chrome.runtime.getURL('popup/popup.html') || sender.tab || message.collection === true) {
+    throw new Error('Send must be chosen explicitly in the YouTube popup. Use Open for manual review.');
+  }
+  const destinationUrl = YT2GPTDestination.normalize(message.destinationUrl);
+  const enabled = (await chrome.storage.local.get('chatgptExplicitSendEnabled')).chatgptExplicitSendEnabled === true;
+  if (!enabled || YT2GPTDestination.provider(destinationUrl) !== 'chatgpt') throw new Error('Explicit Send is enabled only for opted-in ChatGPT videos.');
+  const source = await chrome.tabs.get(message.sourceTabId);
+  const sourceUrl = new URL(source.url);
+  if (sourceUrl.protocol !== 'https:' || !['www.youtube.com','youtube.com','m.youtube.com'].includes(sourceUrl.hostname) || sourceUrl.pathname !== '/watch' ||
+      !message.videoId || sourceUrl.searchParams.get('v') !== message.videoId) throw new Error('The source video changed. Use Open for manual review.');
+  if (typeof message.payload !== 'string' || !message.payload.trim()) throw new Error('Prompt payload is empty.');
+  const hash = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify([destinationUrl,message.videoId,message.payload])));
+  const key = 'explicit_send_' + [...new Uint8Array(hash)].map(v=>v.toString(16).padStart(2,'0')).join('');
+  if ((await chrome.storage.session.get(key))[key]) throw new Error('This prompt already has a Send request in this browser session. Use Open and review manually; no automatic retry.');
+  // Reserve before opening. Failures/uncertain attempts remain reserved until
+  // session end; never silently retry a send or evict a deduplication record.
+  const record = { state:'reserved', destinationUrl, createdAt:Date.now() };
+  await chrome.storage.session.set({ [key]:record });
+  const opened = await handleOpenDestination({ ...message, destinationUrl, explicitSendKey:key });
+  await chrome.storage.session.set({ [key]: { ...record, state:'prepared', tabId:opened.tabId } });
+  return opened;
+}
+
+async function authorizeExplicitSend(message, sender) {
+  const key = message.explicitSendKey;
+  if (typeof key !== 'string' || !/^explicit_send_[a-f0-9]{64}$/.test(key) || sender.frameId !== 0 || !sender.documentId) return {ok:false};
+  const record = (await chrome.storage.session.get(key))[key];
+  if (!record || record.state !== 'claimed' || record.tabId !== sender.tab?.id || record.documentId !== sender.documentId ||
+      YT2GPTDestination.provider(record.destinationUrl) !== 'chatgpt' || YT2GPTDestination.normalize(sender.url) !== record.destinationUrl ||
+      Date.now()-record.createdAt > PENDING_TTL_MS ||
+      (await chrome.storage.local.get('chatgptExplicitSendEnabled')).chatgptExplicitSendEnabled !== true) return {ok:false};
+  // Persist the irreversible attempt boundary BEFORE granting the one click.
+  // A crash/reload/changed control after this point always means manual review.
+  await chrome.storage.session.set({[key]:{...record,state:'attempted'}});
+  return {ok:true};
 }
 
 async function clearPendingForSender(sender) {

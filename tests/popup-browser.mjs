@@ -233,6 +233,25 @@ try {
     console.log('Isolated Claude public-page inspection (no personal session): ' + JSON.stringify(observed.result.value));
     await call('Target.closeTarget', { targetId });
   }
+  const quick=await page('general');
+  assert.equal(await quick.evaluate('document.getElementById("explicitSendOptIn").checked'),false);
+  await quick.click('#explicitSendPanel summary');
+  await quick.click('#explicitSendOptIn');
+  await quick.waitFor('fixture.data.chatgptExplicitSendEnabled === true');
+  await quick.evaluate('location.reload()');
+  await quick.waitFor('document.getElementById("explicitSendOptIn")?.checked');
+  await quick.click('#explicitSendPanel summary');
+  assert.match(await quick.evaluate('document.getElementById("explicitSendDestination").textContent'),/https:\/\/chatgpt.com/);
+  await quick.click('#previewPrompt');
+  await quick.waitFor('document.getElementById("promptPreview").textContent.length > 0');
+  await quick.click('#copyPrompt');
+  await quick.waitFor('fixture.copied.length > 0');
+  assert.equal(await quick.evaluate('fixture.messages.length'),0);
+  await quick.click('#explicitSendButton');
+  await quick.waitFor('fixture.messages.length === 1');
+  assert.equal(await quick.evaluate('fixture.messages[0].type'),'OPEN_CHATGPT_WITH_EXPLICIT_SEND');
+  await quick.close();
+  console.log('PASS: native remembered opt-in, visible Send destination and explicit per-video action; Preview/Copy remain manual.');
   assert.equal(errors.length, 0, `No runtime exceptions: ${JSON.stringify(errors)}`);
   console.log(`PASS: ${cases} native popup task/destination cases${hasPromptReview ? ' with preview = copy = Open, no extra tabs, safe text and stale-preview checks' : ''}, reload retention${hasProviderSwitch ? ' and provider switching' : ' (baseline popup)'}${hasCustomInstructions ? ', explicit local Custom save/forget and one-off clearing' : ''} on ${version.product}.`);
   if (hasProviderSwitch) console.log(`Synthetic UI screenshots: ${profile}`);

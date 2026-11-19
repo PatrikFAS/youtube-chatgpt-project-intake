@@ -2,9 +2,9 @@
 
 A lightweight Chrome/Edge browser extension that extracts YouTube transcripts and routes them to ChatGPT or Claude for summarization, critical analysis, or project-specific application.
 
-**Beta candidate v0.1.16 - Claude manual autofill for the reported composer**
+**Beta candidate v0.1.17 — explicit Send to ChatGPT**
 
-Patrik's v0.1.15 structural report identifies a recognized editor with four nearby controls but no supported Send marker. That layout reproduced the old pre-insertion refusal. v0.1.16 permits manual autofill for the exact stronger editor identity without identifying or activating Send. It checks the destination, empty composer and full text acceptance, preserves drafts/clipboard fallback, and retains Custom's corrected structure and all three presets. The matching fixture passes; the affected signed-in Claude case still needs Patrik's test.
+Patrik confirmed v0.1.16 Claude autofill in his selected real-browser journey and v0.1.15 Custom instructions. v0.1.17 keeps those flows and adds a separate, default-off ChatGPT Send action. Under Faster sending, opt in to reveal **Send to ChatGPT** and its destination URL. That button authorizes one send for the chosen video; Open, Copy, Preview and Retry remain manual. The opt-in is remembered on this browser and can be turned off. Claude has no Send action. New Send behavior is fixture-tested and still needs Patrik's harmless live sample.
 
 YouTube AI Bridge is Patrik's chosen working name, used in forthcoming beta interfaces and documentation. This is the same extension: update the existing installation in place to retain its identity and saved settings. The name is provisional; no trademark/name clearance or store publication is implied.
 
@@ -34,12 +34,12 @@ For an optional skip/skim/watch/apply response experiment, see the [draft Custom
 
 The raw transcript is a separate utility. The selected task appears above the action button and as SELECTED MODE in the copied prompt, so task choices remain easy to distinguish.
 
-## Update an existing installation to v0.1.16
+## Update an existing installation to v0.1.17
 
 1. Extract the versioned ZIP and overwrite its files in the **same unpacked extension folder** you originally loaded. Keep that folder's location. You can back it up first.
 2. Open `edge://extensions/` or `chrome://extensions/` and click **Reload** on the existing extension entry. Do not uninstall it; updating in place retains saved destinations and preferences.
-3. Refresh your open YouTube, ChatGPT and Claude tabs without clearing any drafts. Allow claude.ai site access if upgrading from a version before v0.1.10 and your browser asks. Confirm **YouTube AI Bridge / v0.1.16**. Saved links, preset and caption preferences remain; no permissions or settings migration are added.
-4. Use [the focused Claude check](TESTING.md#v0116-focused-claude-acceptance): one captioned video, Summarize, the same affected Claude destination, Open, and no Send. Check that the complete selected prompt appears on the intended page. If fallback appears, preserve the composer and report the exact notice; the already supplied structural report does not need repeating. Clipboard fallback remains available; inspect for any partial text before pasting.
+3. Refresh relevant tabs without clearing drafts and confirm **YouTube AI Bridge / v0.1.17**. No new permissions. Keep the working v0.1.16 ZIP as a fallback; destinations/preferences remain.
+4. For the new action, use [the harmless-sample Send check](TESTING.md#v0117-smallest-user-test). Send requires the exact saved route/document, one empty recognized composer, the complete exact prompt and one stable known enabled native Send control. Uncertain/partial cases stay manual. Same-video/prompt/destination requests are blocked for the browser session after any Send request, even if opening or sending failed. Check the conversation before any manual retry; a notice confirms the click request, not server acceptance.
 
 The update keeps supported destination URLs intact and rejects Codex or unfamiliar routes with repair guidance. It checks the actual URL, selected product controls and specific ChatGPT composer markers before insertion, preserves existing drafts, and consumes a handoff before editing to avoid duplicates. Unrecognized interfaces get a visible clipboard fallback; choose the intended ChatGPT surface before pasting. No product-mode override is invented.
 

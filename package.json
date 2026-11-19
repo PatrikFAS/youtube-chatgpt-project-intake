@@ -1,6 +1,6 @@
 {
   "name": "youtube-chatgpt-project-intake",
-  "version": "0.1.16",
+  "version": "0.1.17",
   "private": true,
   "description": "Lightweight Chromium extension for routing YouTube transcripts into ChatGPT or Claude.",
   "scripts": {
@@ -8,6 +8,7 @@
     "test": "node tests/transcript-fallback.mjs && node tests/dom-transcript-fallback.mjs && node tests/routing-handoff.mjs && node tests/popup-options.mjs",
     "package": "python3 scripts/package.py",
     "test:browser": "node tests/popup-browser.mjs",
-    "test:claude-browser": "node tests/claude-browser.mjs"
+    "test:claude-browser": "node tests/claude-browser.mjs",
+    "test:send-browser": "node tests/explicit-send-browser.mjs"
   }
 }

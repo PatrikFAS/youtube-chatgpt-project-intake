@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.17
+
+- Adds default-off, remembered explicit Send to ChatGPT for individual videos. The visible destination and separate Send action authorize each handoff; existing Open, Copy, Preview and Retry remain manual. Claude and Collections cannot use it.
+- Session reservations deduplicate the same source/prompt/destination; one-time permission binds the exact destination, tab and document and is consumed before one native click. Drafts/uploads, partial text, changed/ambiguous/disabled controls, route changes or uncertain results stay manual with no retry. No live third-party messages were sent by Codex.
+- Records Patrik's accepted v0.1.16 Claude journey and v0.1.15 Custom. New Send behavior is fixture-verified only and awaits his harmless-sample acceptance. Keeps all presets, Claude injector and permissions unchanged. Collection is separately authorized but not included in this milestone.
+
 ## 0.1.16
 
 - Addresses the pre-insertion refusal reproduced from Patrik's v0.1.15 structural report: one recognized chat-input / textbox / tiptap / ProseMirror editor with the exact Write your prompt to Claude label, four nearby controls, and no recognized Send marker. The old path waited without claiming or editing. Timing/destination/framework behavior in the actual failed handoff is not recorded by that diagnostic.

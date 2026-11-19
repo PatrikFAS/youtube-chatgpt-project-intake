@@ -31,7 +31,7 @@ function createBackground({ source = { id: 11, windowId: 4, index: 2 }, nextTabI
   let queried = false;
   let storageGetGate = null;
   const chrome = {
-    runtime: { onInstalled: { addListener(fn) { installed = fn; } }, onMessage: { addListener(fn) { listener = fn; } } },
+    runtime: { getURL:p=>`chrome-extension://fixture/${p}`, onInstalled: { addListener(fn) { installed = fn; } }, onMessage: { addListener(fn) { listener = fn; } } },
     tabs: {
       async get(id) { gets.push(id); if (failGet) throw new Error('closed'); return { ...source, id }; },
       async create(options) { creates.push(options); if (failCreate) throw new Error('create failed'); return { id: nextTabId }; },
@@ -47,7 +47,7 @@ function createBackground({ source = { id: 11, windowId: 4, index: 2 }, nextTabI
     }, local: { async get() { return localData; }, async set(values) { Object.assign(localData, values); } } }
   };
   const context = vm.createContext({
-    chrome, URL, Date, String, Error, Number, Array, Set, Object,
+    chrome, URL, Date, String, Error, Number, Array, Set, Object, crypto:globalThis.crypto, TextEncoder,
     importScripts(name) { assert.equal(name, 'shared/destination.js'); vm.runInContext(destinationSource, context); }
   });
   vm.runInContext(backgroundSource, context, { filename: 'background.js' });
@@ -742,5 +742,49 @@ async function testInjector() {
 }
 
 await testBackground();
+async function testExplicitSend() {
+  const source={id:11,windowId:4,index:2,url:'https://www.youtube.com/watch?v=fixture-video'};
+  const enabled={chatgptExplicitSendEnabled:true};
+  const popup={url:'chrome-extension://fixture/popup/popup.html'};
+  const request={type:'OPEN_CHATGPT_WITH_EXPLICIT_SEND',sourceTabId:11,videoId:'fixture-video',destinationUrl:'https://chatgpt.com/',payload:'Harmless fixture sample'};
+  const worker=createBackground({source,localData:enabled});
+  const results=await Promise.all([worker.message(request,popup),worker.message(request,popup)]);
+  assert.equal(results.filter(r=>r.ok).length,1,'duplicate popup clicks open once');
+  assert.equal(worker.creates.length,1);
+  const sender={tab:{id:90},frameId:0,documentId:'document-one',url:request.destinationUrl};
+  const pending=await worker.message({type:'GET_PENDING_PAYLOAD'},sender);
+  assert.match(pending.explicitSendKey,/^explicit_send_[a-f0-9]{64}$/);
+  const claimed=await worker.message({type:'CLAIM_PENDING_PAYLOAD'},sender);
+  assert.equal(claimed.explicitSendKey,pending.explicitSendKey);
+  const authorize={type:'AUTHORIZE_CHATGPT_SEND_ONCE',explicitSendKey:claimed.explicitSendKey};
+  assert.equal((await worker.message(authorize,{...sender,documentId:'reloaded-document'})).ok,false,'different document cannot send');
+  assert.equal((await worker.message(authorize,{...sender,frameId:1})).ok,false,'frame cannot send');
+  assert.equal((await worker.message(authorize,{...sender,url:'https://chatgpt.com/c/other'})).ok,false,'route mismatch cannot send');
+  assert.equal((await worker.message(authorize,sender)).ok,true);
+  assert.equal((await worker.message(authorize,sender)).ok,false,'authorization is consumed before click');
+  assert.equal((await worker.message({type:'CLAIM_PENDING_PAYLOAD'},sender)).payload,null,'reload cannot insert/send again');
+  assert.equal((await worker.message(request,popup)).ok,false,'reopening popup cannot duplicate this request');
+  for(const options of [
+    {localData:{}}, {localData:enabled,source:{...source,url:'https://www.youtube.com/watch?v=changed'}}
+  ])assert.equal((await createBackground({...options,source:options.source||source}).message(request,popup)).ok,false);
+  for(const changed of [{destinationUrl:'https://claude.ai/new'},{collection:true}]){
+    const w=createBackground({source,localData:enabled});
+    assert.equal((await w.message({...request,...changed},popup)).ok,false);assert.equal(w.creates.length,0);
+  }
+  assert.equal((await createBackground({source,localData:enabled}).message(request,{...sender,url:'https://chatgpt.com/'})).ok,false,'content script cannot request an explicit send');
+  const ordinary=createBackground({source,localData:enabled});
+  await ordinary.message({...request,type:'OPEN_DESTINATION_WITH_PAYLOAD',explicitSendKey:pending.explicitSendKey},popup);
+  assert.equal((await ordinary.message({type:'GET_PENDING_PAYLOAD'},sender)).explicitSendKey,undefined,'ordinary Open ignores any send flag');
+  const redirected=createBackground({source,localData:enabled});
+  await redirected.message({...request,destinationUrl:'https://chatgpt.com/g/g-p-fixture/project'},popup);
+  const result=await redirected.message({type:'CLAIM_PENDING_PAYLOAD'},{...sender,url:'https://chatgpt.com/g/g-p-fixture/c/fixture'});
+  assert.equal(result.payload,request.payload);assert.equal(result.explicitSendKey,undefined,'Project redirect permits manual insertion only');
+  assert.equal(result.sendSuppressed,true);
+  const failed=createBackground({source,localData:enabled,failCreate:true});
+  assert.equal((await failed.message(request,popup)).ok,false);
+  assert.match((await failed.message(request,popup)).error,/already has a Send request/,'failed open never automatically retries');
+  console.log('PASS: explicit Send worker reserves once, binds exact destination/document, refuses Claude/Collection/untrusted callers and never retries.');
+}
+await testExplicitSend();
 await testInjector();
 console.log('PASS: routing, source-tab placement, pending claims, destination checks, and safe composer insertion.');

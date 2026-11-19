@@ -54,12 +54,19 @@ function cacheElements() {
     'openOptionsTop','openOptionsOther','handoffHelp','copyChatTitle',
     'providerChatGPT','providerClaude','destinationHelp','saveHeading','saveHelp','actionSummary','buildVersion',
     'copyPrompt','previewPrompt','promptPanel','promptPreview','promptCount',
-    'customPanel','customInstructions','customHelp','saveCustomInstructions','forgetCustomInstructions','questionDetails'
+    'customPanel','customInstructions','customHelp','saveCustomInstructions','forgetCustomInstructions','questionDetails',
+    'explicitSendPanel','explicitSendOptIn','explicitSendButton','explicitSendDestination'
   ]) els[id] = document.getElementById(id);
 }
 
 function wireEvents() {
   els.sendButton.addEventListener('click', sendToChatGPT);
+  els.explicitSendButton.addEventListener('click', () => sendToChatGPT(true));
+  els.explicitSendOptIn.addEventListener('change', async () => {
+    try { await chrome.storage.local.set({chatgptExplicitSendEnabled:els.explicitSendOptIn.checked}); }
+    catch { els.explicitSendOptIn.checked=false; showError('Could not save Send preference. Manual Open remains available.'); }
+    updateExplicitSend();
+  });
   els.copyTranscript.addEventListener('click', copyTranscript);
   els.copyPrompt.addEventListener('click', () => preparePromptAction(true));
   els.previewPrompt.addEventListener('click', () => preparePromptAction(false));
@@ -153,7 +160,8 @@ function renderVideoContext() {
 
 async function loadPreferences(preserveCustom = false) {
   const customDraft = preserveCustom ? { value: els.customInstructions.value, selected: getSelectedMode() === 'custom' } : null;
-  const stored = await chrome.storage.local.get(['lastMode', 'lastDestinationId', 'preferredTranscriptLanguage', 'lastProvider', 'lastDestinationByProvider', 'customInstructions', 'lastPresetMode']);
+  const stored = await chrome.storage.local.get(['lastMode', 'lastDestinationId', 'preferredTranscriptLanguage', 'lastProvider', 'lastDestinationByProvider', 'customInstructions', 'lastPresetMode', 'chatgptExplicitSendEnabled']);
+  els.explicitSendOptIn.checked = stored.chatgptExplicitSendEnabled === true;
   savedCustomInstructions = typeof stored.customInstructions === 'string' ? stored.customInstructions : '';
   els.customInstructions.value = customDraft ? customDraft.value : savedCustomInstructions;
   lastPresetMode = PRESET_MODES.includes(stored.lastMode) ? stored.lastMode : PRESET_MODES.includes(stored.lastPresetMode) ? stored.lastPresetMode : 'apply';
@@ -318,8 +326,10 @@ function invalidatePromptPreview() {
   els.previewPrompt.setAttribute('aria-expanded', 'false');
 }
 
-async function sendToChatGPT() {
+async function sendToChatGPT(explicitSend = false) {
+  explicitSend = explicitSend === true;
   if (busy || sending) return;
+  if (explicitSend && (!els.explicitSendOptIn.checked || currentProvider !== 'chatgpt')) return;
   sending = true;
   clearMessages();
   const choice = capturePromptChoice();
@@ -349,10 +359,11 @@ async function sendToChatGPT() {
     if (!normalizedDestination) throw new Error(YT2GPTDestination.REPAIR);
 
     const response = await chrome.runtime.sendMessage({
-      type: 'OPEN_DESTINATION_WITH_PAYLOAD',
+      type: explicitSend ? 'OPEN_CHATGPT_WITH_EXPLICIT_SEND' : 'OPEN_DESTINATION_WITH_PAYLOAD',
       destinationUrl: normalizedDestination,
       payload: prompt,
-      sourceTabId
+      sourceTabId,
+      ...(explicitSend ? {videoId:videoContext.videoId} : {})
     });
 
     if (!response?.ok) throw new Error(response?.error || 'Could not open the selected destination.');
@@ -477,6 +488,7 @@ async function rememberDestination() {
 }
 
 function updateHandoffHelp() {
+  updateExplicitSend();
   const claude = currentProvider === 'claude';
   if (!busy) els.sendButton.textContent = claude ? 'Open in Claude' : 'Open in ChatGPT';
   els.handoffHelp.textContent = claude
@@ -621,7 +633,16 @@ function setInteractionBusy(value) {
   busy = value;
   for (const el of [els.providerChatGPT, els.providerClaude, els.destinationSelect, els.trackSelect, els.optionalQuestion, els.copyTranscript, els.copyChatTitle, els.viewTranscript, els.retryButton, els.copyPrompt, els.previewPrompt, els.customInstructions, els.saveCustomInstructions, els.forgetCustomInstructions]) el.disabled = value;
   document.querySelectorAll('input[name="mode"]').forEach((radio) => { radio.disabled = value; });
+  els.explicitSendOptIn.disabled = value;
+  els.explicitSendButton.disabled = value;
   if (!value) updateCustomUI();
+}
+
+function updateExplicitSend() {
+  const supported = currentProvider === 'chatgpt';
+  els.explicitSendPanel.classList.toggle('hidden', !supported);
+  els.explicitSendButton.classList.toggle('hidden', !supported || !els.explicitSendOptIn.checked);
+  els.explicitSendDestination.textContent = `Send destination: ${els.destinationSelect.selectedOptions[0]?.dataset?.url || 'Choose a destination'}`;
 }
 
 function show(el) { el?.classList.remove('hidden'); }

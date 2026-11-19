@@ -2,6 +2,33 @@
 
 ## Current status
 
+**v0.1.17 explicit ChatGPT Send milestone:** default off; remembered opt-in only
+reveals a separate Send action and destination URL. Open/Copy/Preview/Retry remain
+manual. Worker fixtures cover duplicate requests, reload/document binding,
+authorization consumption and provider/Collection rejection. Native intercepted
+DOM tests exercise one-click effects and protected failures; these do not
+establish live ChatGPT acceptance.
+
+Verification: required suites, 24 native popup combinations plus the native
+remembered-opt-in/action check, 31 native Send cases and 66 Claude cases pass.
+Send cases include exact paragraph/indentation preservation, known/unknown and
+duplicate controls, drafts/uploads, claim/focus changes, route/control/text
+changes during authorization, denied permission and one-click submit effects.
+
+Patrik confirmed v0.1.16 Claude autofill on his selected real-browser journey and
+v0.1.15 Custom instructions. Keep the v0.1.16 ZIP as the accepted fallback.
+
+### v0.1.17 smallest user test
+
+Update the same unpacked folder, Reload and refresh relevant tabs. On one short,
+harmless captioned sample choose ChatGPT and inspect the visible destination.
+Open Faster sending, enable the remembered opt-in, then click **Send to ChatGPT**
+once. Check that exactly one full prompt appears as a sent message, or that the
+notice withholds Send and leaves manual review. Do not retry an uncertain send;
+check the conversation first. Existing drafts must remain untouched. Claude has
+no Send action. Turn the opt-in off afterward if undesired. Codex does not run
+this live test.
+
 **v0.1.16 addresses the reported Claude pre-insertion refusal.** The supplied
 v0.1.15 report has one recognized chat-input / textbox / tiptap / ProseMirror
 editor with the exact Write your prompt to Claude label, four enabled controls

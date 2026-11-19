@@ -120,6 +120,13 @@
         <button id="copyPrompt" class="secondary" title="Copy the full prepared prompt without opening a tab">Copy prompt</button>
       </div>
       <p id="handoffHelp" class="muted" aria-live="polite"></p>
+      <details id="explicitSendPanel" class="question-details">
+        <summary>Faster sending <span class="optional-label">ChatGPT beta</span></summary>
+        <label><input id="explicitSendOptIn" type="checkbox"> Enable explicit Send to ChatGPT on this browser</label>
+        <p class="field-help">Off by default. Remembered locally. Only the separate Send action below can submit this video to the visible destination. Open, Copy, Preview and Retry never send. Uncertain cases stay manual.</p>
+        <p id="explicitSendDestination" class="url-preview"></p>
+        <button id="explicitSendButton" class="secondary wide hidden">Send to ChatGPT</button>
+      </details>
 
       <div class="utility-row">
         <button id="previewPrompt" class="link-button" aria-controls="promptPanel" aria-expanded="false">Preview prompt</button>

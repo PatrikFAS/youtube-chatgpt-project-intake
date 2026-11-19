@@ -33,7 +33,7 @@
       if (problem) return failVisible(problem);
       const composer = findComposer();
       if (composer) {
-        if (hasDraft(composer)) {
+        if (hasDraft(composer) || (pending.explicitSendKey && unsafeForSend(composer, true))) {
           return failVisible('Your existing draft was left untouched. Review it before pasting the copied prompt.', false);
         }
         let claimed;
@@ -50,8 +50,9 @@
         if (destinationProblem(claimed.destinationUrl) || findComposer() !== composer || hasDraft(composer)) {
           return failVisible('The page or draft changed while preparing the prompt. Nothing was inserted.', false);
         }
-        const ok = insertIntoComposer(composer, claimed.payload, claimed.destinationUrl);
-        if (ok) showToast('YouTube AI Bridge: prompt inserted in ChatGPT. Review it, then press Send.');
+        const ok = insertIntoComposer(composer, claimed.payload, claimed.destinationUrl, Boolean(claimed.explicitSendKey));
+        if (ok && claimed.explicitSendKey) await sendExplicitlyOnce(composer, claimed);
+        else if (ok) showToast(`YouTube AI Bridge: prompt inserted in ChatGPT. ${claimed.sendSuppressed ? 'Explicit Send was withheld because the exact page or document could not be confirmed. ' : ''}Review it, then press Send.`);
         else showToast('YouTube AI Bridge: ChatGPT insertion could not be confirmed. Check the composer before pasting; the complete prompt remains on your clipboard.', true);
         return;
       }
@@ -151,12 +152,12 @@
     return el.matches('textarea') || el.getAttribute('contenteditable') === 'true' || el.isContentEditable;
   }
 
-  function insertIntoComposer(el, text, destinationUrl) {
+  function insertIntoComposer(el, text, destinationUrl, strict = false) {
     try {
-      if (hasDraft(el)) return false;
+      if (hasDraft(el) || (strict && unsafeForSend(el, true))) return false;
       el.focus();
       // Focusing can synchronously trigger framework updates or a draft restore.
-      if (hasDraft(el) || destinationProblem(destinationUrl) || findComposer() !== el) return false;
+      if (hasDraft(el) || (strict && unsafeForSend(el, true)) || destinationProblem(destinationUrl) || findComposer() !== el) return false;
 
       if (el instanceof HTMLTextAreaElement || el instanceof HTMLInputElement) {
         setNativeValue(el, text);
@@ -167,7 +168,7 @@
       selectAllContents(el);
       let inserted = false;
       try { inserted = document.execCommand('insertText', false, text); } catch {}
-      if (!inserted && !readComposer(el).trim()) {
+      if (!strict && !inserted && !readComposer(el).trim()) {
         el.replaceChildren(document.createTextNode(text));
         dispatchInput(el, text);
       }
@@ -176,6 +177,71 @@
       console.warn('YT2GPT insertion failed', error);
       return false;
     }
+  }
+
+  function unsafeForSend(el, requireEmpty = false) {
+    const form = el.closest('form');
+    return !isVisibleAndEditable(el) || !form || Boolean(el.closest('[inert], [aria-hidden="true"]')) ||
+      [...form.querySelectorAll('[contenteditable="true"], textarea, input[type="text"]')].filter(isVisibleAndEditable).length !== 1 ||
+      (requireEmpty && Boolean(el instanceof HTMLTextAreaElement || el instanceof HTMLInputElement ? el.value : el.textContent)) || hasAttachmentsOrActivity(form) ||
+      Boolean(el.querySelector('[contenteditable="false"], [data-node-view-wrapper]'));
+  }
+  function hasAttachmentsOrActivity(form) {
+    return form.getAttribute('aria-busy') === 'true' ||
+      Boolean(form.querySelector('img, video, audio, iframe, [data-type="mention"], [data-testid*="attachment"], [data-testid*="file-preview"], [data-testid*="upload"], [role="progressbar"], [aria-busy="true"], [data-testid*="stop"], button[aria-label^="Stop"], button[aria-label*="remove" i], button[aria-label*="delete" i]')) ||
+      [...form.querySelectorAll('[data-composer-attachments]')].some(node=>node.childElementCount>0) ||
+      [...form.querySelectorAll('input[type="file"]')].some(input=>input.files?.length);
+  }
+  function readySend(el, claimed) {
+    if (location.origin !== 'https://chatgpt.com' || YT2GPTDestination.normalize(location.href) !== claimed.destinationUrl ||
+        destinationProblem(claimed.destinationUrl) || findComposer() !== el || unsafeForSend(el) ||
+        exactComposerText(el) !== claimed.payload.replace(/\r\n/g,'\n')) return null;
+    const buttons = [...el.closest('form').querySelectorAll('[data-testid="send-button"], [data-testid="composer-send-button"]')].filter(isVisible);
+    if (buttons.length !== 1) return null;
+    const button = buttons[0];
+    return button instanceof HTMLButtonElement && !button.disabled && button.getAttribute('aria-disabled') !== 'true' &&
+      button.getAttribute('aria-readonly') !== 'true' && !button.closest('[inert], [aria-hidden="true"]') ? button : null;
+  }
+  function exactComposerText(el) {
+    if (el instanceof HTMLTextAreaElement || el instanceof HTMLInputElement) return el.value.replace(/\r\n/g,'\n');
+    // Native plaintext editing creates paragraphs. innerText adds layout gaps
+    // around P nodes, so serialize only this bounded text/P/DIV/BR shape.
+    // Preserve every literal space/newline; unknown rich markup stays manual.
+    function inline(node) {
+      if (node.nodeType === Node.TEXT_NODE) return node.nodeValue;
+      if (node.nodeType === Node.ELEMENT_NODE && node.tagName === 'BR') return '\n';
+      return null;
+    }
+    let result = '';
+    for (const node of el.childNodes) {
+      if (node.nodeType === Node.ELEMENT_NODE && ['P','DIV'].includes(node.tagName)) {
+        if (result || node !== el.firstChild) result += '\n';
+        if (node.childNodes.length === 1 && node.firstChild.nodeName === 'BR') continue;
+        for (const child of node.childNodes) { const text=inline(child); if(text===null)return null; result+=text; }
+      } else { const text=inline(node); if(text===null)return null; result+=text; }
+    }
+    return result.replace(/\r\n/g,'\n');
+  }
+  async function sendExplicitlyOnce(el, claimed) {
+    const started = Date.now();
+    let stable = null;
+    while (Date.now()-started < 2500) {
+      await sleep(100);
+      const button = readySend(el, claimed);
+      if (!button) { stable = null; continue; }
+      if (stable !== button) { stable = button; continue; }
+      let authorization;
+      try { authorization = await chrome.runtime.sendMessage({type:'AUTHORIZE_CHATGPT_SEND_ONCE',explicitSendKey:claimed.explicitSendKey}); } catch {}
+      if (!authorization?.ok || readySend(el, claimed) !== button) break;
+      try {
+        // One native control activation only. Authorization is consumed first;
+        // never retry, even if the site rejects or the document changes.
+        HTMLButtonElement.prototype.click.call(button);
+        showToast('YouTube AI Bridge: Send was requested once in ChatGPT. Check the conversation for the result; it will not be retried.');
+      } catch { showToast('YouTube AI Bridge: the Send attempt is uncertain. Check the conversation before doing anything else; no retry will occur.', true); }
+      return;
+    }
+    showToast('YouTube AI Bridge: automatic Send was withheld. Check the destination and complete draft, then send manually if appropriate. Nothing will be retried.', true);
   }
 
   function setNativeValue(el, value) {

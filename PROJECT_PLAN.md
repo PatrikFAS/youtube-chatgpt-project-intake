@@ -40,6 +40,18 @@ separate checks. Do not reopen scope/terms research for this beta.
 
 ## Verified delivery and unresolved work
 
+Patrik confirmed the v0.1.16 Claude autofill journey and v0.1.15 Custom, then
+explicitly authorized two bounded milestones on 19 November. **M1 v0.1.17:**
+ChatGPT-only default-off remembered opt-in with an explicit per-video Send action,
+exact destination/document and one-time no-retry safeguards. Codex validates
+local fixtures; Patrik owns one harmless live sample. **M2 next:** three-video
+session-only manual Collection, reviewed source-labelled Preview/Copy/Open,
+manual Send only. It reuses the 39-check offline experiment; no playlist/bulk
+capture, persistent transcripts or AI API. Preserve v0.1.16 ZIP, keep milestones
+reviewable in the existing PR stack, and do not merge/publish. These approved
+milestones supersede older parked/gated wording below; new functionality needs
+its own acceptance and fixture results do not establish live behavior.
+
 | State | Evidence and limit |
 | --- | --- |
 | Accepted baseline | v0.1.10 is merged in [PR #3](https://github.com/PatrikFAS/youtube-chatgpt-project-intake/pull/3). Patrik confirmed the Chrome/Edge workflow, provider UI and automatic Claude insertion in his tested case. The precise Claude route/browser version was not recorded. |
