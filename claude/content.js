@@ -5,10 +5,10 @@
   window.__YT2GPT_CLAUDE_INSTALLED__ = true;
 
   const MAX_WAIT_MS = 30000;
-  // The final candidate uses the exact editor label/classes observed through
-  // signed-in Edge accessibility. Its DOM attributes and nearby Send marker
-  // remain to be verified live; never fall back to generic ProseMirror editors.
+  // Never fall back to generic ProseMirror editors. The stricter manual-only
+  // identity below matches Patrik's 2026-11-19 opt-in structural report.
   const EDITOR_SELECTOR = '[data-testid="chat-input"][contenteditable="true"], [data-testid="chat-input"] .ProseMirror[contenteditable="true"], textarea[aria-label="Write your prompt to Claude"], .tiptap.ProseMirror[contenteditable="true"][aria-label="Write your prompt to Claude"]';
+  const REPORTED_EDITOR_SELECTOR = 'div[data-testid="chat-input"][role="textbox"].tiptap.ProseMirror[contenteditable="true"][aria-label="Write your prompt to Claude"]';
   const SEND_SELECTOR = 'button[data-testid="chat-input-send"]';
   const ATTACHMENT_SELECTOR = 'img, video, audio, iframe, [data-type="mention"], [data-testid*="attachment"], [data-testid*="file-preview"], [data-testid*="upload-preview"], button[aria-label*="remove" i], button[aria-label*="delete" i], [role="progressbar"], [aria-busy="true"]';
 
@@ -66,13 +66,16 @@
 
         if (inserted) {
           const settling = Date.now();
-          // Confirm both text and the framework's readiness after it processes
-          // native editing events. This loop never writes or presses controls.
+          let stableTextChecks = 0;
+          // Confirm native text acceptance. For the reported manual-only
+          // surface, Send identity/readiness is deliberately not inferred.
+          // This loop never writes or presses controls.
           while (Date.now() - settling < 2500) {
             await sleep(100);
             if (!sameComposer(found, claimed.destinationUrl) || read(found.editor) !== normalize(claimed.payload)) break;
             const send = findComposer()?.send;
-            if (send && !send.disabled && send.getAttribute('aria-disabled') !== 'true') {
+            if ((send && !send.disabled && send.getAttribute('aria-disabled') !== 'true') ||
+                (!found.send && ++stableTextChecks >= 3)) {
               toast('Prompt inserted in Claude. Review it, then press Send yourself.');
               return;
             }
@@ -82,7 +85,8 @@
       }
       await sleep(500);
     }
-    return fail('This Claude message box was not recognized. Your saved destination was kept.', true);
+    const editorFound = [...document.querySelectorAll(EDITOR_SELECTOR)].filter(editable).length === 1;
+    return fail(`This Claude message box was not recognized.${editorFound ? ' An editor was found, but its supported composer controls could not be confirmed.' : ''} Your saved destination was kept.`, true);
   }
 
   function destinationProblem(expected) {
@@ -99,8 +103,7 @@
     const candidates = [...document.querySelectorAll(EDITOR_SELECTOR)].filter(editable);
     if (candidates.length !== 1) return null;
     const editor = candidates[0];
-    // Require a specific editor identity AND the Claude Send marker in a
-    // nearby scope. A generic ProseMirror or unrelated editor is insufficient.
+    // Retain the existing marked-Send path for previously supported surfaces.
     let scope = editor.parentElement;
     for (let depth = 0; scope && depth < 6 && scope !== document.body && scope !== document.documentElement; depth++, scope = scope.parentElement) {
       const sends = [...scope.querySelectorAll(SEND_SELECTOR)].filter(visible);
@@ -108,6 +111,19 @@
       const editors = [...scope.querySelectorAll('[contenteditable="true"], textarea')].filter(editable);
       if (editors.length !== 1 || editors[0] !== editor) return null;
       return { editor, scope, send: sends[0] };
+    }
+    // The supplied report has this exact, stronger editor identity and four
+    // unknown controls in its fifth ancestor. Manual autofill does not need to
+    // identify a Send button. Use the nearest bounded controls scope to keep
+    // draft/attachment checks intact; never interpret unknown buttons as Send.
+    if (!editor.matches(REPORTED_EDITOR_SELECTOR)) return null;
+    scope = editor.parentElement;
+    for (let depth = 0; scope && depth < 6 && scope !== document.body && scope !== document.documentElement; depth++, scope = scope.parentElement) {
+      if (![...scope.querySelectorAll('button')].some(visible)) continue;
+      if ([...scope.querySelectorAll(SEND_SELECTOR)].some(visible)) return null;
+      const editors = [...scope.querySelectorAll('[contenteditable="true"], textarea')].filter(editable);
+      if (editors.length !== 1 || editors[0] !== editor) return null;
+      return { editor, scope, send: null };
     }
     return null;
   }

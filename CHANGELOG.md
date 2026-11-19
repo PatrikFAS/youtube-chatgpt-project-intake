@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.16
+
+- Addresses the pre-insertion refusal reproduced from Patrik's v0.1.15 structural report: one recognized chat-input / textbox / tiptap / ProseMirror editor with the exact Write your prompt to Claude label, four nearby controls, and no recognized Send marker. The old path waited without claiming or editing. Timing/destination/framework behavior in the actual failed handoff is not recorded by that diagnostic.
+- Allows manual autofill only for that stronger combined editor identity, with a bounded, unique-editor controls scope. Unknown buttons are never interpreted or activated as Send. The earlier marked-Send path remains; ambiguous marked controls still refuse insertion. Exact routes, one-time claims, draft/attachment and focus/race checks remain mandatory. Native text must persist over three checks on the new path; this establishes text acceptance, not Send readiness.
+- Adds a redacted matching DOM fixture and safety regressions; improves the timeout distinction when an editor exists but supported controls cannot be confirmed. Clipboard fallback, Custom's v0.1.15 structure, all presets, settings and permissions are retained. No automatic Send, browser takeover, merge or publication. Affected signed-in Claude acceptance remains Patrik's focused next check.
+- Required verify/test suites, 24 native popup combinations and 66 Claude native-DOM safety/diagnostic cases pass. These tests establish synthetic text acceptance and regressions, not authenticated Claude behavior.
+
 ## 0.1.15
 
 - Removes a confirmed prompt contradiction for Custom: the shared source header no longer unconditionally demands a TL;DR. After the required full-title/known-featured-people/link header, Custom follows the user's requested task and answer structure, adding a summary/verdict/template/next step only when requested.

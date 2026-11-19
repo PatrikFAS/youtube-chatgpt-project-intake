@@ -2,13 +2,13 @@
 
 A lightweight Chrome/Edge browser extension that extracts YouTube transcripts and routes them to ChatGPT or Claude for summarization, critical analysis, or project-specific application.
 
-**Optional next candidate: v0.1.15 - Custom follows your requested answer structure**
+**Beta candidate v0.1.16 - Claude manual autofill for the reported composer**
 
-Patrik's current v0.1.14 test remains valid. v0.1.15 is isolated from that checkout and removes only Custom's contradictory compulsory TL;DR request after the source header. All three preset payloads, saved settings and handoff guards are unchanged. Try this candidate when ready; it is not a confirmed Claude recognition fix.
+Patrik's v0.1.15 structural report identifies a recognized editor with four nearby controls but no supported Send marker. That layout reproduced the old pre-insertion refusal. v0.1.16 permits manual autofill for the exact stronger editor identity without identifying or activating Send. It checks the destination, empty composer and full text acceptance, preserves drafts/clipboard fallback, and retains Custom's corrected structure and all three presets. The matching fixture passes; the affected signed-in Claude case still needs Patrik's test.
 
 YouTube AI Bridge is Patrik's chosen working name, used in forthcoming beta interfaces and documentation. This is the same extension: update the existing installation in place to retain its identity and saved settings. The name is provisional; no trademark/name clearance or store publication is implied.
 
-Patrik accepted v0.1.10's automatic Claude insertion in his tested case and v0.1.11's ChatGPT flow/UI, then reported an unrecognized Claude message box. Read-only inspection reached a signed-in editor with the exact Write your prompt to Claude label and tiptap/ProseMirror classes. v0.1.13 adds a narrow candidate for that combination while retaining the existing Claude Send marker, route and draft checks. Its DOM attributes and Send identity still need live verification, so **the reported failure is not confirmed fixed**. The opt-in structural diagnostic remains available. See [PROJECT_PLAN.md](PROJECT_PLAN.md) for priorities, evidence and next actions; Sarah's separate acceptance is unrecorded.
+Patrik accepted v0.1.10's Claude insertion in his tested case and v0.1.11's ChatGPT flow/UI, then reported later Claude failures including v0.1.15. His opt-in structural report now grounds the bounded v0.1.16 path; it does not prove live insertion or identify any Send button. Review and send yourself. See [PROJECT_PLAN.md](PROJECT_PLAN.md) for evidence and next actions; Sarah's separate acceptance is unrecorded.
 
 The extension does **not** run its own AI. It extracts YouTube captions locally, packages them with a focused instruction and copies the complete prompt before opening your selected destination. ChatGPT uses the existing guarded composer insertion. Claude now attempts **guarded automatic insertion** in a recognized empty message box on the exact saved route. Patrik confirmed automatic insertion in his signed-in browser; his exact browser version and destination were not recorded. Drafts/attachments are preserved, the complete prompt stays copied, and you review and send yourself.
 
@@ -34,12 +34,12 @@ For an optional skip/skim/watch/apply response experiment, see the [draft Custom
 
 The raw transcript is a separate utility. The selected task appears above the action button and as SELECTED MODE in the copied prompt, so task choices remain easy to distinguish.
 
-## Update an existing installation to v0.1.15 when ready
+## Update an existing installation to v0.1.16
 
 1. Extract the versioned ZIP and overwrite its files in the **same unpacked extension folder** you originally loaded. Keep that folder's location. You can back it up first.
 2. Open `edge://extensions/` or `chrome://extensions/` and click **Reload** on the existing extension entry. Do not uninstall it; updating in place retains saved destinations and preferences.
-3. Refresh your open YouTube, ChatGPT and Claude tabs. Allow claude.ai site access if upgrading from a version before v0.1.10 and your browser asks. Confirm **YouTube AI Bridge / v0.1.15**. Saved links, preset and caption preferences remain; this update adds no permissions or settings migration.
-4. Use [the focused v0.1.15 check](TESTING.md#v0115-focused-acceptance) for Custom's outgoing prompt. Finish your current v0.1.14 Claude check first if it is in progress. Claude's reported recognition failure is **not confirmed fixed**. Copy troubleshooting details remains an optional control-only report; that explicit action replaces your clipboard prompt, which Copy prompt restores. Nothing is automatically shared or sent.
+3. Refresh your open YouTube, ChatGPT and Claude tabs without clearing any drafts. Allow claude.ai site access if upgrading from a version before v0.1.10 and your browser asks. Confirm **YouTube AI Bridge / v0.1.16**. Saved links, preset and caption preferences remain; no permissions or settings migration are added.
+4. Use [the focused Claude check](TESTING.md#v0116-focused-claude-acceptance): one captioned video, Summarize, the same affected Claude destination, Open, and no Send. Check that the complete selected prompt appears on the intended page. If fallback appears, preserve the composer and report the exact notice; the already supplied structural report does not need repeating. Clipboard fallback remains available; inspect for any partial text before pasting.
 
 The update keeps supported destination URLs intact and rejects Codex or unfamiliar routes with repair guidance. It checks the actual URL, selected product controls and specific ChatGPT composer markers before insertion, preserves existing drafts, and consumes a handoff before editing to avoid duplicates. Unrecognized interfaces get a visible clipboard fallback; choose the intended ChatGPT surface before pasting. No product-mode override is invented.
 

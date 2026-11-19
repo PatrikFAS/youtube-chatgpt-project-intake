@@ -1,6 +1,6 @@
 # YouTube AI Bridge engineering and release plan
 
-Updated 2026-11-18. This repository owns implementation milestones and technical
+Updated 2026-11-19. This repository owns implementation milestones and technical
 acceptance. The [Product and Launch Space](https://chatgpt.com/space/page_6afdceb7f4b88191911b88bf7f55952e)
 owns shared strategy, recommendations, decisions and user feedback. This plan
 reconciles Astra's strategy without editing or replacing that material.
@@ -43,22 +43,22 @@ separate checks. Do not reopen scope/terms research for this beta.
 | State | Evidence and limit |
 | --- | --- |
 | Accepted baseline | v0.1.10 is merged in [PR #3](https://github.com/PatrikFAS/youtube-chatgpt-project-intake/pull/3). Patrik confirmed the Chrome/Edge workflow, provider UI and automatic Claude insertion in his tested case. The precise Claude route/browser version was not recorded. |
-| Current testable candidate | v0.1.14, runtime commit `b5e5e16ca6fb4905288ed3c15848b3de8df056bf`, is delivered through Library and [draft PR #4](https://github.com/PatrikFAS/youtube-chatgpt-project-intake/pull/4). It adds Custom with one-off text, explicit Save locally / Forget and unchanged presets. Required checks, 24 native task/provider/destination combinations and 42 Claude native-DOM guard/diagnostic cases pass. Fixtures do not establish authenticated insertion or good AI judgment. |
-| Optional next implementation | v0.1.15 is prepared on `codex/custom-output-contract` in an isolated worktree of this same repository. It removes the confirmed compulsory TL;DR contradiction from Custom's shared header while preserving source identity and the requested task. All 18 preset payloads are byte-identical to delivered v0.1.14; required checks and 24 native popup cases pass. Current user testing is not replaced or marked complete. This is not a Claude selector fix or a new compact-response preset/default. |
-| Current Claude blocker | Patrik's later case times out with an unrecognized message box. Signed-in Edge accessibility observed the exact editor label and tiptap/ProseMirror classes, but actual aria-label/Send marker and successful insertion remain unverified. The v0.1.13 bounded candidate is retained. The timeout can reflect editor/readiness, Send/scope or ambiguity guards; no actual cause is established. This is missing diagnosis as well as live acceptance, not a confirmed fix waiting only for a final check. |
+| Delivered versions | v0.1.14 added Custom; v0.1.15 removed its compulsory TL;DR conflict. All 18 preset payloads stayed byte-identical to v0.1.14, and 24 native task/provider/destination cases passed. Patrik tested v0.1.15 and reported no Claude insertion. Its supplied control-shape report now replaces the missing structural evidence; no repeat diagnostic is needed. |
+| Current candidate | v0.1.16 on the existing `codex/custom-output-contract` branch / [draft PR #5](https://github.com/PatrikFAS/youtube-chatgpt-project-intake/pull/5), stacked on [PR #4](https://github.com/PatrikFAS/youtube-chatgpt-project-intake/pull/4). Adds manual autofill for the exact stronger editor identity in the supplied report, without identifying/activating Send. Preserves Custom's corrected structure, presets, settings, permissions and draft/destination protections. Fixture results are recorded in TESTING.md; affected live acceptance remains open. |
+| Claude diagnosis and gate | The v0.1.15 report shows one recognized div/chat-input/textbox/tiptap/ProseMirror editor with the exact label, four controls at ancestors five/six and no known Send marker. Reconstructing that shape reproduced refusal before claim/edit in the old injector. v0.1.16 passes that fixture with full-text stability checks. The report does not capture actual timing, route or framework acceptance; only Patrik's affected-case check can confirm the live result. Unknown controls are never treated as Send. |
 | Browser and safety | The authorized free window reached DevTools but produced no usable DOM report. No Claude draft/message text, cookies or profile files were read/changed and no AI message was sent. Visible control stopped when Patrik returned. Do not repeat OS input workarounds or take over the browser; use supplied structural evidence or supported inspection. Unknown controls keep fallback. |
-| Mode report and demand | Earlier Summarize/Analyze mismatch was not reproduced; later click snapshots/visible mode and retention fixtures pass. No original cause is claimed. Patrik accepted the later ChatGPT/UI path. Custom acceptance, Sarah's own journey, independent reuse and willingness to pay remain unrecorded. |
+| Mode report and demand | Earlier Summarize/Analyze mismatch was not reproduced; later click snapshots/visible mode and retention fixtures pass. No original cause is claimed. The Space records Patrik's 19 November acceptance of ChatGPT and Custom in v0.1.15. Sarah's own journey, independent reuse and willingness to pay remain unrecorded. |
 
-The delivered v0.1.14 ZIP remains the active user-test artifact. The optional
-v0.1.15 candidate is isolated so its implementation does not alter that
-checkout. Choose an in-place update only when ready; no automatic installation,
-merge, store publication or acceptance is performed.
+The original v0.1.14 checkout stays untouched. v0.1.16 is prepared in the same
+repository's existing worktree/PR stack for an in-place update of the loaded
+unpacked folder. No automatic installation, merge, store publication or live
+acceptance is performed.
 
 ## NOW NEXT LATER
 
 | When | Owner and next action | Gate |
 | --- | --- | --- |
-| NOW: Claude reliability | Codex reviews actual evidence and preserves existing guards. Patrik performs the one-case check below and supplies the opt-in structural report only if it still fails. | A bounded change is grounded in the failing control identity, passes fixture regressions, and Patrik confirms that affected case. No generic editor/Send fallback or repeat of accepted ChatGPT normal-case tests. Keep issue #1 open until its affected routing/tab placement acceptance. |
+| NOW: Claude reliability | Codex packages the report-grounded v0.1.16 fix after required/native checks. Patrik performs the single affected-case check below; his existing diagnostic is sufficient. | The bounded change passes fixtures; Patrik confirms complete unsent insertion on the exact destination. No generic editor/Send fallback, browser takeover or repeat of accepted ChatGPT normal-case tests. Keep issue #1 open until its affected routing/tab placement acceptance. |
 | NOW: compact-response experiment | Patrik uses the draft below through existing Custom in the working ChatGPT path, with his chosen Project/context and manual Send. Codex records evidence; no new UI or preset/default change. | Compare useful decisions, reading effort, missed important ideas and handoff friction across contrasting sources. The experiment can run while Claude is investigated. A few cases are directional, not demand proof. |
 | NEXT: proven wording only | After Patrik selects/approves a refinement, Codex makes a small prompt-only change. Reconcile shared-header/TL;DR instructions, move generic ChatGPT Apply's hard-coded Hermes detail into Patrik's own Custom/project instructions, and use the available-context rule for both providers. | Preserve distinct tasks, optional question, naming/header/source safety and Preview = Copy = Open. User checks response quality, including a visual-only demonstration and hour-long timestamps; fixtures establish payload integrity only. No default changes are authorized in this reconciliation. |
 | NEXT: Sarah and 3–5 matched users | Patrik supplies the actual ZIP; Sarah accepts her own account/destination, then testers try their own task unaided. Record collection habits and alternatives manually. | People finish without coaching, explain an actual skip/skim/watch/apply outcome and choose to return within a week. Observe support effort. Do not equate video duration with time saved or enthusiasm/installs with demand. |
@@ -95,7 +95,8 @@ only and does not alter the active beta, optional candidate or their ZIPs.
 
 ## Smallest Claude user check
 
-**Owner: Patrik.** With v0.1.14 already loaded, repeat just the affected saved
+**Owner: Patrik.** After updating the same unpacked installation to v0.1.16,
+repeat just the affected saved
 Claude destination from one captioned video using Summarize. Check the destination
 and existing draft first; never erase a draft to enable a test. Choose Open,
 wait for insertion or the notice, and **do not press Send**.
@@ -103,11 +104,10 @@ wait for insertion or the notice, and **do not press Send**.
 - If it inserts: record browser/version, destination kind and that the complete
   selected prompt appeared without sending or disturbing a draft. This accepts
   that case, not every Claude layout.
-- If the same recognition notice appears: click Copy troubleshooting details
-  and paste its structural JSON into the support conversation with destination
-  kind. No message/draft text, prompt, URLs or account details are needed. This
-  explicit copy replaces the clipboard prompt; Copy prompt in the YouTube popup
-  restores it.
+- If no insertion occurs: record the exact notice and destination kind. Do not
+  repeat the diagnostic already supplied. Inspect for partial text before using
+  clipboard fallback; Copy prompt in the YouTube popup restores the payload if
+  needed. Do not share message/draft text or account details.
 - If the selected destination restores a draft/attachment, leave it untouched
   and record the protective fallback. No authenticated live action is delegated
   to Codex by this checklist.

@@ -2,6 +2,44 @@
 
 ## Current status
 
+**v0.1.16 addresses the reported Claude pre-insertion refusal.** The supplied
+v0.1.15 report has one recognized chat-input / textbox / tiptap / ProseMirror
+editor with the exact Write your prompt to Claude label, four enabled controls
+at ancestor five and six, and no chat-input-send marker. A redacted matching DOM
+fixture reproduced the old refusal with zero claims/edits. It now accepts native
+manual autofill with full-text stability checks, without identifying Send.
+The report describes control structure, not the failed handoff's timing,
+destination or framework acceptance. No signed-in browser is controlled here.
+
+### v0.1.16 focused Claude acceptance
+
+1. Overwrite the files in the same unpacked extension folder with v0.1.16,
+   Reload the existing extension entry, refresh relevant tabs and confirm the
+   version. Do not uninstall, load a duplicate or clear any existing draft.
+2. From one captioned video, select Summarize and the same affected saved Claude
+   destination. Choose Open. Check the exact intended Project/chat and that the
+   full selected prompt appears. **Do not press Send.**
+3. If there is an existing draft/attachment, the safe result is untouched content
+   plus clipboard fallback. Never delete a draft simply to make the test pass.
+4. Report inserted/not inserted, destination kind and exact notice if any.
+   The supplied diagnostic is sufficient; no repeat is requested. After any
+   uncertain/partial insertion, inspect before pasting to avoid duplication.
+
+Native fixture checks establish text acceptance and guards, not live Send
+readiness. No button, form or Enter submission is triggered. ChatGPT's accepted
+normal-case test and Sarah's independent acceptance remain separate.
+
+**v0.1.16 verification:** `npm run verify` and `npm test` pass. Native Chromium
+passes all 24 popup task/provider/destination cases, including retained choices
+and Preview = Copy = Open, plus 66 Claude cases (42 existing and 24 new). The new
+cases cover the reported layout on all destination kinds, text/whitespace/rich
+drafts, hidden attachments, busy/readonly/dialog states, claim/focus restoration,
+wrong/changed routes, partial/rejected edits, duplicate scripts/composers,
+ambiguous marked controls, missing identity markers and redacted diagnostics.
+All assert zero automatic button clicks, submissions and Enter events.
+
+## Previous candidate history
+
 **v0.1.15 optional candidate: Custom's answer-structure conflict corrected.**
 The shared header used to require a TL;DR even for a Custom task requesting
 questions or another format. The source title/known-people/link header is kept;
