@@ -3,21 +3,24 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import vm from 'node:vm';
 import {spawn} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const executable=process.argv[2];assert.ok(executable&&fs.existsSync(executable));
 const destination=fs.readFileSync(path.join(root,'shared/destination.js'),'utf8');
 const injector=fs.readFileSync(path.join(root,'chatgpt/content.js'),'utf8');
+const collectionContext=vm.createContext({URL,TextEncoder,Date});vm.runInContext(fs.readFileSync(path.join(root,'shared/collection.js'),'utf8'),collectionContext);
+const collectionPayload=collectionContext.YT2GPTCollection.build([1,2,3].map(n=>({videoId:'fixture'+n,title:'Collection source '+n,url:'https://www.youtube.com/watch?v=fixture'+n,channel:'Fixture',transcript:{text:'[0:00] Source '+n,segments:[{start:0,text:'Source '+n}],track:{name:'English'}}})));
 const html=`<!doctype html><style>body{margin:30px}form{width:600px;padding:20px}#prompt-textarea{min-height:100px;white-space:pre-wrap}button{min-width:90px;min-height:35px}textarea{min-height:40px}</style><form data-chatgpt-composer><div data-composer-body><div data-composer-input><div id="prompt-textarea" data-composer-markdown role="textbox" aria-multiline="true" contenteditable="true"><p><br></p></div></div><div data-composer-attachments hidden></div></div><button type="button" aria-label="Select ChatGPT model">Pro</button><button id="send" data-testid="send-button" disabled>Send</button></form><textarea id="unrelated">Keep unrelated draft</textarea>`;
 const profile=fs.mkdtempSync(path.join(os.tmpdir(),'yt-bridge-explicit-send-'));
 const browser=spawn(executable,['--headless','--disable-gpu','--no-first-run','--no-default-browser-check','--remote-debugging-port=0',`--user-data-dir=${profile}`,'about:blank'],{stdio:['ignore','ignore','pipe']});
-let ws,sequence=0;const pending=new Map(),errors=[];
+let ws,sequence=0;const pending=new Map(),errors=[],closingSessions=new Set();
 try{
  const endpoint=await new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(Error('No browser endpoint')),15000);let output='';browser.once('error',reject);browser.stderr.on('data',d=>{output+=d;const m=output.match(/DevTools listening on (ws:\/\/[^\s]+)/);if(m){clearTimeout(timer);resolve(m[1]);}});});
  ws=new WebSocket(endpoint);await new Promise((resolve,reject)=>{ws.addEventListener('open',resolve,{once:true});ws.addEventListener('error',reject,{once:true});});
  function call(method,params={},sessionId){const id=++sequence;return new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(Error(method+' timed out')),20000);pending.set(id,{resolve,reject,timer});ws.send(JSON.stringify({id,method,params,...(sessionId?{sessionId}:{})}));});}
- ws.addEventListener('message',e=>{const m=JSON.parse(e.data);if(m.id){const p=pending.get(m.id);if(p){clearTimeout(p.timer);pending.delete(m.id);m.error?p.reject(Error(JSON.stringify(m.error))):p.resolve(m.result);}}if(m.method==='Runtime.exceptionThrown')errors.push(m.params.exceptionDetails);if(m.method==='Fetch.requestPaused')call('Fetch.fulfillRequest',{requestId:m.params.requestId,responseCode:200,responseHeaders:[{name:'Content-Type',value:'text/html'}],body:Buffer.from(html).toString('base64')},m.sessionId).catch(e=>errors.push(String(e)));});
+ ws.addEventListener('message',e=>{const m=JSON.parse(e.data);if(m.id){const p=pending.get(m.id);if(p){clearTimeout(p.timer);pending.delete(m.id);m.error?p.reject(Error(JSON.stringify(m.error))):p.resolve(m.result);}}if(m.method==='Runtime.exceptionThrown')errors.push(m.params.exceptionDetails);if(m.method==='Fetch.requestPaused')call('Fetch.fulfillRequest',{requestId:m.params.requestId,responseCode:200,responseHeaders:[{name:'Content-Type',value:'text/html'}],body:Buffer.from(html).toString('base64')},m.sessionId).catch(e=>{if(!closingSessions.has(m.sessionId))errors.push(String(e));});});
  let cases=0;
  async function run(name,o={}){
   const {targetId}=await call('Target.createTarget',{url:'about:blank'}),{sessionId}=await call('Target.attachToTarget',{targetId,flatten:true});
@@ -33,11 +36,14 @@ try{
    if(o.draft)editor.textContent=o.draft;
    if(o.readonly)editor.setAttribute('aria-readonly','true');
    if(o.inert)form.setAttribute('inert','');
+   if(o.ancestorReadonly)form.setAttribute('aria-readonly','true');
+   if(o.disabledFieldset){const field=document.createElement('fieldset');field.disabled=true;send.before(field);field.append(send);}
    if(o.busy)form.setAttribute('aria-busy','true');
    if(o.rich){const n=document.createElement('span');n.contentEditable='false';editor.append(n);}
    if(o.attachment){const n=document.createElement('div');n.dataset.testid='upload-preview';n.hidden=true;form.append(n);}
    if(o.unknown)send.removeAttribute('data-testid');
    if(o.duplicateSend){const n=send.cloneNode(true);n.id='duplicate-send';form.append(n);}
+   if(o.otherSend){const n=document.createElement('button');n.setAttribute('aria-label','Send prompt');n.textContent='Other';form.append(n);}
    if(o.duplicateEditor){const n=editor.cloneNode(true);n.id='other-editor';form.append(n);}
    if(o.dialog){const n=document.createElement('div');n.setAttribute('role','dialog');n.style='width:100px;height:60px';document.body.append(n);}
    if(o.focusDraft)editor.addEventListener('focus',()=>{editor.textContent='Restored private draft';});
@@ -63,7 +69,7 @@ try{
   if(o.edits!==undefined)assert.equal(r.edits,o.edits,name+': editing bound');
   if(o.text!==undefined)assert.equal(r.text,o.text,name+': preserve draft/partial content');
   if(o.auth!==undefined)assert.equal(r.authorizations,o.auth);
-  await call('Target.closeTarget',{targetId});cases++;
+  closingSessions.add(sessionId);await call('Target.closeTarget',{targetId});cases++;
  }
  await run('explicit native Send',{send:true});
  await run('textarea native Send',{send:true,textarea:true});
@@ -72,6 +78,7 @@ try{
  await run('duplicate injector',{send:true,duplicateScript:true});
  await run('literal indentation and extra paragraph breaks',{send:true,payload:'Unicode café\n\n\n\n  Indented text\nFinal line.'});
  await run('ordinary Open',{manual:true,auth:0,notice:'Review it, then press Send'});
+ await run('actual Collection payload stays manual',{manual:true,payload:collectionPayload,auth:0,notice:'Review it, then press Send'});
  await run('existing draft',{draft:'Keep my draft',text:'Keep my draft',edits:0,auth:0});
  await run('whitespace draft',{draft:'   ',edits:0,auth:0});
  await run('rich draft',{rich:true,edits:0,auth:0});
@@ -87,7 +94,10 @@ try{
  await run('Project redirect remains manual',{expected:'https://chatgpt.com/g/g-p-fixture/project',actual:'https://chatgpt.com/g/g-p-fixture/c/fixture',notice:'withheld',auth:0});
  await run('unknown Send',{unknown:true,notice:'withheld',auth:0});
  await run('two Send controls',{duplicateSend:true,notice:'withheld',auth:0});
+ await run('other unmarked Send-labelled control',{otherSend:true,notice:'withheld',auth:0});
  await run('disabled Send',{disabled:true,notice:'withheld',auth:0});
+ await run('disabled fieldset Send',{disabledFieldset:true,notice:'withheld',auth:0});
+ await run('readonly ancestor',{ancestorReadonly:true,edits:0,auth:0});
  await run('changed Send after authorization',{changeControl:true,notice:'withheld',auth:1});
  await run('disabled after authorization',{disableOnAuth:true,notice:'withheld',auth:1});
  await run('changed draft after authorization',{changeText:true,notice:'withheld',auth:1});

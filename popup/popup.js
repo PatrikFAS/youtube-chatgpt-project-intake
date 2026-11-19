@@ -55,11 +55,13 @@ function cacheElements() {
     'providerChatGPT','providerClaude','destinationHelp','saveHeading','saveHelp','actionSummary','buildVersion',
     'copyPrompt','previewPrompt','promptPanel','promptPreview','promptCount',
     'customPanel','customInstructions','customHelp','saveCustomInstructions','forgetCustomInstructions','questionDetails',
-    'explicitSendPanel','explicitSendOptIn','explicitSendButton','explicitSendDestination'
+    'explicitSendPanel','explicitSendOptIn','explicitSendButton','explicitSendDestination',
+    'collectionPanel','collectionCount','collectionStatus','addToCollection','collectionItems','useCollection','clearCollection','collectionQuestion','collectionQuestionWrap'
   ]) els[id] = document.getElementById(id);
 }
 
 function wireEvents() {
+  wireCollectionEvents();
   els.sendButton.addEventListener('click', sendToChatGPT);
   els.explicitSendButton.addEventListener('click', () => sendToChatGPT(true));
   els.explicitSendOptIn.addEventListener('change', async () => {
@@ -179,6 +181,7 @@ async function loadPreferences(preserveCustom = false) {
 
   choosePreferredTrack(stored.preferredTranscriptLanguage || videoContext?.browserLanguage || navigator.language || 'en');
   updateHandoffHelp();
+  await refreshCollection();
 }
 
 async function loadDestinations() {
@@ -235,12 +238,12 @@ function choosePreferredTrack(language) {
   els.trackSelect.value = String(index);
 }
 
-async function getSelectedTranscript() {
+async function getSelectedTranscript(expectedVideoId = null) {
   if (!videoContext) throw new Error('Video information is unavailable.');
 
   const selected = els.trackSelect.value;
   const cacheKey = `${videoContext.videoId}:${selected}`;
-  if (transcriptCache.has(cacheKey)) {
+  if (!expectedVideoId && transcriptCache.has(cacheKey)) {
     currentTranscript = transcriptCache.get(cacheKey);
     return currentTranscript;
   }
@@ -251,7 +254,8 @@ async function getSelectedTranscript() {
   try {
     const response = await chrome.tabs.sendMessage(sourceTabId, {
       type: 'YT2GPT_GET_TRANSCRIPT',
-      track
+      track,
+      ...(expectedVideoId ? {expectedVideoId} : {})
     });
     if (!response?.ok) throw new Error(response?.error || 'Could not load transcript.');
 
@@ -278,11 +282,16 @@ function capturePromptChoice() {
     instructions: els.customInstructions.value.trim(),
     selectedUrl: els.destinationSelect.selectedOptions[0]?.dataset?.url,
     destinationId: els.destinationSelect.value,
-    provider: currentProvider
+    provider: currentProvider,
+    videoId: videoContext?.videoId,
+    collection: collectionActive,
+    collectionItems: collectionActive ? JSON.parse(JSON.stringify(collectionState?.items||[])) : null,
+    collectionQuestion: els.collectionQuestion.value || ''
   };
 }
 
 function buildSelectedPrompt(choice, transcript) {
+  if(choice.collection)return YT2GPTCollection.build(choice.collectionItems,choice.collectionQuestion);
   return buildPrompt({ mode: choice.mode, question: choice.question, customInstructions: choice.instructions, transcript,
     provider: YT2GPTDestination.provider(choice.selectedUrl) || choice.provider,
     newChat: YT2GPTDestination.isNewChatEntry(choice.selectedUrl) });
@@ -296,7 +305,7 @@ async function preparePromptAction(copy) {
   const choice = capturePromptChoice();
   try {
     validatePromptChoice(choice);
-    const transcript = await getSelectedTranscript();
+    const transcript = choice.collection ? null : await getSelectedTranscript();
     setBusy(true, copy ? 'Copying prompt…' : 'Preparing preview…');
     const prompt = buildSelectedPrompt(choice, transcript);
     els.promptPreview.textContent = prompt;
@@ -329,7 +338,7 @@ function invalidatePromptPreview() {
 async function sendToChatGPT(explicitSend = false) {
   explicitSend = explicitSend === true;
   if (busy || sending) return;
-  if (explicitSend && (!els.explicitSendOptIn.checked || currentProvider !== 'chatgpt')) return;
+  if (explicitSend && (!els.explicitSendOptIn.checked || currentProvider !== 'chatgpt' || collectionActive)) return;
   sending = true;
   clearMessages();
   const choice = capturePromptChoice();
@@ -337,10 +346,10 @@ async function sendToChatGPT(explicitSend = false) {
   let promptCopied = false;
   try {
     validatePromptChoice(choice);
-    const transcript = await getSelectedTranscript();
+    const transcript = choice.collection ? null : await getSelectedTranscript(explicitSend ? choice.videoId : null);
     setBusy(true, 'Preparing prompt…');
 
-    if (transcript.characterCount > LONG_TRANSCRIPT_WARNING) {
+    if (transcript && transcript.characterCount > LONG_TRANSCRIPT_WARNING) {
       const proceed = window.confirm(
         `This transcript is ${Math.round(transcript.characterCount / 1000)}k characters. ` +
         'Your chosen assistant may have length limits. Pasting or composer insertion can be less reliable. Continue?'
@@ -363,7 +372,8 @@ async function sendToChatGPT(explicitSend = false) {
       destinationUrl: normalizedDestination,
       payload: prompt,
       sourceTabId,
-      ...(explicitSend ? {videoId:videoContext.videoId} : {})
+      ...(explicitSend ? {videoId:choice.videoId} : {}),
+      ...(choice.collection ? {collection:true} : {})
     });
 
     if (!response?.ok) throw new Error(response?.error || 'Could not open the selected destination.');
@@ -496,6 +506,10 @@ function updateHandoffHelp() {
     : 'Prompt copied first. We fill a recognized empty message box when possible. Review and send yourself.';
   const selected = els.destinationSelect.selectedOptions[0];
   els.actionSummary.textContent = `${MODE_LABELS[getSelectedMode()]} · ${selected?.textContent || 'Choose a destination'}`;
+  if(collectionActive){
+    els.actionSummary.textContent=`Compare ${collectionState?.items.length||0} videos · ${selected?.textContent||'Choose a destination'}`;
+    if(!busy)els.sendButton.textContent=claude?'Open collection in Claude':'Open collection in ChatGPT';
+  }
   const kind = YT2GPTDestination.kind(selected?.dataset?.url);
   const providerName = currentProvider === 'claude' ? 'Claude' : 'ChatGPT';
   els.destinationHelp.textContent = kind === 'unknown' ? 'This saved link needs repair. Manage destinations to update it; your saved link is kept.'
@@ -515,13 +529,14 @@ async function rememberMode() {
 }
 
 function validatePromptChoice(choice) {
+  if(choice.collection){YT2GPTCollection.build(choice.collectionItems,choice.collectionQuestion);return;}
   if (choice.mode === 'custom' && !choice.instructions) throw new Error('Enter your custom instructions first. Nothing was copied or opened.');
 }
 
 function updateCustomUI() {
-  const custom = getSelectedMode() === 'custom';
+  const custom = getSelectedMode() === 'custom' && !collectionActive;
   els.customPanel.classList.toggle('hidden', !custom);
-  els.questionDetails.classList.toggle('hidden', custom);
+  els.questionDetails.classList.toggle('hidden', custom || collectionActive);
   els.customHelp.textContent = savedCustomInstructions.trim()
     ? 'Saved only on this browser. Edits are one-off until you choose Save locally again.'
     : 'One-off: cleared when this popup closes. Save locally to reuse on this browser.';
@@ -636,10 +651,11 @@ function setInteractionBusy(value) {
   els.explicitSendOptIn.disabled = value;
   els.explicitSendButton.disabled = value;
   if (!value) updateCustomUI();
+  renderCollection();
 }
 
 function updateExplicitSend() {
-  const supported = currentProvider === 'chatgpt';
+  const supported = currentProvider === 'chatgpt' && !collectionActive;
   els.explicitSendPanel.classList.toggle('hidden', !supported);
   els.explicitSendButton.classList.toggle('hidden', !supported || !els.explicitSendOptIn.checked);
   els.explicitSendDestination.textContent = `Send destination: ${els.destinationSelect.selectedOptions[0]?.dataset?.url || 'Choose a destination'}`;

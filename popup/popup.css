@@ -107,3 +107,8 @@ textarea::placeholder { color: var(--muted); opacity: .8; }
 .custom-choice { grid-column: 1 / -1; padding: 6px 9px; }
 .custom-choice > span { display: flex; align-items: baseline; gap: 8px; }
 .custom-actions { display: flex; align-items: center; gap: 8px; margin-top: 7px; font-size: 10px; }
+.collection-panel { border:1px solid var(--line); border-radius:12px; padding:10px; margin:10px 0; background:var(--panel); }
+.collection-panel > summary { cursor:pointer; color:var(--accent); font-weight:700; }
+.collection-item { padding:10px 0; border-bottom:1px solid var(--line); overflow-wrap:anywhere; }
+.collection-item > strong { font-size:12px; }
+body[data-collection="true"] .utility-row > span { display:none; }

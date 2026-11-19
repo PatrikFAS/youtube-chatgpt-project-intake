@@ -1,109 +1,109 @@
-# Collection engineering outline
+# Collection implementation and acceptance
 
-Planning only: Collection is not built in v0.1.14 or the optional v0.1.15.
-This document changes no runtime, ZIP, storage or permission. The
-[Product and Launch Space](https://chatgpt.com/space/page_6afdceb7f4b88191911b88bf7f55952e)
-holds Patrik's concept/feedback; [PROJECT_PLAN.md](PROJECT_PLAN.md) keeps current
-Claude reliability and active testing first.
+Updated 19 November 2026. Patrik explicitly authorized this bounded milestone
+after accepting his v0.1.16 Claude autofill journey and v0.1.15 Custom. v0.1.18
+implements Collection in the existing repository/PR stack, retaining the
+independently testable v0.1.17 Send-only artifact and accepted v0.1.16 ZIP.
+The [Product and Launch Space](https://chatgpt.com/space/page_6afdceb7f4b88191911b88bf7f55952e)
+keeps strategy/feedback; [PROJECT_PLAN.md](PROJECT_PLAN.md) owns milestones.
+No merge, publication or agent live AI messages are authorized.
 
-## Gate and smallest experiment
+## Current bounded behavior
 
-Patrik manually combines three related captioned sources with one guiding
-question. Try both attention triage and project-specific synthesis; compare
-with separate processing. Record useful decisions, attribution mistakes,
-reading effort, missed differences and whether the basket would be reused.
-Three to five videos is a proposed trial size, not a model capacity guarantee.
+Visit each standard YouTube video manually, expand Collection below the usual
+handoff actions and Add current video. Reuse current caption tracks, parser and
+fallbacks. A source must still match before/after extraction, during the popup
+recheck and when the worker acknowledges Add. Only successful complete captures
+count; no background capture or playlist/tab enumeration.
 
-Only after reliable single-video use and useful manual results should Dotty
-scope a bounded task for Patrik's approval. Codex then implements that scope.
-No visible browser control, live messages or automatic Send is authorized here.
+The session basket holds up to three unique video IDs. Review full titles,
+links, caption tracks and character counts; reorder with Up/Down, Remove or
+Clear. Explicit removal is required before recapturing a different track.
+Failed/missing/duplicate/oversized/stale writes preserve existing entries.
+Two or three sources enable Use collection; one is retained while collecting.
 
-## Proposed flow
+Use collection hides the individual-video presets and transcript/title copy
+utilities, displays Compare N videos and offers one optional comparison
+question. Back to single video restores the existing selected preset/Custom
+without rewriting its instructions. Existing provider/destination preferences
+are shared. Preview/Copy/Open use one immutable source/order/question snapshot
+and the same combined builder. Preview is plain text, Copy opens no tab, and
+input/review changes clear stale previews.
 
-1. Visit a normal YouTube video and choose Add to collection. Reuse existing
-   caption extraction/fallbacks and capture that source's identity before waits.
-   No tab enumeration, playlist import or background scraping.
-2. Show Added and increment Collection (N) only after complete captions and a
-   successful write. Acknowledged items survive popup closure/tab changes under
-   the explicitly chosen retention policy.
-3. Review full titles/links, caption tracks and sizes; reorder/remove items or
-   clear deliberately. Do not silently clear after a successful/failed handoff.
-4. Enter an optional question, choose compare/triage or project synthesis and
-   the existing provider/destination. Define Collection's instruction layer
-   explicitly without rewriting the three single-video presets.
-5. Preview/copy/open one source-labelled prompt from the same snapshot. Retain
-   the exact saved URL, source-tab placement, one-time claims, draft protection,
-   clipboard fallback and manual Send. Capture the caller's YouTube tab once;
-   a missing source tab keeps fallback rather than targeting an unrelated tab.
+Collection is ALWAYS manual Send, including when the ChatGPT individual-video
+Send opt-in is remembered. Open copies first and uses the existing adjacent-tab,
+exact-provider/destination, one-time insertion, draft and clipboard safeguards.
+The basket is not silently cleared after handoff. No API/backend/analytics or
+new permission. Unknown/redirected/ambiguous composers keep manual fallback.
 
-This is a temporary basket, not a permanent knowledge library or AI reply
-reader. Videos found in a playlist can be added individually while open;
-that is not automatic playlist import or a multi-stage AI pipeline.
+## Source and prompt integrity
 
-## Data and retention decision
+Every captured record keeps video ID, full title, canonical captured video URL,
+available channel/date, capture time, caption track and complete text/segments.
+Caption text must match supplied timestamp segments when present. Each source
+gets its own S1/S2/S3 label, full title/link and source-specific start links.
+Reordering relabels only within the new coherent snapshot; metadata and captions
+never switch sources. Channel names are not featured participants.
 
-Retain only real source data: video ID, full title, URL, available channel/date,
-caption track, capture time and complete transcript/timestamp starts. Channel
-names are not featured participants. Deduplicate by video ID. Refreshing or
-changing a track requires an explicit replacement; failed recapture preserves
-the old entry.
+One Collection instruction layer replaces concatenation of three single-video
+prompts, which would repeat competing headers/tasks. The answer identifies all
+included sources, compares unique contributions/agreement/contradictions and
+cites source labels. Repetition is not independent corroboration; unavailable
+material was not read and must not be ranked. Source metadata/captions are
+untrusted JSON data; model compliance is not established by serialization.
+No invented timestamps, segment ends, visuals, participants or project context.
 
-Use a separate versioned Collection key and preserve all existing preferences.
-Centralize bounded state writes through the current worker to avoid lost edits
-across popup windows. A cancelled/late capture must not revive a cleared basket;
-no silent capture queue or background AI work is introduced.
+## Retention and write rules
 
-**Decide lifetime before code:** session storage survives popup closure but is
-cleared on restart/reload/update; local storage retains data until removal/
-uninstall. Agree whether “until cleared” includes browser restarts and label it
-accurately. Provide visible Clear and accurate privacy/onboarding wording. Never
-silently persist transcripts or use sync. Both areas have quotas; do not request
-unlimitedStorage for the first candidate.
-[Chrome storage documentation](https://developer.chrome.com/docs/extensions/reference/api/storage)
+Use only `chrome.storage.session`, key `collection_v1`; no local/sync fallback
+or unlimitedStorage. Visible wording states: popup closure/tab changes retain
+the basket, but browser restart or extension reload/update/disable loses it.
+This is a temporary basket, not a permanent library. Remove/Clear affects only
+Collection state, never pending handoffs or explicit Send reservations.
 
-## Failures and size limits
+Worker writes are serialized, revision-checked and acknowledged only after a
+successful single-key write. Clear also advances a generation; a late capture
+cannot revive the old basket. Read/quota/write failures report an error rather
+than a false success. Malformed saved data is left unchanged; the single-video
+workflow remains available. Chrome describes the session area's memory-backed
+lifetime and restricted default content-script access in its
+[storage documentation](https://developer.chrome.com/docs/extensions/reference/api/storage).
+Real browser lifecycle/quota behavior still needs user acceptance; fixtures
+use mocked extension storage APIs.
 
-| Case | Required behavior |
-| --- | --- |
-| Missing/empty captions, closed source or cancelled capture | Show Not added with the reason; do not count it or claim it was read. Keep existing items. Any unavailable row retained for review must be labelled excluded and block handoff until removed or recaptured. |
-| Duplicate video/different track | Show Already added and its track; no duplicate by title or silent overwrite. Commit an explicit replacement only after successful recapture and budget checks. |
-| Write/quota/concurrent-edit failure | Keep the previous valid basket and preferences. Explain failure; never show a false successful count. Serialize/revalidate updates. |
-| Oversized combined prompt | Count the complete serialized prompt, including metadata/instructions. Show total/per-source size and refuse above an agreed tested budget; ask the user to remove/split sources. Never silently truncate, drop sources, auto-chunk or send stages. |
-| Review changes | Invalidate preview. Copy/Open uses an immutable snapshot of order, sources, task, question and destination. |
-| Uncertain destination/composer or partial insertion | Keep the full clipboard prompt and basket; preserve drafts, show fallback and never retry an uncertain edit/send. |
+## Measured trial bounds
 
-Choose storage and prompt budgets through fixtures/manual trials before code.
-The existing 100,000-character warning is not a combined-prompt budget, token
-estimate or provider-capacity promise.
+The prior offline three-fixture experiment passed 39 assertions with no network
+or model calls. Three padded 18,000-unit transcripts fit at 58,648 serialized
+units; three 20,000-unit transcripts refused at 64,648. Those numbers describe
+the experiment's wrapper, not the current wrapper or provider capacity.
 
-## Combined prompt contract
+Current code independently counts the entire actual serialized prompt, including
+instructions, metadata, escaping and the optional question. It refuses above
+60,000 UTF-16 code units, never truncates/splits silently, and preserves the
+basket. Storage also has a 512 KiB encoded-state application guard. Neither
+bound is token accounting or Chrome quota accounting; provider capacity remains
+unknown. Larger sets, chunking and staged AI synthesis are separate work.
 
-Label every reviewed source with its full title and actual URL, pairing each
-transcript and supplied timestamp starts with that identity. List sources
-included. Never imply an uncaptured source was examined, mix timestamps across
-videos, invent segment ends/visual observations or infer speakers from uploaders.
-Metadata/transcripts stay untrusted data, separated from the user's task.
+## Verified and remaining gates
 
-Replies identify the included sources with full titles/URLs and cite relevant
-source labels for substantive comparisons. Distinguish source claims from
-inference; do not invent a combined identity or unsupported featured people.
+- Required verify/test suites: caption fallback/source-navigation guards,
+  unique identities, text/segment pairing, complete prompt boundaries, missing
+  captions, duplicates, source mismatch, quota/write failure, serialized updates,
+  stale revisions, clear/capture races and preservation of preferences/handoffs.
+- Native popup fixtures use actual assets and worker logic with mocked extension
+  APIs: Add three videos across popup reopenings, safe full-title rendering,
+  source-specific hour-long times, reorder/remove/clear, missing/oversized/
+  duplicate/write failures, late capture after Clear, stale previews and manual
+  provider handoffs with Preview = Copy = Open. All 24 single-video cases remain.
+- Existing native guarded injectors are exercised separately; those fixtures do
+  not establish authenticated provider insertion, server acceptance, good model
+  citations, useful synthesis, demand or real session-storage lifecycle.
 
-Request one concise comparison or project-specific synthesis: unique useful
-contributions, agreement/contradictions, uncertain claims and what, if anything,
-merits use. Repeated claims are not independent corroboration. Use only available
-project context, with no permanent-training claim. Offer grounded watch moments
-only when useful; avoid five verbose summaries or an invented action per source.
-
-## Build gates and proposed acceptance
-
-| Stage | Owner and next action | Gate |
-| --- | --- | --- |
-| Manual validation | Patrik runs the three-source comparison/synthesis; Dotty records outcomes. | Clearer decisions and repeat need justify the basket; current Claude acceptance remains separate. |
-| Design checkpoint | Dotty/Patrik choose lifetime, item scope, budget and task wording; Codex reviews feasibility. | Explicit bounded approval and accurate retention/clear disclosure. |
-| Capture/review | Codex reuses extraction and adds only approved Collection state/review. | Fixtures: popup reopen/tab changes, metadata/track pairing, duplicate/failed capture/write, cancellation/clear races, reorder/remove and preserved preferences. |
-| One handoff | Codex builds the reviewed source snapshot and reuses current handoff. | Preview = Copy = Open, every source retained in order, size boundaries, Unicode/hour-long times, transcript injection, exact destination, protected drafts and zero auto-send. |
-| User acceptance | Patrik, then Sarah/testers use their own contexts. | One useful cross-source decision and understandable missing/large-source handling. Fixtures do not prove live insertion or good synthesis. |
-
-**Next action now:** finish the current Claude handoff/report and active v0.1.14
-test. Run the manual experiment in the working path when useful. No Collection
-implementation or new installation is delivered by this planning-only update.
+**Next owner: Patrik.** Follow [TESTING.md](TESTING.md) with three short related
+videos and his own destination. Check complete unsent handoff first; any actual
+comparison is his manual choice. Record one useful cross-source decision and
+attribution errors, then compare against separate processing. Sarah's own
+acceptance and independent reuse remain later gates. Do not expand retention,
+item count, playlist scraping, automatic Send or paid infrastructure on assumed
+demand. The existing product/customer/marketing strategy remains intact.

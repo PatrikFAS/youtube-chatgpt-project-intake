@@ -181,7 +181,7 @@
 
   function unsafeForSend(el, requireEmpty = false) {
     const form = el.closest('form');
-    return !isVisibleAndEditable(el) || !form || Boolean(el.closest('[inert], [aria-hidden="true"]')) ||
+    return !isVisibleAndEditable(el) || !form || Boolean(el.closest('[inert], [aria-hidden="true"], [aria-disabled="true"], [aria-readonly="true"], fieldset[disabled]')) ||
       [...form.querySelectorAll('[contenteditable="true"], textarea, input[type="text"]')].filter(isVisibleAndEditable).length !== 1 ||
       (requireEmpty && Boolean(el instanceof HTMLTextAreaElement || el instanceof HTMLInputElement ? el.value : el.textContent)) || hasAttachmentsOrActivity(form) ||
       Boolean(el.querySelector('[contenteditable="false"], [data-node-view-wrapper]'));
@@ -196,11 +196,11 @@
     if (location.origin !== 'https://chatgpt.com' || YT2GPTDestination.normalize(location.href) !== claimed.destinationUrl ||
         destinationProblem(claimed.destinationUrl) || findComposer() !== el || unsafeForSend(el) ||
         exactComposerText(el) !== claimed.payload.replace(/\r\n/g,'\n')) return null;
-    const buttons = [...el.closest('form').querySelectorAll('[data-testid="send-button"], [data-testid="composer-send-button"]')].filter(isVisible);
+    const buttons = [...el.closest('form').querySelectorAll('[data-testid="send-button"], [data-testid="composer-send-button"], button[aria-label="Send"], button[aria-label="Send prompt"], button[aria-label="Send message"]')].filter(isVisible);
     if (buttons.length !== 1) return null;
     const button = buttons[0];
-    return button instanceof HTMLButtonElement && !button.disabled && button.getAttribute('aria-disabled') !== 'true' &&
-      button.getAttribute('aria-readonly') !== 'true' && !button.closest('[inert], [aria-hidden="true"]') ? button : null;
+    return button instanceof HTMLButtonElement && button.matches('[data-testid="send-button"], [data-testid="composer-send-button"]') && !button.matches(':disabled') && button.getAttribute('aria-disabled') !== 'true' &&
+      button.getAttribute('aria-readonly') !== 'true' && !button.closest('[inert], [aria-hidden="true"], [aria-disabled="true"], [aria-readonly="true"]') ? button : null;
   }
   function exactComposerText(el) {
     if (el instanceof HTMLTextAreaElement || el instanceof HTMLInputElement) return el.value.replace(/\r\n/g,'\n');

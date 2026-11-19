@@ -76,15 +76,26 @@ try {
     const source = `(() => {
       const data = window.name ? JSON.parse(window.name) : ${JSON.stringify({ destinations, lastMode: 'analyze', lastDestinationId: storedDestination, preferredTranscriptLanguage: 'en' })};
       globalThis.fixture = { data, copied: '', messages: [], closed: false };
+      data.__session ||= {};
+      const persist=()=>{window.name=JSON.stringify(data);};
+      let collectionListener;
+      const scripts=${JSON.stringify(Object.fromEntries(['shared/destination.js','shared/collection.js','background.js'].map(f=>[f,fs.readFileSync(path.join(root,f),'utf8')])))};
+      const currentVideo=()=>({videoId:data.__video?'fixture'+(data.__video+1):'fixture',title:data.__video?'Fixture video '+(data.__video+1)+(data.__video===1?' <img src=x>':''):'A clearer way to think - with Dr. Rowan Vale',channel:'Fixture channel',url:'https://www.youtube.com/watch?v='+(data.__video?'fixture'+(data.__video+1):'fixture'),tracks:[{name:'English',languageCode:'en'}]});
+      const workerChrome={runtime:{getURL:p=>'chrome-extension://fixture/'+p,onInstalled:{addListener(){}},onMessage:{addListener(fn){collectionListener=fn;}}},tabs:{async get(id){return {id,windowId:1,index:0,url:currentVideo().url};}},storage:{session:{async get(key){return {[key]:structuredClone(data.__session[key])};},async set(values){if(fixture.failCollectionWrite)throw Error('Fixture write denied');Object.assign(data.__session,structuredClone(values));persist();}},local:{async get(key){return {[key]:data[key]};},async set(values){Object.assign(data,values);persist();}}}};
+      new Function('chrome','importScripts',scripts['background.js'])(workerChrome,name=>new Function(scripts[name])());
+      fixture.collectionRequest=message=>new Promise(resolve=>collectionListener(message,{url:'chrome-extension://fixture/popup/popup.html'},resolve));
       window.close = () => { fixture.closed = true; };
       Object.defineProperty(navigator, 'clipboard', { value: { async writeText(text) { fixture.copied = text; } }, configurable: true });
       globalThis.chrome = {
-        runtime: { getManifest() { return ${JSON.stringify(manifest)}; }, async sendMessage(message) { fixture.messages.push(message); return { ok: true }; }, openOptionsPage() {} },
+        runtime: { getManifest() { return ${JSON.stringify(manifest)}; }, async sendMessage(message) { if(message.type.startsWith('COLLECTION_'))return fixture.collectionRequest(message); fixture.messages.push(message); return { ok: true }; }, openOptionsPage() {} },
         storage: { local: { async get(keys) { return Object.fromEntries((Array.isArray(keys) ? keys : [keys]).filter(key => key in data).map(key => [key, structuredClone(data[key])])); }, async set(values) { await new Promise(resolve => setTimeout(resolve, 10)); Object.assign(data, structuredClone(values)); window.name = JSON.stringify(data); } } },
-        tabs: { async query() { return [{ id: 41, url: 'https://www.youtube.com/watch?v=fixture' }]; }, async sendMessage(id, message) {
-          if (message.type === 'YT2GPT_GET_CONTEXT') return { ok: true, data: { videoId: 'fixture', title: 'A clearer way to think — with Dr. Rowan Vale', channel: 'Fixture channel', url: 'https://www.youtube.com/watch?v=fixture', tracks: [{ name: 'English', languageCode: 'en' }] } };
+        tabs: { async query() { return [{ id: 41, url: currentVideo().url }]; }, async sendMessage(id, message) {
+          if (message.type === 'YT2GPT_GET_CONTEXT') return { ok: true, data: currentVideo() };
+          if(fixture.holdCapture){fixture.awaitingCapture=true;await new Promise(resolve=>{fixture.releaseCapture=resolve;});}
           await new Promise(resolve => setTimeout(resolve, 20));
-          return { ok: true, data: { text: '[0:00] A synthetic transcript for native popup testing.', characterCount: 55, track: { name: 'English' } } };
+          if(fixture.missingCaptions)return {ok:false,error:'Fixture captions unavailable'};
+          const start=data.__video===1?3665:0,content=fixture.largeCaptions?'x'.repeat(61000):'A synthetic transcript for native popup testing.';
+          return { ok: true, data: { text: '['+(start?'1:01:05':'0:00')+'] '+content, characterCount: content.length+8, segments:[{start,text:content}], track: { name: 'English' } } };
         } }
       };
     })();`;
@@ -252,6 +263,57 @@ try {
   assert.equal(await quick.evaluate('fixture.messages[0].type'),'OPEN_CHATGPT_WITH_EXPLICIT_SEND');
   await quick.close();
   console.log('PASS: native remembered opt-in, visible Send destination and explicit per-video action; Preview/Copy remain manual.');
+  const basket=await page('general');
+  const state=()=>basket.evaluate('fixture.data.__session.collection_v1');
+  async function visit(index){await basket.evaluate(`fixture.data.__video=${index};window.name=JSON.stringify(fixture.data);location.reload()`);await basket.waitFor(`document.getElementById('youtubeView')&&!document.getElementById('youtubeView').classList.contains('hidden')`);await basket.click('#collectionPanel summary');}
+  await basket.click('#collectionPanel summary');
+  await basket.evaluate('fixture.missingCaptions=true');await basket.click('#addToCollection');
+  await basket.waitFor('document.getElementById("error").textContent.includes("unavailable")');
+  assert.equal((await state())?.items?.length||0,0);
+  await basket.evaluate('fixture.missingCaptions=false;fixture.failCollectionWrite=true');await basket.click('#addToCollection');
+  await basket.waitFor('document.getElementById("error").textContent.length>0&&!document.getElementById("addToCollection").disabled');
+  assert.equal((await state())?.items?.length||0,0,'failed write never acknowledges Add');
+  await basket.evaluate('fixture.failCollectionWrite=false;fixture.largeCaptions=true');await basket.click('#addToCollection');
+  await basket.waitFor('document.getElementById("error").textContent.includes("60,000")');
+  assert.equal((await state())?.items?.length||0,0);
+  await basket.evaluate('fixture.largeCaptions=false');await basket.click('#addToCollection');
+  await basket.waitFor('document.getElementById("collectionCount").textContent.includes("1/3")');
+  await basket.click('#addToCollection');await basket.waitFor('document.getElementById("error").textContent.includes("Already added")');
+  assert.equal((await state()).items.length,1);
+  await visit(1);await basket.click('#addToCollection');await basket.waitFor('document.getElementById("collectionCount").textContent.includes("2/3")');
+  await visit(2);await basket.click('#addToCollection');await basket.waitFor('document.getElementById("collectionCount").textContent.includes("3/3")');
+  assert.equal(await basket.evaluate('document.querySelectorAll(".collection-item img").length'),0,'source titles render as text');
+  await visit(3);await basket.click('#addToCollection');await basket.waitFor('document.getElementById("error").textContent.includes("three videos")');assert.equal((await state()).items.length,3);
+  await basket.click('.collection-item:nth-child(2) button:first-child');
+  await basket.waitFor('fixture.data.__session.collection_v1.items[0].videoId === "fixture2"');
+  await basket.click('#useCollection');await basket.click('#collectionQuestion');await call('Input.insertText',{text:'What do these sources disagree about?'},basket.sessionId);
+  assert.equal(await basket.evaluate('document.getElementById("explicitSendPanel").classList.contains("hidden")'),true,'Collection has no explicit Send');
+  await basket.click('#previewPrompt');await basket.waitFor('document.getElementById("promptPreview").textContent.startsWith("COLLECTION TASK")');
+  let comparison=await basket.evaluate('document.getElementById("promptPreview").textContent');
+  assert.ok(comparison.includes('1:01:05'));assert.ok(comparison.includes('watch?v=fixture2&t=3665s'));assert.ok(comparison.includes('What do these sources disagree about?'));
+  await basket.click('#copyPrompt');await basket.waitFor('fixture.copied.startsWith("COLLECTION TASK")');assert.equal(await basket.evaluate('fixture.copied'),comparison);
+  assert.equal(await basket.evaluate('fixture.messages.length'),0,'Add/review/Preview/Copy never open a tab');
+  await basket.click('#collectionQuestion');await call('Input.insertText',{text:' Keep it compact.'},basket.sessionId);
+  assert.equal(await basket.evaluate('document.getElementById("promptPreview").textContent'),'','changed Collection question invalidates preview');
+  await basket.click('#previewPrompt');await basket.waitFor('document.getElementById("promptPreview").textContent.startsWith("COLLECTION TASK")');comparison=await basket.evaluate('document.getElementById("promptPreview").textContent');
+  await basket.click('#copyPrompt');await basket.waitFor('fixture.copied.includes("Keep it compact.")');assert.equal(await basket.evaluate('fixture.copied'),comparison);
+  const collectionShot=await call('Page.captureScreenshot',{format:'png',captureBeyondViewport:true},basket.sessionId);fs.writeFileSync(path.join(profile,'collection-review.png'),Buffer.from(collectionShot.data,'base64'));
+  await basket.click('#sendButton');await basket.waitFor('fixture.messages.length === 1');
+  assert.equal(await basket.evaluate('fixture.messages[0].payload'),comparison);assert.equal(await basket.evaluate('fixture.messages[0].type'),'OPEN_DESTINATION_WITH_PAYLOAD');assert.equal(await basket.evaluate('fixture.messages[0].collection'),true);
+  // Reopen the popup in the synthetic session, choose Claude and preserve the basket.
+  await visit(2);assert.equal((await state()).items.length,3);await basket.click('#useCollection');await basket.click('label.provider-choice:has(#providerClaude) span');
+  await basket.click('#previewPrompt');await basket.waitFor('document.getElementById("promptPreview").textContent.startsWith("COLLECTION TASK")');
+  const claudeCollection=await basket.evaluate('document.getElementById("promptPreview").textContent');await basket.click('#sendButton');await basket.waitFor('fixture.messages.length===1');
+  assert.equal(await basket.evaluate('fixture.messages[0].payload'),claudeCollection);assert.equal(await basket.evaluate('fixture.messages[0].type'),'OPEN_DESTINATION_WITH_PAYLOAD');assert.equal(await basket.evaluate('fixture.messages[0].destinationUrl'),'https://claude.ai/new');
+  await visit(2);await basket.click('.collection-item:first-child button:last-child');await basket.waitFor('fixture.data.__session.collection_v1.items.length===2');
+  await basket.click('#clearCollection');await basket.waitFor('fixture.data.__session.collection_v1.items.length===0');
+  // A late capture cannot resurrect a basket cleared by another popup/worker action.
+  await basket.evaluate('fixture.holdCapture=true');await basket.click('#addToCollection');await basket.waitFor('fixture.awaitingCapture===true');
+  await basket.evaluate(`fixture.collectionRequest({type:'COLLECTION_CLEAR',revision:fixture.data.__session.collection_v1.revision,generation:fixture.data.__session.collection_v1.generation})`);
+  await basket.evaluate('fixture.releaseCapture()');await basket.waitFor('document.getElementById("error").textContent.includes("collection changed")');
+  assert.equal((await state()).items.length,0);
+  await basket.close();
+  console.log('PASS: native three-video Collection Add/reopen/reorder/remove/clear, missing/oversized/duplicate/write/late-capture failures, source timestamps and manual provider handoffs; Preview = Copy = Open.');
   assert.equal(errors.length, 0, `No runtime exceptions: ${JSON.stringify(errors)}`);
   console.log(`PASS: ${cases} native popup task/destination cases${hasPromptReview ? ' with preview = copy = Open, no extra tabs, safe text and stale-preview checks' : ''}, reload retention${hasProviderSwitch ? ' and provider switching' : ' (baseline popup)'}${hasCustomInstructions ? ', explicit local Custom save/forget and one-off clearing' : ''} on ${version.product}.`);
   if (hasProviderSwitch) console.log(`Synthetic UI screenshots: ${profile}`);

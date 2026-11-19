@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "YouTube AI Bridge",
   "short_name": "YT AI Bridge",
-  "version": "0.1.17",
+  "version": "0.1.18",
   "description": "Route YouTube transcripts to ChatGPT or Claude for summary, analysis, or project application. Review and send yourself.",
   "permissions": [
     "activeTab",

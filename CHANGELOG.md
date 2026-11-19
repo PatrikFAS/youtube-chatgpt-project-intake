@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.18
+
+- Required suites, all 24 native single-video combinations plus complete Collection/opt-in journeys, 35 Send native-DOM cases and 68 Claude cases pass. Native tests include actual combined builder payloads with manual insertion and protected drafts. These are local fixtures, not live new-feature acceptance.
+- Tightens Send against inherited readonly/disabled controls, competing Send-labelled controls and source navigation during caption capture; those uncertain cases remain manual.
+- Adds manually captured Collection for up to three current captioned videos, review/reorder/remove/clear and one optional comparison question. Session-only captions survive popup closure/tab changes, but are lost on browser restart or extension reload/update/disable; no local/sync retention, background or playlist collection.
+- Reuses Preview/Copy/Open and provider/destination handoff protections with manual Send only. Every source keeps full title/link, caption track and its own timestamp links. Preserves all single-video presets and Custom. Rejects duplicate/missing/mismatched captions, changed source identity, stale revisions/late captures, oversized prompts and failed writes without replacing previous entries or silently truncating.
+- Uses the measured experiment's three-item / 60,000-unit serialized prompt trial bound and a 512 KiB encoded-state guard; neither promises model capacity. Separate v0.1.17 Send-only artifact and accepted v0.1.16 ZIP remain unchanged. New Collection and explicit Send live acceptance remain separate from Patrik's accepted Claude/Custom cases.
+
 ## 0.1.17
 
 - Adds default-off, remembered explicit Send to ChatGPT for individual videos. The visible destination and separate Send action authorize each handoff; existing Open, Copy, Preview and Retry remain manual. Claude and Collections cannot use it.

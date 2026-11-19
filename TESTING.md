@@ -2,6 +2,43 @@
 
 ## Current status
 
+**v0.1.18 Collection milestone:** two or three captioned videos in a manually
+filled session basket. Review/reorder/remove/clear, one comparison question and
+source-labelled Preview/Copy/Open work with both providers; Send remains manual.
+Session data is lost on browser restart or extension reload/update/disable.
+The separate v0.1.17 artifact tests explicit ChatGPT Send independently.
+
+Required verification/test suites pass, including worker revision/generation,
+source/segment pairing, size boundary, duplicate/missing/source/quota failures
+and source navigation before/during extraction. Native popup checks exercise
+the complete three-video Add/reopen/review/copy/open path, source-specific
+hour-long timestamps, safe title rendering, stale previews, write failures and
+late capture after Clear; all 24 single-video combinations and explicit opt-in
+checks pass. The 35 native Send cases and 68 Claude cases remain synthetic.
+
+### v0.1.18 focused Collection check
+
+1. Update the same unpacked folder, Reload and refresh relevant tabs. Confirm
+   v0.1.18; updating loses any earlier session basket. Saved destinations and
+   Custom settings remain. Leave explicit Send off while testing Collection.
+2. On a captioned video expand Collection and Add current video. Repeat on two
+   related videos. Reopen the popup between videos: count/titles/tracks should
+   remain. Add does not copy/open/send. A duplicate/missing/oversized source
+   must not replace previously added items.
+3. Review titles/links/tracks, try Up/Down or Remove, then Use collection. Add
+   a short comparison question and choose the intended provider/destination.
+   Preview/Copy/Open should contain the same sources/question/timestamps, with
+   each timestamp tied to its own video. Current-video Copy title/transcript
+   utilities are hidden while using Collection to avoid mixing sources.
+4. Open, check the intended destination and complete unsent prompt. Existing
+   drafts must remain untouched. There is no Collection Send action. Any actual
+   model comparison is Patrik's manual choice; check usefulness and citations
+   separately from successful handoff.
+5. Clear removes the basket; reload/restart also loses it as disclosed. Keep
+   working v0.1.16 and Send-only v0.1.17 ZIPs for isolated comparisons. No live
+   new-feature acceptance or real browser storage lifecycle was run by Codex;
+   native popup tests use mocked extension APIs and actual DOM interactions.
+
 **v0.1.17 explicit ChatGPT Send milestone:** default off; remembered opt-in only
 reveals a separate Send action and destination URL. Open/Copy/Preview/Retry remain
 manual. Worker fixtures cover duplicate requests, reload/document binding,

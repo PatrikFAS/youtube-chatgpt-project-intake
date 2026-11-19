@@ -1,6 +1,8 @@
 'use strict';
 
 importScripts('shared/destination.js');
+importScripts('shared/collection.js');
+let collectionQueue = Promise.resolve();
 
 const PENDING_PREFIX = 'pending_';
 const PENDING_TTL_MS = 10 * 60 * 1000;
@@ -25,6 +27,12 @@ chrome.runtime.onInstalled.addListener(async () => {
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (!message || typeof message !== 'object') return;
+  if (['COLLECTION_GET','COLLECTION_ADD','COLLECTION_REMOVE','COLLECTION_CLEAR','COLLECTION_MOVE'].includes(message.type)) {
+    const task = collectionQueue.then(() => handleCollection(message,sender));
+    collectionQueue = task.catch(() => {});
+    task.then(sendResponse).catch(error=>sendResponse({ok:false,error:String(error.message||error)}));
+    return true;
+  }
 
   if (message.type === 'OPEN_CHATGPT_WITH_EXPLICIT_SEND') {
     serializeExplicitSend(() => prepareExplicitSend(message, sender))
@@ -187,6 +195,23 @@ async function prepareExplicitSend(message, sender) {
   const opened = await handleOpenDestination({ ...message, destinationUrl, explicitSendKey:key });
   await chrome.storage.session.set({ [key]: { ...record, state:'prepared', tabId:opened.tabId } });
   return opened;
+}
+
+async function handleCollection(message,sender) {
+  if (sender.url !== chrome.runtime.getURL('popup/popup.html') || sender.tab) throw Error('Open Collection from the extension popup.');
+  if (!chrome.storage.session) throw Error('Session storage is unavailable. Single-video handoff remains available.');
+  const key=YT2GPTCollection.KEY, saved=(await chrome.storage.session.get(key))[key];
+  const state=saved || YT2GPTCollection.empty();
+  if(state.version!==1 || !Array.isArray(state.items) || !Number.isInteger(state.revision) || !Number.isInteger(state.generation)) throw Error('Collection data is not recognized. No existing data was changed.');
+  if(state.items.length){state.items.forEach(item=>YT2GPTCollection.normalize(item));YT2GPTCollection.build(state.items,'',true);}
+  if(message.type==='COLLECTION_GET')return {ok:true,state};
+  if(message.type==='COLLECTION_ADD') {
+    const source=await chrome.tabs.get(message.sourceTabId);
+    if(YT2GPTCollection.videoId(source.url)!==message.item?.videoId) throw Error('The source video changed. Nothing was added.');
+  }
+  const next=YT2GPTCollection.mutate(state,message);
+  await chrome.storage.session.set({[key]:next});
+  return {ok:true,state:next};
 }
 
 async function authorizeExplicitSend(message, sender) {

@@ -114,7 +114,7 @@ async function makePopup({
     } },
     runtime: {
       getManifest() { return JSON.parse(fs.readFileSync(path.join(root, 'manifest.json'), 'utf8')); },
-      async sendMessage(message) { events.push('open'); events.message = message; return { ok: runtimeOk, error: 'Simulated opening failure.' }; },
+      async sendMessage(message) { if(message.type==='COLLECTION_GET')return {ok:true,state:{version:1,revision:0,generation:0,items:[]}}; events.push('open'); events.message = message; return { ok: runtimeOk, error: 'Simulated opening failure.' }; },
       openOptionsPage() {}
     }
   };
@@ -129,7 +129,9 @@ async function makePopup({
     } } }
   });
   vm.runInContext(destinationSource, context, { filename: 'shared/destination.js' });
+  vm.runInContext(fs.readFileSync(path.join(root,'shared/collection.js'),'utf8'), context);
   vm.runInContext(popupSource, context, { filename: 'popup/popup.js' });
+  vm.runInContext(fs.readFileSync(path.join(root,'popup/collection.js'),'utf8'),context);
   await windowListeners.DOMContentLoaded();
   return { context, els, radios, events, storageData, queriedTabs: () => queriedTabs, closed: () => closed };
 }

@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import vm from 'node:vm';
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
@@ -15,7 +16,7 @@ const html = read('tests/fixtures/claude-composer.html');
 const reportedComposer = read('tests/fixtures/claude-reported-composer.html');
 const destinationSource = read('shared/destination.js');
 const injector = read('claude/content.js');
-const payload = 'Fixture prompt — café\n\n[0:00] Full source transcript.\nSecond paragraph.';
+let payload = 'Fixture prompt — café\n\n[0:00] Full source transcript.\nSecond paragraph.';
 const profile = fs.mkdtempSync(path.join(os.tmpdir(), 'yt-intake-claude-browser-'));
 const browser = spawn(executable, ['--headless', '--disable-gpu', '--no-first-run', '--no-default-browser-check', '--remote-debugging-port=0', `--user-data-dir=${profile}`, 'about:blank'], { stdio:['ignore','ignore','pipe'] });
 let ws;
@@ -240,8 +241,12 @@ try {
   await run('missing ProseMirror class rejected',{labelled:true,noProseMirror:true,error:'not recognized',maxEdits:0});
   await run('duplicate labelled editors rejected',{labelled:true,duplicate:true,error:'not recognized',maxEdits:0});
   await run('labelled focus-restored draft',{labelled:true,focusDraft:true,error:'changed on focus',expectedText:'Restored on focus',claims:1,maxEdits:0});
+  const c=vm.createContext({URL,TextEncoder,Date});vm.runInContext(read('shared/collection.js'),c);
+  payload=c.YT2GPTCollection.build([1,2,3].map(n=>({videoId:'fixture'+n,title:'Collection source '+n,url:'https://www.youtube.com/watch?v=fixture'+n,channel:'Fixture',transcript:{text:'[0:00] Source '+n,segments:[{start:0,text:'Source '+n}],track:{name:'English'}}})));
+  await run('actual Collection payload remains unsent',{reported:true,maxEdits:1});
+  await run('Collection payload protects restored draft',{reported:true,draft:'Keep Collection destination draft',error:'draft or attachment',maxEdits:0});
   assert.equal(errors.length,0,JSON.stringify(errors));
-  console.log(`PASS: ${cases} Claude native-DOM cases: reported-layout manual autofill, exact routes, draft/attachment guards, text acceptance, opt-in redacted diagnostics, no retries and zero automatic sends. Synthetic fixtures; affected signed-in Claude acceptance remains unperformed.`);
+  console.log(`PASS: ${cases} Claude native-DOM cases: reported-layout manual autofill, exact routes, draft/attachment guards, text acceptance, opt-in redacted diagnostics, no retries and zero automatic sends. Synthetic fixtures; Patrik separately accepted his selected v0.1.16 live journey, not all layouts or Collections.`);
 } finally {
   if(ws?.readyState===WebSocket.OPEN){ws.send(JSON.stringify({id:++sequence,method:'Browser.close'}));await new Promise(resolve=>{const timer=setTimeout(resolve,2000);browser.once('exit',()=>{clearTimeout(timer);resolve();});});}
   ws?.close();browser.kill();browser.stderr.destroy();browser.unref();

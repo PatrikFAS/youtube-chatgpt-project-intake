@@ -18,10 +18,17 @@
       return true;
     }
     if (message.type === 'YT2GPT_GET_TRANSCRIPT') {
-      getTranscript(message.track).then(data => sendResponse({ ok: true, data }))
+      const matches = () => !message.expectedVideoId || getVideoId(new URL(location.href)) === message.expectedVideoId;
+      if (!matches()) { sendResponse({ok:false,error:'The source video changed. Nothing was added.'}); return; }
+      getTranscript(message.track).then(data => {
+        if(!matches())throw Error('The source video changed. Nothing was added.');
+        sendResponse({ ok: true, data });
+      })
         .catch(async error => {
+          if(!matches())return sendResponse({ok:false,error:'The source video changed. Nothing was added.'});
           try {
             const data = await getDomTranscriptFallback();
+            if(!matches())return sendResponse({ok:false,error:'The source video changed. Nothing was added.'});
             if (data?.segments?.length) return sendResponse({ ok: true, data, fallback: 'dom' });
           } catch {}
           sendResponse({ ok: false, error: friendlyError(error) });

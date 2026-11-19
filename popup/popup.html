@@ -120,6 +120,22 @@
         <button id="copyPrompt" class="secondary" title="Copy the full prepared prompt without opening a tab">Copy prompt</button>
       </div>
       <p id="handoffHelp" class="muted" aria-live="polite"></p>
+      <details id="collectionPanel" class="collection-panel">
+        <summary id="collectionCount">Collection (0/3)</summary>
+        <p class="field-help">Add videos individually while open. Captions stay in this browser session only: lost on browser restart or extension reload, update or disable. No background capture.</p>
+        <p id="collectionStatus" class="field-help" aria-live="polite"></p>
+        <button id="addToCollection" class="secondary wide">Add current video</button>
+        <div id="collectionItems"></div>
+        <div class="custom-actions">
+          <button id="useCollection" class="secondary small" disabled>Use collection</button>
+          <button id="clearCollection" class="link-button" disabled>Clear collection</button>
+        </div>
+        <div id="collectionQuestionWrap" class="field hidden">
+          <label for="collectionQuestion">Compare these videos <span class="optional-label">Optional question</span></label>
+          <textarea id="collectionQuestion" rows="2" placeholder="What do these sources collectively change for my project?"></textarea>
+          <p class="field-help">One combined comparison with source titles, links and timestamps. Review and send manually; explicit Send is unavailable for Collections.</p>
+        </div>
+      </details>
       <details id="explicitSendPanel" class="question-details">
         <summary>Faster sending <span class="optional-label">ChatGPT beta</span></summary>
         <label><input id="explicitSendOptIn" type="checkbox"> Enable explicit Send to ChatGPT on this browser</label>
@@ -189,6 +205,8 @@
   </main>
 
   <script src="../shared/destination.js"></script>
+  <script src="../shared/collection.js"></script>
   <script src="popup.js"></script>
+  <script src="collection.js"></script>
 </body>
 </html>
