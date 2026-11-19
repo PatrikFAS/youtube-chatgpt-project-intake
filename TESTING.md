@@ -25,9 +25,9 @@ The same unpacked path/profile is updated 19 -> 20 -> candidate **between browse
 restarts**; this verifies local settings and URL/query/fragment retention through
 that update path. The browser extension-entry Reload button itself is not driven.
 A separate fresh candidate profile runs the same states. In this headless Chromium
-setup the candidate's actual viewport is approximately 415x510, constrained by its
+setup the candidate's actual viewport is 400x500, constrained by its
 display/work area; the footer fits the actual height. Do not claim every browser
-will grant those exact dimensions. The root's preferred 400x600 is independent
+will grant those exact dimensions. The root's preferred 400x500 is independent
 of the initial viewport, and the fixed shell fits the available viewport.
 
 **Separate page fixtures:** `npm run test:browser -- CHROMIUM` still forces

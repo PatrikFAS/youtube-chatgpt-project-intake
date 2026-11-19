@@ -125,7 +125,7 @@ body[data-collection="true"] .utility-row > span { display:none; }
 /* Give Chrome an intrinsic preferred size before its viewport exists.
    Viewport caps on this root collapse an action popup to its 25px minimum.
    The fixed shell below fits the viewport Chrome actually grants. */
-html { width:400px; height:600px; overflow:hidden; }
+html { width:400px; height:500px; overflow:hidden; }
 body { width:100%; height:100%; overflow:hidden; }
 .shell { position:fixed; inset:0; width:auto; height:auto; max-height:600px; padding:0; display:flex; flex-direction:column; overflow:hidden; }
 .header { flex:none; padding:12px 16px 0; margin-bottom:10px; }
