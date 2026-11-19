@@ -65,6 +65,19 @@ The original v0.1.14 checkout stays untouched. The existing worktree/PR stack ow
 
 ## NOW NEXT LATER
 
+**Independent-beta preparation, 19 November:** a private tester guide, blank
+feedback form and exact v0.1.18 ZIP are ready in `.private/beta` in the original
+project checkout, excluded through local Git info/exclude. The repository is
+public, so the packet and filled feedback must not be force-added/pushed.
+The existing Space holds copyable handoff text; Library saving is currently
+unavailable through the upload workflow. No invitations,
+messages, access grants or public page are created. Normal testing is one
+manual task in the tester's existing assistant; Collection and explicit Send
+are separate optional steps. Gate remains Patrik's v0.1.18 live acceptance,
+then a small unaided independent beta. Earlier Claude/Custom passes do not
+close those gates. Installation claims are checked against exact v0.1.18 and
+official Chrome/Edge guidance; actual unaided completion remains untested.
+
 | When | Owner and next action | Gate |
 | --- | --- | --- |
 | NOW: new milestone acceptance | Patrik tests one harmless ChatGPT explicit Send, then a small Collection using his chosen provider/destination. Codex records each outcome separately from v0.1.16 Claude and v0.1.15 Custom acceptance. | Guarded one-click result or clear manual fallback; correct source attribution and one useful cross-source decision. Keep issue #1 open until affected routing/tab placement is confirmed. No agent live sends or broad retest of accepted normal flows. |
